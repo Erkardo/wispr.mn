@@ -108,19 +108,9 @@ export async function createQpayInvoiceAction(
     return { error: 'Төлбөрийн системтэй холбогдож чадсангүй.', qrImage: '', deeplinks: [], invoiceId: '' };
   }
 
-  const localInvoiceId = randomUUID();
-  const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || 'http://localhost:9002'}/api/payments/qpay-webhook`;
-
-  const invoicePayload = {
-    invoice_code: process.env.QPAY_INVOICE_CODE,
-    sender_invoice_no: localInvoiceId,
-    invoice_receiver_code: ownerId,
-    invoice_description: `${hintPackage.name} (${hintPackage.numHints} hints)`,
-    amount: hintPackage.amount,
-    callback_url: callbackUrl,
-  };
-
   try {
+    const localInvoiceId = randomUUID();
+
     // 1. Create a "PENDING" invoice in our own database first
     const invoiceRef = await addDoc(collection(db, 'invoices'), {
       ownerId: ownerId,
@@ -131,7 +121,20 @@ export async function createQpayInvoiceAction(
       localInvoiceId: localInvoiceId,
     } as Omit<Invoice, 'id'>);
 
-    // 2. Create the invoice on QPay's side
+    // 2. Define callback URL with the localId to ensure it's returned back to us
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || 'http://localhost:9002';
+    const callbackUrl = `${baseUrl}/api/payments/qpay-webhook?localId=${localInvoiceId}`;
+
+    // 3. Create the invoice on QPay's side
+    const invoicePayload = {
+      invoice_code: process.env.QPAY_INVOICE_CODE,
+      sender_invoice_no: localInvoiceId,
+      invoice_receiver_code: ownerId,
+      invoice_description: `${hintPackage.name} (${hintPackage.numHints} hints)`,
+      amount: hintPackage.amount,
+      callback_url: callbackUrl,
+    };
+
     const res = await fetch('https://merchant.qpay.mn/v2/invoice', {
       method: 'POST',
       headers: {
@@ -140,6 +143,7 @@ export async function createQpayInvoiceAction(
       },
       body: JSON.stringify(invoicePayload),
     });
+
 
     if (!res.ok) {
       const errorBody = await res.json();

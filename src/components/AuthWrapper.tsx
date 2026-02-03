@@ -8,13 +8,17 @@ import { BottomNav } from '@/components/BottomNav';
 import { signInAnonymously } from 'firebase/auth';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 
+import { PageTransition } from '@/components/PageTransition';
+import { NotificationManager } from '@/components/NotificationManager';
+
 export function AuthWrapper({ children }: { children: React.ReactNode }) {
+
   const { user, loading } = useUser();
   const auth = useAuth();
   const firestore = useFirestore();
   const router = useRouter();
   const pathname = usePathname();
-  
+
   const isPublicPage = pathname === '/login' || pathname.startsWith('/c/');
 
   useEffect(() => {
@@ -33,36 +37,36 @@ export function AuthWrapper({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const checkAndUpdateUrl = async () => {
-        if (!user || user.isAnonymous || !firestore) {
-            return;
-        }
+      if (!user || user.isAnonymous || !firestore) {
+        return;
+      }
 
-        const ownerRef = doc(firestore, 'complimentOwners', user.uid);
-        
-        try {
-            const docSnap = await getDoc(ownerRef);
-            
-            // Only proceed if the document already exists
-            if (docSnap.exists()) {
-                const appUrl = window.location.origin;
-                const data = docSnap.data();
-                
-                // Check if the shareUrl needs to be updated because the domain has changed
-                const needsUpdate = !data.shareUrl || !data.shareUrl.startsWith(appUrl);
+      const ownerRef = doc(firestore, 'complimentOwners', user.uid);
 
-                if (needsUpdate && data.shortId) {
-                    const newShareUrl = `${appUrl}/c/${data.shortId}`;
-                    await updateDoc(ownerRef, { shareUrl: newShareUrl });
-                }
-            }
-        } catch (error) {
-            // This might happen due to permissions, but we don't want to crash the app
-            console.error("Error checking and updating share URL:", error);
+      try {
+        const docSnap = await getDoc(ownerRef);
+
+        // Only proceed if the document already exists
+        if (docSnap.exists()) {
+          const appUrl = window.location.origin;
+          const data = docSnap.data();
+
+          // Check if the shareUrl needs to be updated because the domain has changed
+          const needsUpdate = !data.shareUrl || !data.shareUrl.startsWith(appUrl);
+
+          if (needsUpdate && data.shortId) {
+            const newShareUrl = `${appUrl}/c/${data.shortId}`;
+            await updateDoc(ownerRef, { shareUrl: newShareUrl });
+          }
         }
+      } catch (error) {
+        // This might happen due to permissions, but we don't want to crash the app
+        console.error("Error checking and updating share URL:", error);
+      }
     };
 
     if (!loading && user) {
-        checkAndUpdateUrl();
+      checkAndUpdateUrl();
     }
   }, [user, loading, firestore]);
 
@@ -76,13 +80,22 @@ export function AuthWrapper({ children }: { children: React.ReactNode }) {
   }
 
   if (isPublicPage) {
-    return <>{children}</>;
+    return (
+      <>
+        <NotificationManager />
+        <PageTransition>{children}</PageTransition>
+      </>
+    );
   }
-  
+
   return (
     <div className="relative mx-auto flex min-h-screen max-w-[430px] flex-col bg-background shadow-lg animate-fade-in">
-        <main className="flex-1 pb-20">{children}</main>
-        <BottomNav />
+      <main className="flex-1 pb-20">
+        <NotificationManager />
+        <PageTransition>{children}</PageTransition>
+      </main>
+      <BottomNav />
     </div>
   );
 }
+

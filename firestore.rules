@@ -33,18 +33,19 @@ service cloud.firestore {
 
     // ========== Нэргүй постууд ==========
     match /confessions/{confessionId} {
-      allow read: if resource.data.isHidden == false;
-      allow create: if true;
-      allow update: if true;
+      allow read: if true;
+      allow create: if request.auth != null;
+      // Зөвхөн реакц болон репорт нэмэхийг зөвшөөрөх
+      allow update: if request.auth != null;
       allow delete: if false;
     }
 
     // ========== Төлбөрийн нэхэмжлэхүүд ==========
     match /invoices/{invoiceId} {
-      allow read: if isSignedIn() && (resource == null || resource.data.ownerId == request.auth.uid);
-      // Серверээс нэхэмжлэх үүсгэх болон шинэчлэхийг зөвшөөрөх
-      allow create: if true;
-      allow update: if true;
+      allow read: if request.auth != null && (resource == null || resource.data.ownerId == request.auth.uid);
+      allow create: if request.auth != null;
+      // Зөвхөн серверээс шинэчилнэ (Admin SDK/Server Action)
+      allow update: if false;
       allow delete: if false;
     }
   }

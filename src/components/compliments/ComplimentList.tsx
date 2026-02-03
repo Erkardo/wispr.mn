@@ -13,7 +13,9 @@ import { useFirestore, type WithId, errorEmitter, FirestorePermissionError, useU
 import { cn } from '@/lib/utils';
 import { format, isToday, isYesterday } from 'date-fns';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import { generateHintAction, addReactionToComplimentAction } from '@/app/compliments/actions';
+
 import {
   Dialog,
   DialogContent,
@@ -418,96 +420,125 @@ function ComplimentCard({
   }
 
 
+  if (!selectedStyle) {
+    return <Skeleton className="w-full aspect-[16/10] rounded-2xl" />;
+  }
+
   const mainCard = (
-    <Card
-      id={`compliment-card-${compliment.id}`}
-      className="animate-in fade-in-50 slide-in-from-bottom-5 duration-500 fill-mode-both overflow-hidden"
-      style={{ animationDelay: `${index * 100}ms`, animationFillMode: 'both', backgroundImage: selectedStyle?.bg }}
+    <motion.div
+      layout
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      whileHover={{ y: -4 }}
+      transition={{ duration: 0.3 }}
+      className="w-full"
     >
-      <CardHeader className="p-4 flex-row items-center justify-between">
-        {getDateBadge()}
-        <Button variant="ghost" size="icon" onClick={handleShareClick} className="h-9 w-9 rounded-full bg-black/20 hover:bg-black/30 text-white/90 backdrop-blur-sm" disabled={isSharing}>
-          {isSharing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
-        </Button>
-      </CardHeader>
-      <CardContent className="relative flex flex-col items-center justify-center p-10 text-center aspect-[16/10] overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.1)_0%,_rgba(255,255,255,0)_50%)]"></div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[14rem] opacity-10 select-none -rotate-12">{selectedStyle?.emoji}</div>
+      <Card
+        id={`compliment-card-${compliment.id}`}
+        className="w-full relative overflow-hidden text-white rounded-3xl border-none shadow-2xl transition-all duration-500"
+        style={{ backgroundImage: selectedStyle.bg }}
+      >
+        <CardHeader className="flex flex-row items-center justify-between p-6 pb-2">
+          {getDateBadge()}
+          <Button variant="ghost" size="icon" onClick={handleShareClick} className="h-9 w-9 rounded-full bg-black/20 hover:bg-black/30 text-white/90 backdrop-blur-sm" disabled={isSharing}>
+            {isSharing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
+          </Button>
+        </CardHeader>
+        <CardContent className="relative flex flex-col items-center justify-center p-10 text-center aspect-[16/10] overflow-hidden">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.1)_0%,_rgba(255,255,255,0)_50%)]"></div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[14rem] opacity-10 select-none -rotate-12">{selectedStyle?.emoji}</div>
 
-        <p className={cn(
-          "font-black leading-tight my-auto z-10 text-white",
-          getFontSizeClass(compliment.text)
-        )} style={{ textShadow: '0 2px 6px rgba(0,0,0,0.2)' }}>
-          {compliment.text}
-        </p>
+          <p className={cn(
+            "font-black leading-tight my-auto z-10 text-white",
+            getFontSizeClass(compliment.text)
+          )} style={{ textShadow: '0 2px 6px rgba(0,0,0,0.2)' }}>
+            {compliment.text}
+          </p>
 
-        <div className="absolute bottom-4 flex items-center gap-2 text-sm opacity-80 font-medium z-10 select-none text-white/90">
-          <UserX className="h-4 w-4" />
-          Нэрээ нууцалсан
-        </div>
-      </CardContent>
-      <CardFooter className="bg-black/10 dark:bg-black/20 flex items-center justify-between gap-3 p-3 backdrop-blur-sm">
-        <div className="flex gap-1">
-          {reactionEmojis.map(emoji => (
-            <Button
-              key={emoji}
-              variant="ghost"
-              size="sm"
-              onClick={() => handleReaction(emoji)}
-              className={cn(
-                "flex items-center gap-1.5 px-2.5 text-sm rounded-full bg-white/10 dark:bg-white/10 hover:bg-white/20 dark:hover:bg-white/20 hover:scale-110 transition-all transform-gpu text-white",
-                isReacting === emoji && 'animate-pulse scale-125'
-              )}
-              disabled={!!isReacting}
-            >
-              <span className="opacity-90">{emoji}</span>
-              <span className="font-mono text-xs min-w-[1ch] opacity-70">{localReactions[emoji] || 0}</span>
-            </Button>
-          ))}
-        </div>
+          <div className="absolute bottom-4 flex items-center gap-2 text-sm opacity-80 font-medium z-10 select-none text-white/90">
+            <UserX className="h-4 w-4" />
+            Нэрээ нууцалсан
+          </div>
+        </CardContent>
+        <CardFooter className="bg-black/10 dark:bg-black/20 flex items-center justify-between gap-3 p-3 backdrop-blur-sm">
+          <div className="flex gap-1">
+            {reactionEmojis.map(emoji => (
+              <Button
+                key={emoji}
+                variant="ghost"
+                size="sm"
+                onClick={() => handleReaction(emoji)}
+                className={cn(
+                  "flex items-center gap-1.5 px-2.5 text-sm rounded-full bg-white/10 dark:bg-white/10 hover:bg-white/20 dark:hover:bg-white/20 hover:scale-110 transition-all transform-gpu text-white",
+                  isReacting === emoji && 'animate-pulse scale-125'
+                )}
+                disabled={!!isReacting}
+              >
+                <span className="opacity-90">{emoji}</span>
+                <span className="font-mono text-xs min-w-[1ch] opacity-70">{localReactions[emoji] || 0}</span>
+              </Button>
+            ))}
+          </div>
 
-        <Button
-          className="font-bold bg-white text-primary rounded-full px-4 transition-all duration-300 transform active:translate-y-px active:scale-100 hover:scale-[1.03] shadow-lg border-b-4 border-primary/20"
-          onClick={() => setIsHintDialogOpen(true)}
-        >
-          <KeyRound className="mr-2 h-4 w-4" />
-          <span>Hint харах {revealedHints.length > 0 ? `(${revealedHints.length})` : ''}</span>
-        </Button>
-      </CardFooter>
-    </Card>
+          <Button
+            className="font-bold bg-white text-primary rounded-full px-4 transition-all duration-300 transform active:translate-y-px active:scale-100 hover:scale-[1.03] shadow-lg border-b-4 border-primary/20"
+            onClick={() => setIsHintDialogOpen(true)}
+          >
+            <KeyRound className="mr-2 h-4 w-4" />
+            <span>Hint харах {revealedHints.length > 0 ? `(${revealedHints.length})` : ''}</span>
+          </Button>
+        </CardFooter>
+      </Card>
+    </motion.div>
   );
 
   if (!isRevealed) {
     return (
-      <Card
-        id={`compliment-card-${compliment.id}`}
-        className="hover:soft-shadow transition-shadow animate-in fade-in-50 slide-in-from-bottom-5 duration-500 fill-mode-both"
-        style={{ animationDelay: `${index * 100}ms`, animationFillMode: 'both' }}
+      <motion.div
+        layout
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.4, delay: index * 0.1 }}
+        className="w-full"
       >
-        <CardContent className="p-8 text-center flex flex-col items-center justify-center aspect-[16/10] bg-gradient-to-br from-primary/5 via-background to-background">
-          <div className="relative mb-4">
-            <Gift className="w-20 h-20 text-primary drop-shadow-[0_4px_10px_hsl(var(--primary)/0.4)]" />
-            <div className="w-5 h-5 absolute top-0 right-0 bg-primary rounded-full animate-ping" />
-          </div>
-          <p className="text-xl font-bold text-foreground mt-4">
-            🎁 Шинэ нэргүй wispr ирлээ!
-          </p>
-          <p className="text-muted-foreground text-sm">Таны сэтгэлийг дулаацуулах wispr хүлээж байна.</p>
-          <div className="mt-8 flex gap-4">
-            <Button onClick={handleReveal} disabled={isRevealing} size="lg">
-              {isRevealing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Нээх
-            </Button>
-            <Button variant="ghost" onClick={() => toast({ title: 'Дараа уншихаар хадгаллаа!' })}>Дараа унших</Button>
-          </div>
-        </CardContent>
-      </Card>
+        <Card
+          id={`compliment-card-${compliment.id}`}
+          className="hover:soft-shadow transition-shadow overflow-hidden"
+        >
+          <CardContent className="p-8 text-center flex flex-col items-center justify-center aspect-[16/10] bg-gradient-to-br from-primary/5 via-background to-background">
+            <motion.div
+              animate={{
+                scale: [1, 1.1, 1],
+                rotate: [0, 5, -5, 0]
+              }}
+              transition={{
+                duration: 3,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+              className="relative mb-4"
+            >
+              <Gift className="w-20 h-20 text-primary drop-shadow-[0_4px_10px_hsl(var(--primary)/0.4)]" />
+              <div className="w-5 h-5 absolute top-0 right-0 bg-primary rounded-full animate-ping" />
+            </motion.div>
+            <p className="text-xl font-bold text-foreground mt-4">
+              🎁 Шинэ нэргүй wispr ирлээ!
+            </p>
+            <p className="text-muted-foreground text-sm">Таны сэтгэлийг дулаацуулах wispr хүлээж байна.</p>
+            <div className="mt-8 flex gap-4">
+              <Button onClick={handleReveal} disabled={isRevealing} size="lg">
+                {isRevealing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Нээх
+              </Button>
+              <Button variant="ghost" onClick={() => toast({ title: 'Дараа уншихаар хадгаллаа!' })}>Дараа унших</Button>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
     );
   }
 
-  if (!selectedStyle) {
-    return <Skeleton className="w-full aspect-[16/10] rounded-2xl" />;
-  }
+
 
   return (
     <>

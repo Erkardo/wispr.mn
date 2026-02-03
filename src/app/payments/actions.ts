@@ -122,8 +122,13 @@ export async function createQpayInvoiceAction(
     } as Omit<Invoice, 'id'>);
 
     // 2. Define callback URL with the localId to ensure it's returned back to us
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || 'http://localhost:9002';
-    const callbackUrl = `${baseUrl}/api/payments/qpay-webhook?localId=${localInvoiceId}`;
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL;
+    if (!baseUrl && process.env.NODE_ENV === 'production') {
+      console.warn("CRITICAL: APP_URL is not set in production. Webhooks might fail as they will default to localhost.");
+    }
+    const finalBaseUrl = baseUrl || 'http://localhost:9002';
+    const callbackUrl = `${finalBaseUrl}/api/payments/qpay-webhook?localId=${localInvoiceId}`;
+
 
     // 3. Create the invoice on QPay's side
     const invoicePayload = {

@@ -70,11 +70,14 @@ export default function ProfilePage() {
         }
 
         let dailyHints = 5;
-        const resetDate = ownerData.lastHintResetAt?.toDate();
+        const resetDate = (ownerData.lastHintResetAt && typeof ownerData.lastHintResetAt.toDate === 'function')
+            ? ownerData.lastHintResetAt.toDate()
+            : null;
         if (resetDate && isToday(resetDate)) {
             dailyHints = 5 - (ownerData.hintsUsedToday || 0);
         }
         setTotalHints(dailyHints + (ownerData.bonusHints || 0));
+
 
     }, [ownerData]);
 

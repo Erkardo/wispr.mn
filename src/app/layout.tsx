@@ -6,9 +6,30 @@ import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { AuthWrapper } from '@/components/AuthWrapper';
 
 export const metadata: Metadata = {
-  title: 'Wispr',
-  description: 'Сэтгэлийн үгээ нэргүйгээр хуваалцаж, wispr-үүд сонсоорой.',
+  title: 'Wispr - Сэтгэлийн үгээ шивнээч',
+  description: 'Нэргүйгээр сэтгэлийн үгээ хуваалцаж, бусдаас ирсэн wispr-үүдийг уншаарай. Хамгийн аюулгүй, нээлттэй орон зай.',
+  manifest: '/manifest.json',
+  themeColor: '#8b5cf6',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Wispr',
+  },
+  openGraph: {
+    title: 'Wispr - Сэтгэлийн үгээ шивнээч',
+    description: 'Нэргүйгээр сэтгэлийн үгээ хуваалцаж, бусдаас ирсэн wispr-үүдийг уншаарай.',
+    url: 'https://wispr.mn',
+    siteName: 'Wispr',
+    locale: 'mn_MN',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Wispr - Сэтгэлийн үгээ шивнээч',
+    description: 'Нэргүйгээр сэтгэлийн үгээ хуваалцаж, бусдаас ирсэн wispr-үүдийг уншаарай.',
+  },
 };
+
 
 export default function RootLayout({
   children,

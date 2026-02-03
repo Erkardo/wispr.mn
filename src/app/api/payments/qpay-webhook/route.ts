@@ -52,8 +52,9 @@ async function processWebhook(payload: any) {
   const qIdRaw = payload.invoice_id || payload.qpay_payment_id;
   const qId = qIdRaw ? String(qIdRaw) : undefined;
 
-  // QPay sends sender_invoice_no (our local UUID)
-  const lId = payload.sender_invoice_no ? String(payload.sender_invoice_no) : undefined;
+  // QPay sends sender_invoice_no, or we might have it as localId in the URL
+  const lIdRaw = payload.sender_invoice_no || payload.localId;
+  const lId = lIdRaw ? String(lIdRaw) : undefined;
   const paymentStatus = payload.payment_status || 'PAID';
 
   console.log(`Processing Webhook - qId: ${qId}, lId: ${lId}, Status: ${paymentStatus}`);

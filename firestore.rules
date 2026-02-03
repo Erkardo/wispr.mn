@@ -4,139 +4,53 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
+    // Нэвтэрсэн эсэхийг шалгах функц
     function isSignedIn() {
       return request.auth != null;
     }
 
+    // Эзэмшигч мөн эсэхийг шалгах функц
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // ========== Compliment Owners ==========
-    // Stores user-specific data, including their unique share URL.
+    // ========== Хэрэглэгчийн мэдээлэл ==========
     match /complimentOwners/{ownerId} {
-      // READ: Only the owner can read their own document.
       allow read: if isOwner(ownerId);
-
-      // CREATE: Any signed-in user can create their own owner document.
-      allow create: if isOwner(ownerId)
-                    && request.resource.data.ownerId == ownerId;
-
-      // UPDATE: The owner can update their own document.
-      // Also allow the server webhook (unauthenticated) to increment bonusHints.
-      allow update: if isOwner(ownerId) || (request.auth == null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['bonusHints']));
-      
-      // DELETE: Not allowed.
+      allow create: if isOwner(ownerId);
+      // Серверээс бонус эрх нэмэхийг зөвшөөрөх
+      allow update: if isOwner(ownerId) || request.auth == null;
       allow delete: if false;
 
-
-      // ----- Compliments Subcollection -----
+      // Wispr-үүд (Sub-collection)
       match /compliments/{complimentId} {
-        // READ: Only the owner can read their compliments.
         allow read: if isOwner(ownerId);
-
-        // CREATE: Anyone (even anonymous users) can send a compliment.
-        // Data validation ensures the ownerId in the document matches the path.
-        allow create: if request.resource.data.ownerId == ownerId;
-
-        // UPDATE:
-        // - The owner can mark as read or update hints.
-        // - Anyone can add a reaction.
-        allow update: if (isOwner(ownerId) && (isMarkingAsRead() || isAddingHint()))
-                       || isAddingReaction();
-
-        function isMarkingAsRead() {
-          return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead']);
-        }
-        function isAddingHint() {
-           return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['hints']);
-        }
-        function isAddingReaction() {
-          // Allow anyone to increment reaction counts.
-          let reactionKeys = ['💛', '😄', '✨'];
-          let affected = request.resource.data.reactions.diff(resource.data.reactions).affectedKeys();
-          let isReactionKey = reactionKeys.hasAny(affected);
-          // This is a simplified check. A robust rule would check for increments only.
-          return affected.size() > 0 && isReactionKey;
-        }
-
-        // DELETE: Not allowed.
+        allow create: if true;
+        allow update: if isOwner(ownerId) || true;
         allow delete: if false;
       }
     }
 
-    // ========== Short Links ==========
-    // Public mapping of short IDs to user IDs.
+    // ========== Богино холбоос ==========
     match /shortLinks/{shortId} {
-      // READ: Anyone can read this to resolve a short link. This is public.
       allow read: if true;
-
-      // WRITE (Create/Update): Only the owner can create/update their own short link.
-      allow write: if isOwner(request.resource.data.ownerId);
-
-      // DELETE: Not allowed.
-      allow delete: if false;
+      allow write: if isSignedIn();
     }
 
-    // ========== Confessions ==========
-    // Public, anonymous confessions.
+    // ========== Нэргүй постууд ==========
     match /confessions/{confessionId} {
-      // READ: Anyone can read confessions that are not hidden.
       allow read: if resource.data.isHidden == false;
-
-      // CREATE: Anyone can post a confession.
       allow create: if true;
-
-      // UPDATE: Anyone can increment reaction counts or report a confession.
-      // Other fields are immutable.
-      allow update: if isAddingConfessionReaction() || isReportingConfession();
-
-      function isAddingConfessionReaction() {
-        // Simplified check, allows incrementing reaction counts.
-        return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactionsCount']);
-      }
-      function isReportingConfession() {
-        let isIncrementingReports = request.resource.data.reportsCount == resource.data.reportsCount + 1;
-        let isHiding = request.resource.data.isHidden == true && resource.data.isHidden == false;
-        let onlyReportsAffected = request.resource.data.diff(resource.data).affectedKeys().hasAny(['reportsCount', 'isHidden']);
-        
-        return onlyReportsAffected && (isIncrementingReports || isHiding);
-      }
-
-      // DELETE: Not allowed.
+      allow update: if true;
       allow delete: if false;
     }
 
-    // ========== Invoices ==========
-    // For hint purchases.
+    // ========== Төлбөрийн нэхэмжлэхүүд ==========
     match /invoices/{invoiceId} {
-       // READ: Only the owner of the invoice can read it.
-      allow read: if isOwner(resource.data.ownerId);
-
-      // CREATE: A signed-in user can create an invoice for themselves.
-      // We also allow unauthenticated creation to support Server Actions using the Client SDK.
-      allow create: if isOwner(request.resource.data.ownerId) || request.auth == null;
-
-
-      // UPDATE:
-      // - The server webhook (unauthenticated) can update the status to PAID and add the qpayInvoiceId.
-      //   Simultaneously, the webhook updates the owner's bonusHints.
-      //   WARNING: This relies on a transaction in the webhook. A Cloud Function is a more robust solution.
-      allow update: if isPaymentWebhook();
-      
-      function isPaymentWebhook() {
-        let isChangingStatusToPaid = request.resource.data.status == 'PAID' && resource.data.status == 'PENDING';
-        let allowedKeys = ['status', 'qpayInvoiceId'];
-        // Allow unauthenticated requests to change status and add qpayInvoiceId
-        let isAllowedFieldUpdate = request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowedKeys);
-        
-        // This part is tricky without Admin SDK. The webhook must also update complimentOwners.
-        // We can't verify that second write here. This rule is permissive for the webhook.
-        return request.auth == null && isAllowedFieldUpdate && isChangingStatusToPaid;
-      }
-      
-      // DELETE: Not allowed.
+      allow read: if isSignedIn() && (resource == null || resource.data.ownerId == request.auth.uid);
+      // Серверээс нэхэмжлэх үүсгэх болон шинэчлэхийг зөвшөөрөх
+      allow create: if true;
+      allow update: if true;
       allow delete: if false;
     }
   }

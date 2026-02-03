@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { collection, query, where, getDocs, writeBatch, increment, doc } from 'firebase/firestore';
+import { collection, query, where, getDocs, writeBatch, increment, doc, serverTimestamp } from 'firebase/firestore';
 import { createHmac } from 'crypto';
 
 /**
@@ -48,55 +48,74 @@ async function verifyQpayRequest(request: NextRequest, rawBody: string): Promise
 
 
 async function processWebhook(payload: any) {
-  const qpayInvoiceId = payload.invoice_id;
-  const senderInvoiceNo = payload.sender_invoice_no || payload.qpay_payment_id; // QPay might send as qpay_payment_id in GET
-  const paymentStatus = payload.payment_status || 'PAID'; // If it's a callback, assume PAID if we got here
+  // QPay might send invoice_id or qpay_payment_id
+  const qId = payload.invoice_id || payload.qpay_payment_id;
+  // QPay sends sender_invoice_no (our local UUID)
+  const lId = payload.sender_invoice_no;
+  const paymentStatus = payload.payment_status || 'PAID';
 
-  console.log(`Processing - QPay ID: ${qpayInvoiceId}, Local ID: ${senderInvoiceNo}, Status: ${paymentStatus}`);
+  console.log(`Processing - QPayID: ${qId}, LocalID: ${lId}, Status: ${paymentStatus}`);
 
-  if ((!qpayInvoiceId && !senderInvoiceNo) || (paymentStatus !== 'PAID' && paymentStatus !== 'SUCCESS')) {
-    return { status: 200, message: 'Awaiting payment or invalid payload' };
+  if (!qId && !lId) {
+    return { status: 400, error: 'Missing identifiers' };
   }
 
   const invoicesRef = collection(db, 'invoices');
-  let q;
+  let invoiceDocToProcess = null;
 
-  if (qpayInvoiceId) {
-    q = query(invoicesRef, where('qpayInvoiceId', '==', qpayInvoiceId), where('status', '==', 'PENDING'));
-  } else {
-    q = query(invoicesRef, where('localInvoiceId', '==', senderInvoiceNo), where('status', '==', 'PENDING'));
+  // 1. Try to find by QPay ID (qId) first
+  if (qId) {
+    const q = query(invoicesRef, where('qpayInvoiceId', '==', qId), where('status', '==', 'PENDING'));
+    const snap = await getDocs(q);
+    if (!snap.empty) {
+      invoiceDocToProcess = snap.docs[0];
+    }
   }
 
-  const querySnapshot = await getDocs(q);
+  // 2. If not found, and we have a Local ID (lId), try finding by that
+  if (!invoiceDocToProcess && lId) {
+    const q = query(invoicesRef, where('localInvoiceId', '==', lId), where('status', '==', 'PENDING'));
+    const snap = await getDocs(q);
+    if (!snap.empty) {
+      invoiceDocToProcess = snap.docs[0];
+    }
+  }
 
-  if (querySnapshot.empty) {
-    console.log(`Invoice not found or already processed: ${qpayInvoiceId || senderInvoiceNo}`);
+  // 3. Fallback: If QPay sent qpay_payment_id but it's not in qpayInvoiceId, 
+  // maybe it's actually our localInvoiceId (less likely, but for safety)
+  if (!invoiceDocToProcess && qId) {
+    const q = query(invoicesRef, where('localInvoiceId', '==', qId), where('status', '==', 'PENDING'));
+    const snap = await getDocs(q);
+    if (!snap.empty) {
+      invoiceDocToProcess = snap.docs[0];
+    }
+  }
+
+  if (!invoiceDocToProcess) {
+    console.log(`Invoice STILL not found: ${qId || lId}`);
     return { status: 404, error: 'Invoice not found' };
   }
 
   const batch = writeBatch(db);
-  let successfulUpdate = false;
+  const invoiceData = invoiceDocToProcess.data();
+  const invoiceRef = doc(db, 'invoices', invoiceDocToProcess.id);
+  const ownerRef = doc(db, 'complimentOwners', invoiceData.ownerId);
 
-  querySnapshot.forEach(invoiceDoc => {
-    const invoiceData = invoiceDoc.data();
-    const invoiceRef = doc(db, 'invoices', invoiceDoc.id);
-    const ownerRef = doc(db, 'complimentOwners', invoiceData.ownerId);
+  // Update Invoice
+  batch.update(invoiceRef, { status: 'PAID', paidAt: serverTimestamp() });
 
-    batch.update(invoiceRef, { status: 'PAID' });
-    batch.set(ownerRef, {
-      ownerId: invoiceData.ownerId,
-      bonusHints: increment(invoiceData.numHints)
-    }, { merge: true });
+  // Update Owner Hints
+  batch.set(ownerRef, {
+    ownerId: invoiceData.ownerId,
+    bonusHints: increment(invoiceData.numHints)
+  }, { merge: true });
 
-    successfulUpdate = true;
-  });
+  await batch.commit();
+  console.log(`Successfully credited ${invoiceData.numHints} hints to user ${invoiceData.ownerId}`);
 
-  if (successfulUpdate) {
-    await batch.commit();
-    return { status: 200, success: true };
-  }
-  return { status: 500, error: 'Update failed' };
+  return { status: 200, success: true };
 }
+
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);

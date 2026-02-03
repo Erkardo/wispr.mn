@@ -33,8 +33,8 @@ type HintPackage = {
 
 // In-memory cache for the QPay token
 let cachedToken: {
-    accessToken: string;
-    expiresAt: number; // Expiry time in milliseconds
+  accessToken: string;
+  expiresAt: number; // Expiry time in milliseconds
 } | null = null;
 
 
@@ -53,7 +53,7 @@ async function getQPayToken(): Promise<string | null> {
   }
 
   try {
-    const res = await fetch('https://api.qpay.mn/v2/auth/token', {
+    const res = await fetch('https://merchant.qpay.mn/v2/auth/token', {
       method: 'POST',
       headers: {
         Authorization: `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`,
@@ -71,12 +71,22 @@ async function getQPayToken(): Promise<string | null> {
     const data: QPayTokenResponse = await res.json();
 
     // Cache the new token. We'll refresh it 60 seconds before it actually expires.
-    const expiresAt = Date.now() + (data.expires_in - 60) * 1000;
+    // Handle both duration (seconds) and timestamp (seconds since epoch)
+    let expiresAt: number;
+    if (data.expires_in > Date.now() / 1000) {
+      // It's a timestamp
+      expiresAt = (data.expires_in - 60) * 1000;
+    } else {
+      // It's a duration
+      expiresAt = Date.now() + (data.expires_in - 60) * 1000;
+    }
+
     cachedToken = {
-        accessToken: data.access_token,
-        expiresAt: expiresAt,
+      accessToken: data.access_token,
+      expiresAt: expiresAt,
     };
-    
+
+
     return data.access_token;
   } catch (error) {
     console.error('Error fetching QPay token:', error);
@@ -99,7 +109,7 @@ export async function createQpayInvoiceAction(
   }
 
   const localInvoiceId = randomUUID();
-  const callbackUrl = `${process.env.APP_URL || 'http://localhost:9002'}/api/payments/qpay-webhook`;
+  const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || 'http://localhost:9002'}/api/payments/qpay-webhook`;
 
   const invoicePayload = {
     invoice_code: process.env.QPAY_INVOICE_CODE,
@@ -120,9 +130,9 @@ export async function createQpayInvoiceAction(
       createdAt: serverTimestamp(),
       localInvoiceId: localInvoiceId,
     } as Omit<Invoice, 'id'>);
-    
+
     // 2. Create the invoice on QPay's side
-    const res = await fetch('https://api.qpay.mn/v2/invoice', {
+    const res = await fetch('https://merchant.qpay.mn/v2/invoice', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

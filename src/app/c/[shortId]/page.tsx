@@ -5,7 +5,7 @@ import { Heart, Loader2, Frown } from 'lucide-react';
 import { useFirestore } from '@/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { Header } from '@/components/Header';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 
 function ComplimentPageContent({ shortId }: { shortId: string }) {
   const firestore = useFirestore();
@@ -59,7 +59,7 @@ function ComplimentPageContent({ shortId }: { shortId: string }) {
       </div>
     );
   }
-  
+
   return (
     <div className="flex min-h-[calc(100vh-56px)] flex-col items-center justify-center bg-gradient-to-br from-background via-accent/5 to-background dark:from-background dark:via-accent/10 dark:to-background p-4">
       <Card className="w-full max-w-md shadow-2xl bg-card/80 backdrop-blur-lg border-primary/20">
@@ -79,13 +79,17 @@ function ComplimentPageContent({ shortId }: { shortId: string }) {
 }
 
 
-export default function SubmitComplimentShortIdPage({ params }: { params: { shortId: string } }) {
+
+export default function SubmitComplimentShortIdPage({ params }: { params: Promise<{ shortId: string }> }) {
+  const { shortId } = use(params);
+
   return (
     <>
       <Header title="Wispr үлдээх" showBackButton={false} />
       <main>
-        <ComplimentPageContent shortId={params.shortId} />
+        <ComplimentPageContent shortId={shortId} />
       </main>
     </>
   );
 }
+

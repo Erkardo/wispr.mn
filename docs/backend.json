@@ -1,0 +1,274 @@
+{
+  "entities": {
+    "Compliment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Compliment",
+      "type": "object",
+      "description": "Represents a compliment submitted by an anonymous user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the compliment entity."
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "Reference to the owner of the compliment link. (Relationship: ComplimentOwner 1:N Compliment)"
+        },
+        "text": {
+          "type": "string",
+          "description": "The text content of the compliment."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "The date and time when the compliment was created.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "text",
+        "createdAt"
+      ]
+    },
+    "Confession": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Confession",
+      "type": "object",
+      "description": "Represents an anonymous confession posted to the public feed.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the confession entity."
+        },
+        "text": {
+          "type": "string",
+          "description": "The text content of the confession."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "The date and time when the confession was created.",
+          "format": "date-time"
+        },
+        "reactionsCount": {
+          "type": "number",
+          "description": "The number of reactions (emojis) the confession has received."
+        },
+        "reportsCount": {
+          "type": "number",
+          "description": "The number of times the confession has been reported."
+        },
+        "isHidden": {
+          "type": "boolean",
+          "description": "Indicates whether the confession is hidden due to reports or profanity."
+        }
+      },
+      "required": [
+        "id",
+        "text",
+        "createdAt",
+        "reactionsCount",
+        "reportsCount",
+        "isHidden"
+      ]
+    },
+    "ComplimentOwner": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ComplimentOwner",
+      "type": "object",
+      "description": "Represents the owner of a compliment link.",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "Unique identifier for the compliment owner. This is a random UUID."
+        },
+        "shortId": {
+          "type": "string",
+          "description": "A short, unique identifier for the shareable link."
+        },
+        "shareUrl": {
+          "type": "string",
+          "description": "The shareable URL associated with the compliment owner."
+        },
+        "hintsUsedToday": {
+          "type": "number",
+          "description": "The number of free hints used today."
+        },
+        "lastHintResetAt": {
+          "type": "string",
+          "description": "The timestamp when the hint counter was last reset.",
+          "format": "date-time"
+        },
+        "referredBy": {
+          "type": "string",
+          "description": "The ownerId of the user who referred this owner."
+        }
+      },
+      "required": [
+        "ownerId",
+        "shortId",
+        "shareUrl"
+      ]
+    },
+    "ShortLink": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ShortLink",
+      "type": "object",
+      "description": "Maps a short, public ID to a user's private ownerId.",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "The ownerId of the user this short link maps to."
+        }
+      },
+      "required": [
+        "ownerId"
+      ]
+    },
+    "Invoice": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Invoice",
+      "type": "object",
+      "description": "Represents a payment invoice for purchasing hints.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the invoice."
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "The UID of the user who created the invoice."
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "PAID",
+            "FAILED"
+          ],
+          "description": "The current status of the invoice."
+        },
+        "amount": {
+          "type": "number",
+          "description": "The monetary amount of the invoice."
+        },
+        "numHints": {
+          "type": "number",
+          "description": "The number of hints purchased with this invoice."
+        },
+        "qpayInvoiceId": {
+          "type": "string",
+          "description": "The invoice ID generated by QPay."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of when the invoice was created."
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "status",
+        "amount",
+        "numHints",
+        "createdAt"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/complimentOwners/{ownerId}",
+        "definition": {
+          "entityName": "ComplimentOwner",
+          "schema": {
+            "$ref": "#/backend/entities/ComplimentOwner"
+          },
+          "description": "Stores the owner of a compliment link and its associated share URL.  The ownerId is a random UUID generated on the client.",
+          "params": [
+            {
+              "name": "ownerId",
+              "description": "Unique identifier for the compliment owner (UUID)."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/complimentOwners/{ownerId}/compliments/{complimentId}",
+        "definition": {
+          "entityName": "Compliment",
+          "schema": {
+            "$ref": "#/backend/entities/Compliment"
+          },
+          "description": "Stores compliments associated with a specific compliment owner. Includes denormalized 'ownerId' for authorization independence.",
+          "params": [
+            {
+              "name": "ownerId",
+              "description": "Unique identifier for the compliment owner."
+            },
+            {
+              "name": "complimentId",
+              "description": "Unique identifier for the compliment."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/confessions/{confessionId}",
+        "definition": {
+          "entityName": "Confession",
+          "schema": {
+            "$ref": "#/backend/entities/Confession"
+          },
+          "description": "Stores anonymous confessions posted to the public feed. Includes metadata for reactions, reports, and moderation.",
+          "params": [
+            {
+              "name": "confessionId",
+              "description": "Unique identifier for the confession."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/invoices/{invoiceId}",
+        "definition": {
+          "entityName": "Invoice",
+          "schema": {
+            "$ref": "#/backend/entities/Invoice"
+          },
+          "description": "Stores payment invoices for hint purchases.",
+          "params": [
+            {
+              "name": "invoiceId",
+              "description": "Unique identifier for the invoice."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/shortLinks/{shortId}",
+        "definition": {
+          "entityName": "ShortLink",
+          "schema": {
+            "$ref": "#/backend/entities/ShortLink"
+          },
+          "description": "Publicly maps a short, unique ID to a compliment owner's ID.",
+          "params": [
+            {
+              "name": "shortId",
+              "description": "The unique short identifier."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to support the anonymous nature of the \"Нэргүй Хуудас\" application, focusing on simplicity and security. The key principle is authorization independence, which is achieved by avoiding `get()` calls in security rules. This is facilitated by denormalizing authorization data where needed.\n\n1.  **ComplimentOwner (Links):** `/complimentOwners/{ownerId}` stores the relationship between the `ownerId` and the `shareUrl`. This is the entry point for users to submit compliments.\n2.  **Compliments:** `/complimentOwners/{ownerId}/compliments/{complimentId}` stores compliments associated with a specific owner.  Each compliment document includes the `ownerId` as a field. This denormalization is CRITICAL for authorization independence. Security rules can directly check if `request.resource.data.ownerId == resource.data.ownerId` in the path without needing to read the parent document.\n3.  **Confessions:** `/confessions/{confessionId}` stores the confessions posted to the public feed.  Since all confessions are public (subject to filtering), no ownership or membership information is included. Security rules can enforce limits on creation, updates, and reporting based on `request.auth.uid` (if needed, e.g., to prevent abuse) but no `get()` calls are needed.\n4.  **Invoices:** `/invoices/{invoiceId}` stores payment invoices for hint purchases. This collection is secured so that users can only create and read their own invoices. The server-side webhook, which is unauthenticated, is given permission to update invoices to mark them as paid; this webhook endpoint must contain its own security logic to verify the incoming request from the payment provider.\n5. **ShortLinks:** `/shortLinks/{shortId}` provides a public lookup table to map a user-friendly short ID to the corresponding owner's UID. This avoids querying the private `/complimentOwners` collection, which is disallowed by security rules."
+  }
+}

@@ -1,0 +1,156 @@
+'use server';
+
+import { db } from '@/lib/db';
+import { collection, addDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
+import type { Invoice } from '@/types';
+import { randomUUID } from 'crypto';
+
+type QPayTokenResponse = {
+  access_token: string;
+  expires_in: number;
+  token_type: string;
+  refresh_token: string;
+  refresh_expires_in: number;
+};
+
+type QPayInvoiceResponse = {
+  invoice_id: string; // This is the QPay-generated ID
+  qr_text: string;
+  qr_image: string; // base64 encoded image
+  urls: {
+    name: string;
+    description: string;
+    link: string;
+    logo: string;
+  }[];
+};
+
+type HintPackage = {
+  name: string;
+  amount: number;
+  numHints: number;
+};
+
+// In-memory cache for the QPay token
+let cachedToken: {
+    accessToken: string;
+    expiresAt: number; // Expiry time in milliseconds
+} | null = null;
+
+
+async function getQPayToken(): Promise<string | null> {
+  // Check if we have a valid cached token
+  if (cachedToken && Date.now() < cachedToken.expiresAt) {
+    return cachedToken.accessToken;
+  }
+
+  const username = process.env.QPAY_USERNAME;
+  const password = process.env.QPAY_PASSWORD;
+
+  if (!username || !password) {
+    console.error('QPay credentials are not set in environment variables. Check your .env file.');
+    return null;
+  }
+
+  try {
+    const res = await fetch('https://api.qpay.mn/v2/auth/token', {
+      method: 'POST',
+      headers: {
+        Authorization: `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams(),
+    });
+
+    if (!res.ok) {
+      console.error('Failed to get QPay token:', await res.text());
+      cachedToken = null; // Clear cache on failure
+      return null;
+    }
+
+    const data: QPayTokenResponse = await res.json();
+
+    // Cache the new token. We'll refresh it 60 seconds before it actually expires.
+    const expiresAt = Date.now() + (data.expires_in - 60) * 1000;
+    cachedToken = {
+        accessToken: data.access_token,
+        expiresAt: expiresAt,
+    };
+    
+    return data.access_token;
+  } catch (error) {
+    console.error('Error fetching QPay token:', error);
+    cachedToken = null; // Clear cache on failure
+    return null;
+  }
+}
+
+export async function createQpayInvoiceAction(
+  hintPackage: HintPackage,
+  ownerId: string
+): Promise<{ qrImage: string; deeplinks: QPayInvoiceResponse['urls']; invoiceId: string; error?: string }> {
+  if (!ownerId) {
+    return { error: 'Хэрэглэгч нэвтрээгүй байна.', qrImage: '', deeplinks: [], invoiceId: '' };
+  }
+
+  const qpayToken = await getQPayToken();
+  if (!qpayToken) {
+    return { error: 'Төлбөрийн системтэй холбогдож чадсангүй.', qrImage: '', deeplinks: [], invoiceId: '' };
+  }
+
+  const localInvoiceId = randomUUID();
+  const callbackUrl = `${process.env.APP_URL || 'http://localhost:9002'}/api/payments/qpay-webhook`;
+
+  const invoicePayload = {
+    invoice_code: process.env.QPAY_INVOICE_CODE,
+    sender_invoice_no: localInvoiceId,
+    invoice_receiver_code: ownerId,
+    invoice_description: `${hintPackage.name} (${hintPackage.numHints} hints)`,
+    amount: hintPackage.amount,
+    callback_url: callbackUrl,
+  };
+
+  try {
+    // 1. Create a "PENDING" invoice in our own database first
+    const invoiceRef = await addDoc(collection(db, 'invoices'), {
+      ownerId: ownerId,
+      status: 'PENDING',
+      amount: hintPackage.amount,
+      numHints: hintPackage.numHints,
+      createdAt: serverTimestamp(),
+      localInvoiceId: localInvoiceId,
+    } as Omit<Invoice, 'id'>);
+    
+    // 2. Create the invoice on QPay's side
+    const res = await fetch('https://api.qpay.mn/v2/invoice', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${qpayToken}`,
+      },
+      body: JSON.stringify(invoicePayload),
+    });
+
+    if (!res.ok) {
+      const errorBody = await res.json();
+      console.error('QPay invoice creation failed:', errorBody);
+      // Optionally mark our local invoice as FAILED
+      await updateDoc(invoiceRef, { status: 'FAILED' });
+      return { error: `Нэхэмжлэл үүсгэхэд алдаа гарлаа: ${errorBody.error_description || res.statusText}`, qrImage: '', deeplinks: [], invoiceId: '' };
+    }
+
+    const data: QPayInvoiceResponse = await res.json();
+
+    // 3. Update our local invoice with the QPay-generated ID
+    await updateDoc(invoiceRef, { qpayInvoiceId: data.invoice_id });
+
+    return {
+      qrImage: data.qr_image,
+      deeplinks: data.urls,
+      invoiceId: invoiceRef.id,
+    };
+  } catch (error) {
+    console.error('Error in createQpayInvoiceAction:', error);
+    return { error: 'Дотоод алдаа гарлаа.', qrImage: '', deeplinks: [], invoiceId: '' };
+  }
+}

@@ -15,21 +15,15 @@ service cloud.firestore {
     }
 
     // ========== Хэрэглэгчийн мэдээлэл ==========
-    match /complimentOwners/{ownerId} {
-      allow read: if isOwner(ownerId);
-      allow create: if isOwner(ownerId);
-      // Серверээс бонус эрх нэмэхийг зөвшөөрөх
-      allow update: if isOwner(ownerId) || request.auth == null;
-      allow delete: if false;
-
-      // Wispr-үүд (Sub-collection)
-      match /compliments/{complimentId} {
-        allow read: if isOwner(ownerId);
-        allow create: if true;
-        allow update: if isOwner(ownerId) || true;
-        allow delete: if false;
+    match /complimentOwners/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      match /{allSubcollections=**} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
       }
     }
+
+
 
     // ========== Богино холбоос ==========
     match /shortLinks/{shortId} {

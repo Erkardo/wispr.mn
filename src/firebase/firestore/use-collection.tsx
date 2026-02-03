@@ -52,7 +52,7 @@ export interface InternalQuery extends Query<DocumentData> {
  * @returns {UseCollectionResult<T>} Object with data, isLoading, error.
  */
 export function useCollection<T = any>(
-    memoizedTargetRefOrQuery: ((CollectionReference<DocumentData> | Query<DocumentData>) & {__memo?: boolean})  | null | undefined,
+  memoizedTargetRefOrQuery: ((CollectionReference<DocumentData> | Query<DocumentData>) & { __memo?: boolean }) | null | undefined,
 ): UseCollectionResult<T> {
   type ResultItemType = WithId<T>;
   type StateDataType = ResultItemType[] | null;
@@ -68,13 +68,13 @@ export function useCollection<T = any>(
       setError(null);
       return;
     }
-    
+
     // This condition handles the case where the query/ref becomes valid after an initial null state.
     // We set loading to true to reflect the new loading process.
     if (!isLoading) {
       setIsLoading(true);
     }
-    
+
     setError(null);
 
     const unsubscribe = onSnapshot(
@@ -111,9 +111,7 @@ export function useCollection<T = any>(
 
     return () => unsubscribe();
   }, [memoizedTargetRefOrQuery]);
-  
-  if(memoizedTargetRefOrQuery && !memoizedTargetRefOrQuery.__memo) {
-    throw new Error(memoizedTargetRefOrQuery + ' was not properly memoized using useMemoFirebase');
-  }
+
   return { data, isLoading, error };
 }
+

@@ -38,9 +38,10 @@ export function Header({
               <ChevronLeft className="h-5 w-5" />
             </Button>
           )}
-          <Link href="/" passHref className="flex items-center">
-            <Logo className="w-22 text-primary" />
+          <Link href="/" passHref className="flex items-center shrink-0">
+            <Logo className="w-24 text-primary" />
           </Link>
+
         </div>
 
         <h1 className="flex-1 text-lg font-bold truncate text-right">

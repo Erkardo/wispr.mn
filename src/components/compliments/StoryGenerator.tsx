@@ -18,52 +18,68 @@ export function StoryGenerator({ ownerData }: { ownerData: WithId<ComplimentOwne
     if (!storyRef.current) return;
     setIsGenerating(true);
 
-    // Auto-copy the link
+    // 1. Copy link to clipboard first (important for the user to have it ready)
     if (ownerData?.shareUrl) {
-        navigator.clipboard.writeText(ownerData.shareUrl);
+      try {
+        await navigator.clipboard.writeText(ownerData.shareUrl);
         toast({
-          title: 'Линк хуулагдлаа!',
-          description: 'Story дээрээ "Link" стикерт наахад бэлэн.',
+          title: 'Линк хуулагдлаа! 🔗',
+          description: 'Instagram Story дээрээ "Link" стикерт наахад бэлэн.',
         });
-    } else {
-        toast({
-            title: 'Линк олдсонгүй',
-            description: 'Story-ны зургийг үүсгэж байна. Та линкээ гараар хуулна уу.',
-            variant: 'default'
-        });
+      } catch (err) {
+        console.error("Failed to copy link:", err);
+      }
     }
 
     try {
-      const dataUrl = await htmlToImage.toPng(storyRef.current, {
+      // 2. Generate the image blob directly
+      const blob = await htmlToImage.toBlob(storyRef.current, {
         cacheBust: true,
-        pixelRatio: 2, // for better quality
+        pixelRatio: 3, // High quality for stories
+        skipFonts: false,
       });
 
-      const blob = await fetch(dataUrl).then(res => res.blob());
+      if (!blob) throw new Error("Blob generation failed");
+
       const file = new File([blob], "wispr-story.png", { type: "image/png" });
 
+      // 3. Share the file
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: 'Надад нэг сайхан үг үлдээгээрэй!',
-        });
+        try {
+          await navigator.share({
+            files: [file],
+            title: 'Wispr Story',
+            text: 'Надад нэг нэргүй wispr үлдээгээрэй! 💛',
+          });
+        } catch (shareError: any) {
+          // If the user cancelled, we dont show an error
+          if (shareError.name === 'AbortError') {
+            setIsGenerating(false);
+            return;
+          }
+          throw shareError;
+        }
       } else {
+        // Fallback for browsers that don't support file sharing
+        const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.download = 'wispr-story.png';
-        link.href = dataUrl;
+        link.href = url;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
         toast({
           title: 'Зураг татагдлаа!',
-          description: 'Story дээрээ хуваалцаарай.',
+          description: 'Story дээрээ зургаа оруулаад, хуулагдсан линкээ стикер болгон нэмээрэй.',
         });
       }
     } catch (error) {
-      console.error('Зураг үүсгэхэд алдаа гарлаа:', error);
+      console.error('Story generation error:', error);
       toast({
-        title: 'Алдаа гарлаа',
-        description: 'Зураг үүсгэхэд алдаа гарлаа. Дахин оролдоно уу.',
+        title: 'Зураг үүсгэхэд алдаа гарлаа',
+        description: 'Түр хүлээгээд дахин оролдоно уу эсвэл хөтчөө дахин ачаална уу.',
         variant: 'destructive',
       });
     } finally {
@@ -76,13 +92,13 @@ export function StoryGenerator({ ownerData }: { ownerData: WithId<ComplimentOwne
       <h2 className="text-lg font-bold px-2">🚀 Story үүсгэж, хуваалцах</h2>
       <StoryPreview ref={storyRef} />
       <div className="p-2 space-y-4">
-         <div className="text-sm text-muted-foreground rounded-lg border bg-secondary/30 p-4 space-y-2">
-            <h3 className="font-bold text-foreground">Яаж хуваалцах вэ?</h3>
-            <ol className="list-decimal list-inside space-y-1">
-                <li>"Story-ны зураг үүсгэх" товчийг дарж зургийг хадгална.</li>
-                <li>Story дээрээ зургийг байршуулсны дараа "Link" стикерийг нэмнэ.</li>
-                <li>Хуулагдсан линкээ стикер дээрээ наана.</li>
-            </ol>
+        <div className="text-sm text-muted-foreground rounded-lg border bg-secondary/30 p-4 space-y-2">
+          <h3 className="font-bold text-foreground">Яаж хуваалцах вэ?</h3>
+          <ol className="list-decimal list-inside space-y-1">
+            <li>"Story-ны зураг үүсгэх" товчийг дарж зургийг хадгална.</li>
+            <li>Story дээрээ зургийг байршуулсны дараа "Link" стикерийг нэмнэ.</li>
+            <li>Хуулагдсан линкээ стикер дээрээ наана.</li>
+          </ol>
         </div>
         <Button onClick={handleShare} disabled={isGenerating || !ownerData} className="w-full font-bold" size="lg">
           {isGenerating ? (

@@ -335,52 +335,56 @@ function ComplimentCard({
     }
 
     try {
+      // 1. Generate Blob
       const blob = await htmlToImage.toBlob(shareImageRef.current, {
-        pixelRatio: 2,
+        pixelRatio: 3,
         cacheBust: true,
+        backgroundColor: '#000000', // Ensure background is solid
       });
 
-      if (!blob) {
-        throw new Error("Зураг үүсгэхэд алдаа гарлаа. Blob үүссэнгүй.");
-      }
+      if (!blob) throw new Error("Зураг үүсгэхэд алдаа гарлаа.");
 
-      const file = new File([blob], "wispr-compliment.png", { type: "image/png" });
-      const shareText = `Надад ирсэн wispr! Та ч бас өөрийн Wispr линкээ үүсгээрэй.`;
+      const file = new File([blob], "wispr-received.png", { type: "image/png" });
+      const shareText = `Надад ирсэн wispr! 🔥 Та ч бас өөрийн линкээ үүсгээрэй.`;
 
+      // 2. Share
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
           await navigator.share({
             files: [file],
-            title: 'Надад ирсэн wispr!',
+            title: 'Wispr Received',
             text: shareText,
           });
-        } catch (error) {
-          if (error instanceof Error && error.name === 'AbortError') {
-            return; // Share canceled by user, ignore
-          }
-          throw error;
+        } catch (shareError: any) {
+          if (shareError.name === 'AbortError') throw shareError;
+          throw new Error("Sharing failed");
         }
       } else {
+        // Fallback: Download
+        const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
-        link.download = 'wispr-compliment.png';
-        link.href = URL.createObjectURL(blob);
+        link.download = 'wispr-received.png';
+        link.href = url;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        URL.revokeObjectURL(link.href);
+        URL.revokeObjectURL(url);
+
         toast({
           title: 'Зураг татагдлаа!',
           description: 'Story дээрээ хуваалцаарай.',
         });
       }
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        setIsSharing(false);
+        setIsPreparingShareImage(false);
         return;
       }
-      console.error('Зураг үүсгэхэд алдаа гарлаа:', error);
+      console.error('Image generation/sharing error:', error);
       toast({
         title: 'Алдаа гарлаа',
-        description: error instanceof Error ? error.message : 'Зураг үүсгэхэд алдаа гарлаа. Дахин оролдоно уу.',
+        description: 'Зураг үүсгэхэд алдаа гарлаа. Түр хүлээгээд дахин оролдоно уу.',
         variant: 'destructive',
       });
     } finally {

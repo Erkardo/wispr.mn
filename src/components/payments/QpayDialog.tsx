@@ -45,23 +45,25 @@ export function QPayDialog({ isOpen, onClose, qrImage, deeplinks }: QPayDialogPr
         </div>
 
         <div className="space-y-2">
-            <p className="text-center text-sm text-muted-foreground">Эсвэл эдгээр апп-аар төлөх:</p>
-            <div className="grid grid-cols-2 gap-2">
-                {deeplinks.map((bank, index) => (
-                    <Button asChild key={index} variant="outline" className="h-14 flex items-center justify-start gap-3">
-                        <Link href={bank.link} target="_blank" rel="noopener noreferrer">
-                             <Image
-                                src={bank.logo}
-                                alt={bank.name}
-                                width={32}
-                                height={32}
-                                className="rounded-md"
-                            />
-                            <span>{bank.name}</span>
-                        </Link>
-                    </Button>
-                ))}
-            </div>
+          <p className="text-center text-sm text-muted-foreground">Эсвэл эдгээр апп-аар төлөх:</p>
+          <div className="grid grid-cols-2 gap-2">
+            {deeplinks.map((bank, index) => (
+              <Button asChild key={index} variant="outline" className="h-14 flex items-center justify-start gap-3 px-3">
+                <a href={bank.link}>
+                  <Image
+                    src={bank.logo}
+                    alt={bank.name}
+                    width={32}
+                    height={32}
+                    className="rounded-md object-contain"
+                    unoptimized
+                  />
+                  <span className="text-xs font-medium line-clamp-2">{bank.name}</span>
+                </a>
+              </Button>
+            ))}
+
+          </div>
         </div>
 
         <DialogFooter className='!mt-6'>

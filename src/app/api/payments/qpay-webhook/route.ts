@@ -47,87 +47,81 @@ async function verifyQpayRequest(request: NextRequest, rawBody: string): Promise
 }
 
 
+async function processWebhook(payload: any) {
+  const qpayInvoiceId = payload.invoice_id;
+  const senderInvoiceNo = payload.sender_invoice_no || payload.qpay_payment_id; // QPay might send as qpay_payment_id in GET
+  const paymentStatus = payload.payment_status || 'PAID'; // If it's a callback, assume PAID if we got here
+
+  console.log(`Processing - QPay ID: ${qpayInvoiceId}, Local ID: ${senderInvoiceNo}, Status: ${paymentStatus}`);
+
+  if ((!qpayInvoiceId && !senderInvoiceNo) || (paymentStatus !== 'PAID' && paymentStatus !== 'SUCCESS')) {
+    return { status: 200, message: 'Awaiting payment or invalid payload' };
+  }
+
+  const invoicesRef = collection(db, 'invoices');
+  let q;
+
+  if (qpayInvoiceId) {
+    q = query(invoicesRef, where('qpayInvoiceId', '==', qpayInvoiceId), where('status', '==', 'PENDING'));
+  } else {
+    q = query(invoicesRef, where('localInvoiceId', '==', senderInvoiceNo), where('status', '==', 'PENDING'));
+  }
+
+  const querySnapshot = await getDocs(q);
+
+  if (querySnapshot.empty) {
+    console.log(`Invoice not found or already processed: ${qpayInvoiceId || senderInvoiceNo}`);
+    return { status: 404, error: 'Invoice not found' };
+  }
+
+  const batch = writeBatch(db);
+  let successfulUpdate = false;
+
+  querySnapshot.forEach(invoiceDoc => {
+    const invoiceData = invoiceDoc.data();
+    const invoiceRef = doc(db, 'invoices', invoiceDoc.id);
+    const ownerRef = doc(db, 'complimentOwners', invoiceData.ownerId);
+
+    batch.update(invoiceRef, { status: 'PAID' });
+    batch.set(ownerRef, {
+      ownerId: invoiceData.ownerId,
+      bonusHints: increment(invoiceData.numHints)
+    }, { merge: true });
+
+    successfulUpdate = true;
+  });
+
+  if (successfulUpdate) {
+    await batch.commit();
+    return { status: 200, success: true };
+  }
+  return { status: 500, error: 'Update failed' };
+}
+
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const params = Object.fromEntries(searchParams.entries());
+  console.log('--- QPay Webhook GET Received ---', params);
+
+  const result = await processWebhook(params);
+  return NextResponse.json(result, { status: result.status });
+}
+
 export async function POST(req: NextRequest) {
-  const rawBody = await req.text(); // Read the raw body ONCE.
-  console.log('--- QPay Webhook Received ---');
-  console.log('Headers:', JSON.stringify(Object.fromEntries(req.headers.entries())));
+  const rawBody = await req.text();
+  console.log('--- QPay Webhook POST Received ---');
   console.log('Body:', rawBody);
 
   try {
     const isVerified = await verifyQpayRequest(req, rawBody);
-    console.log('Verification result:', isVerified);
+    if (!isVerified) return NextResponse.json({ error: 'Invalid signature' }, { status: 403 });
 
-    if (!isVerified) {
-      console.error('Webhook verification failed');
-      return NextResponse.json({ error: 'Invalid request signature' }, { status: 403 });
-    }
-
-    const payload = JSON.parse(rawBody); // Use the raw body for the payload.
-    const qpayInvoiceId = payload.invoice_id;
-    const senderInvoiceNo = payload.sender_invoice_no;
-    const paymentStatus = payload.payment_status; // Should be 'PAID'
-
-    console.log(`Payload QPay ID: ${qpayInvoiceId}, Local ID: ${senderInvoiceNo}, Status: ${paymentStatus}`);
-
-    if ((!qpayInvoiceId && !senderInvoiceNo) || paymentStatus !== 'PAID') {
-      console.log('Skipping: Missing IDs or status not PAID');
-      return NextResponse.json({ message: 'Awaiting payment or invalid payload' }, { status: 200 });
-    }
-
-    // Find the invoice in our database. We try to match either the QPay ID or our local ID.
-    const invoicesRef = collection(db, 'invoices');
-    let q;
-
-    if (qpayInvoiceId) {
-      q = query(invoicesRef, where('qpayInvoiceId', '==', qpayInvoiceId), where('status', '==', 'PENDING'));
-    } else {
-      q = query(invoicesRef, where('localInvoiceId', '==', senderInvoiceNo), where('status', '==', 'PENDING'));
-    }
-
-    const querySnapshot = await getDocs(q);
-
-
-    if (querySnapshot.empty) {
-      console.log(`Webhook received for already processed or non-existent invoice: ${qpayInvoiceId}`);
-      return NextResponse.json({ error: 'Invoice not found or already processed' }, { status: 404 });
-    }
-
-    const batch = writeBatch(db);
-    let successfulUpdate = false;
-
-    querySnapshot.forEach(invoiceDoc => {
-      const invoiceData = invoiceDoc.data();
-      console.log(`Processing payment for invoice ${invoiceDoc.id}, user ${invoiceData.ownerId}`);
-
-      const invoiceRef = doc(db, 'invoices', invoiceDoc.id);
-      const ownerRef = doc(db, 'complimentOwners', invoiceData.ownerId);
-
-      // Update the invoice status to PAID
-      batch.update(invoiceRef, { status: 'PAID' });
-
-      // Add the purchased hints to the user's bonus hints. 
-      // Using set with merge: true in case the owner document doesn't exist yet.
-      batch.set(ownerRef, {
-        ownerId: invoiceData.ownerId,
-        bonusHints: increment(invoiceData.numHints)
-      }, { merge: true });
-
-      successfulUpdate = true;
-    });
-
-
-    if (successfulUpdate) {
-      await batch.commit();
-      console.log(`Successfully processed payment for QPay invoice: ${qpayInvoiceId}`);
-      return NextResponse.json({ success: true, message: 'Payment processed successfully' });
-    } else {
-      // This case should ideally not be reached if querySnapshot is not empty.
-      return NextResponse.json({ error: 'Failed to find a matching pending invoice' }, { status: 500 });
-    }
-
+    const payload = JSON.parse(rawBody);
+    const result = await processWebhook(payload);
+    return NextResponse.json(result, { status: result.status });
   } catch (error) {
-    console.error('QPay Webhook Error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-    return NextResponse.json({ error: 'Internal Server Error', details: errorMessage }, { status: 500 });
+    console.error('Webhook Error:', error);
+    return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
   }
 }
+

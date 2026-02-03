@@ -10,40 +10,40 @@ import { revalidatePath } from 'next/cache';
 
 
 export async function submitComplimentAction(text: string): Promise<{ success: boolean; message: string; filteredText?: string }> {
-  if (!text.trim()) {
-    return { success: false, message: 'Wispr-ээ бичнэ үү.' };
-  }
-
-  try {
-    const { isSafe, filteredText } = await filterCompliment({ text });
-
-    if (!isSafe) {
-      return { success: false, message: 'Зохисгүй агуулга илэрлээ. Wispr-ээ засаад дахин оролдоно уу.' };
+    if (!text.trim()) {
+        return { success: false, message: 'Wispr-ээ бичнэ үү.' };
     }
 
-    if (!filteredText) {
-      return { success: false, message: 'Үгээ шалгаад дахин оролдоно уу.' };
-    }
+    try {
+        const { isSafe, filteredText } = await filterCompliment({ text });
 
-    return { success: true, message: 'Амжилттай шүүгдлээ', filteredText };
-  } catch (error) {
-    console.error('Wispr шүүхэд алдаа гарлаа:', error);
-    return { success: false, message: 'Алдаа гарлаа. Түр хүлээгээд дахин оролдоно уу.' };
-  }
+        if (!isSafe) {
+            return { success: false, message: 'Зохисгүй агуулга илэрлээ. Wispr-ээ засаад дахин оролдоно уу.' };
+        }
+
+        if (!filteredText) {
+            return { success: false, message: 'Үгээ шалгаад дахин оролдоно уу.' };
+        }
+
+        return { success: true, message: 'Амжилттай шүүгдлээ', filteredText };
+    } catch (error) {
+        console.error('Wispr шүүхэд алдаа гарлаа:', error);
+        return { success: false, message: 'Алдаа гарлаа. Түр хүлээгээд дахин оролдоно уу.' };
+    }
 }
 
 
 export async function generateHintAction(
-    complimentText: string, 
+    complimentText: string,
     hintContext: Compliment['hintContext'],
     previousHints: string[]
-): Promise<{success: boolean; hint: string | null; message: string;}> {
+): Promise<{ success: boolean; hint: string | null; message: string; }> {
     if (!complimentText) {
         return { success: false, hint: null, message: 'Wispr-ийн текст шаардлагатай.' };
     }
 
     try {
-        const { hint } = await generateComplimentHint({ 
+        const { hint } = await generateComplimentHint({
             text: complimentText,
             hintContext: hintContext,
             previousHints,
@@ -55,15 +55,17 @@ export async function generateHintAction(
 
         return { success: true, hint, message: 'Hint амжилттай үүслээ' };
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('Сервер дээр hint үүсгэхэд алдаа гарлаа:', error);
-        return { success: false, hint: null, message: 'Алдаа гарлаа. Түр хүлээгээд дахин оролдоно уу.' };
+        const errorMessage = error instanceof Error ? error.message : 'Тодорхойгүй алдаа гарлаа.';
+        return { success: false, hint: null, message: `Хиймэл оюун ажиллахад алдаа гарлаа: ${errorMessage}` };
     }
 }
 
+
 export async function createStoryAction(
     compliments: string[]
-): Promise<{success: boolean; story: string | null; message: string;}> {
+): Promise<{ success: boolean; story: string | null; message: string; }> {
     if (!compliments || compliments.length === 0) {
         return { success: false, story: null, message: 'Түүх үүсгэх wispr-үүд алга байна.' };
     }

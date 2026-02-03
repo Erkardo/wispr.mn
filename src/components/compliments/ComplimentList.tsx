@@ -260,11 +260,13 @@ function ComplimentCard({
         errorEmitter.emit('permission-error', permissionError);
       } else {
         console.error('Hint үүсгэхэд алдаа гарлаа:', error);
-        toast({ title: 'Алдаа', description: 'Hint үүсгэх явцад алдаа гарлаа.', variant: 'destructive' });
+        const errorMessage = error instanceof Error ? error.message : 'Тодорхойгүй алдаа.';
+        toast({ title: 'Алдаа', description: `Дотоод алдаа: ${errorMessage}`, variant: 'destructive' });
         setIsHintRevealing(false);
       }
     }
   };
+
 
   const handleSingleHintPurchase = async () => {
     if (!user || isCreatingInvoice) return;

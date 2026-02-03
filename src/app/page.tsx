@@ -66,10 +66,10 @@ export default function HomePage() {
       if (aRead !== bRead) {
         return aRead ? 1 : -1;
       }
-      if (a.createdAt && b.createdAt) {
-        return b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime();
-      }
-      return 0;
+      // Defensive checks for createdAt and safer timestamp conversion
+      const aTime = (a.createdAt && typeof a.createdAt.toDate === 'function') ? a.createdAt.toDate().getTime() : 0;
+      const bTime = (b.createdAt && typeof b.createdAt.toDate === 'function') ? b.createdAt.toDate().getTime() : 0;
+      return bTime - aTime; // Sorts descending by time
     });
   }, [compliments]);
 

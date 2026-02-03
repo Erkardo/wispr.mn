@@ -143,10 +143,13 @@ function ComplimentCard({
     }
     if (ownerData) {
       let dailyUsed = 0;
-      const resetDate = ownerData.lastHintResetAt?.toDate();
+      const resetDate = (ownerData.lastHintResetAt && typeof ownerData.lastHintResetAt.toDate === 'function')
+        ? ownerData.lastHintResetAt.toDate()
+        : null;
       if (resetDate && isToday(resetDate)) {
         dailyUsed = ownerData.hintsUsedToday || 0;
       }
+
 
       const daily = 5 - dailyUsed;
       const bonus = ownerData.bonusHints || 0;
@@ -403,12 +406,13 @@ function ComplimentCard({
 
   const getDateBadge = () => {
     if (!compliment.createdAt) return null;
-    const date = compliment.createdAt.toDate();
+    const date = (typeof compliment.createdAt.toDate === 'function') ? compliment.createdAt.toDate() : (compliment.createdAt as unknown as Date);
     if (!compliment.isRead) return <Badge className="border-none bg-white text-primary font-bold shadow-lg animate-pulse">Шинэ</Badge>;
     if (isToday(date)) return <Badge variant="secondary" className="border-none bg-black/20 text-white/80 backdrop-blur-sm">Өнөөдөр</Badge>;
     if (isYesterday(date)) return <Badge variant="secondary" className="border-none bg-black/20 text-white/80 backdrop-blur-sm">Өчигдөр</Badge>;
     return <Badge variant="secondary" className="border-none bg-black/20 text-white/80 backdrop-blur-sm">{format(date, 'MMM d')}</Badge>;
   }
+
 
   const mainCard = (
     <Card

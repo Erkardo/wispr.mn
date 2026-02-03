@@ -124,7 +124,7 @@ function ComplimentCard({
   const [isReacting, setIsReacting] = useState<string | null>(null);
 
   const [isCreatingInvoice, setIsCreatingInvoice] = useState(false);
-  const [qpayData, setQpayData] = useState<{ qrImage: string, deeplinks: any[] } | null>(null);
+  const [qpayData, setQpayData] = useState<{ qrImage: string, deeplinks: any[], invoiceId: string } | null>(null);
 
 
   const getFontSizeClass = (text: string) => {
@@ -283,9 +283,14 @@ function ComplimentCard({
           variant: "destructive",
         });
       } else {
-        setQpayData({ qrImage: result.qrImage, deeplinks: result.deeplinks });
+        setQpayData({
+          qrImage: result.qrImage,
+          deeplinks: result.deeplinks,
+          invoiceId: result.invoiceId
+        });
         setIsHintDialogOpen(false); // Close the current dialog
       }
+
     } catch (error) {
       console.error("Single hint purchase failed:", error);
       toast({
@@ -586,8 +591,13 @@ function ComplimentCard({
           onClose={() => setQpayData(null)}
           qrImage={qpayData.qrImage}
           deeplinks={qpayData.deeplinks}
+          invoiceId={qpayData.invoiceId}
+          onSuccess={() => {
+            toast({ title: "Баяр хүргэе!", description: "Hint-ийн эрх амжилттай нэмэгдлээ." });
+          }}
         />
       )}
+
     </>
   );
 }

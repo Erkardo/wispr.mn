@@ -50,7 +50,7 @@ export default function ProfilePage() {
     // State for payment flow
     const [isBuyHintDialogOpen, setIsBuyHintDialogOpen] = useState(false);
     const [isCreatingInvoice, setIsCreatingInvoice] = useState<number | false>(false);
-    const [qpayData, setQpayData] = useState<{ qrImage: string, deeplinks: any[] } | null>(null);
+    const [qpayData, setQpayData] = useState<{ qrImage: string, deeplinks: any[], invoiceId: string } | null>(null);
 
     const ownerRef = useMemoFirebase(() => {
         if (!user || !firestore) return null;
@@ -99,9 +99,14 @@ export default function ProfilePage() {
                     variant: "destructive",
                 });
             } else {
-                setQpayData({ qrImage: result.qrImage, deeplinks: result.deeplinks });
+                setQpayData({
+                    qrImage: result.qrImage,
+                    deeplinks: result.deeplinks,
+                    invoiceId: result.invoiceId
+                });
                 setIsBuyHintDialogOpen(false); // Close the package selection dialog
             }
+
         } catch (error) {
             console.error("Hint худалдан авах хүсэлт явуулахад алдаа гарлаа:", error);
             toast({
@@ -315,8 +320,13 @@ export default function ProfilePage() {
                         onClose={() => setQpayData(null)}
                         qrImage={qpayData.qrImage}
                         deeplinks={qpayData.deeplinks}
+                        invoiceId={qpayData.invoiceId}
+                        onSuccess={() => {
+                            toast({ title: "Баяр хүргэе!", description: "Hint-ийн эрх амжилттай нэмэгдлээ." });
+                        }}
                     />
                 )}
+
 
                 {/* Settings and Legal Section */}
                 <Card>

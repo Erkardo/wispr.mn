@@ -24,11 +24,12 @@ service cloud.firestore {
                     && request.resource.data.ownerId == ownerId;
 
       // UPDATE: The owner can update their own document.
-      // This allows updating hint usage, share URLs when environments change, etc.
-      allow update: if isOwner(ownerId);
+      // Also allow the server webhook (unauthenticated) to increment bonusHints.
+      allow update: if isOwner(ownerId) || (request.auth == null && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['bonusHints']));
       
       // DELETE: Not allowed.
       allow delete: if false;
+
 
       // ----- Compliments Subcollection -----
       match /compliments/{complimentId} {

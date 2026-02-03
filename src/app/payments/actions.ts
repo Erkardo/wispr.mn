@@ -152,7 +152,8 @@ export async function createQpayInvoiceAction(
     const data: QPayInvoiceResponse = await res.json();
 
     // 3. Update our local invoice with the QPay-generated ID
-    await updateDoc(invoiceRef, { qpayInvoiceId: data.invoice_id });
+    await updateDoc(invoiceRef, { qpayInvoiceId: String(data.invoice_id) });
+
 
     return {
       qrImage: data.qr_image,

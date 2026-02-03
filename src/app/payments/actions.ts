@@ -159,8 +159,10 @@ export async function createQpayInvoiceAction(
       deeplinks: data.urls,
       invoiceId: invoiceRef.id,
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in createQpayInvoiceAction:', error);
-    return { error: 'Дотоод алдаа гарлаа.', qrImage: '', deeplinks: [], invoiceId: '' };
+    const errorMessage = error instanceof Error ? error.message : 'Тодорхойгүй алдаа гарлаа.';
+    return { error: `Дотоод алдаа гарлаа: ${errorMessage}`, qrImage: '', deeplinks: [], invoiceId: '' };
   }
 }
+

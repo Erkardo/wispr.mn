@@ -105,11 +105,16 @@ export async function POST(req: NextRequest) {
       // Update the invoice status to PAID
       batch.update(invoiceRef, { status: 'PAID' });
 
-      // Add the purchased hints to the user's bonus hints
-      batch.update(ownerRef, { bonusHints: increment(invoiceData.numHints) });
+      // Add the purchased hints to the user's bonus hints. 
+      // Using set with merge: true in case the owner document doesn't exist yet.
+      batch.set(ownerRef, {
+        ownerId: invoiceData.ownerId,
+        bonusHints: increment(invoiceData.numHints)
+      }, { merge: true });
 
       successfulUpdate = true;
     });
+
 
     if (successfulUpdate) {
       await batch.commit();

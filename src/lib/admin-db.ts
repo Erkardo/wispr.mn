@@ -51,17 +51,21 @@ if (!projectId || !clientEmail || !privateKey) {
     }
 }
 
-const firebaseAdminConfig = {
-    credential: cert({
-        projectId,
-        clientEmail,
-        privateKey,
-    }),
-};
-
 export function getAdminDb() {
+    // Check credentials before attempting initialization
+    if (!projectId || !clientEmail || !privateKey) {
+        console.error("[Admin SDK] Missing credentials for Admin DB.");
+        throw new Error("Missing Firebase Admin Credentials. Please check FIREBASE_PRIVATE_KEY, FIREBASE_CLIENT_EMAIL, and NEXT_PUBLIC_FIREBASE_PROJECT_ID.");
+    }
+
     if (!getApps().length) {
-        initializeApp(firebaseAdminConfig);
+        initializeApp({
+            credential: cert({
+                projectId,
+                clientEmail,
+                privateKey,
+            }),
+        });
     } else {
         // Double check if the existing app has the same config or just return it
         // Usually getApp() is enough if already initialized

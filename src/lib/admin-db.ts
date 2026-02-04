@@ -18,7 +18,7 @@ const formatPrivateKey = (key: string | undefined) => {
     // 3. Ensure correct headers are present (re-add if stripped or malformed, though usually they are there)
     // This is a basic check. If the key is totally messed up, it will still fail, but this handles common env var issues.
 
-    return cleanKey;
+    return cleanKey.trim();
 };
 
 const privateKey = formatPrivateKey(process.env.FIREBASE_PRIVATE_KEY);

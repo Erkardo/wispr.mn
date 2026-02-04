@@ -63,7 +63,8 @@ async function getQPayToken(): Promise<string | null> {
     });
 
     if (!res.ok) {
-      console.error('Failed to get QPay token:', await res.text());
+      const errorText = await res.text();
+      console.error(`Failed to get QPay token. Status: ${res.status}, Body: ${errorText}`);
       cachedToken = null; // Clear cache on failure
       return null;
     }

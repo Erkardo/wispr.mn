@@ -2,7 +2,9 @@ import { initializeApp, getApps, cert, getApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
 const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+const clientEmailRaw = process.env.FIREBASE_CLIENT_EMAIL;
+// Clean email: remove quotes and whitespace
+const clientEmail = clientEmailRaw ? clientEmailRaw.replace(/^"|"$/g, '').trim() : undefined;
 // Helper to clean and format the private key
 const formatPrivateKey = (key: string | undefined) => {
     if (!key) return undefined;

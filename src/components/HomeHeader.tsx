@@ -335,6 +335,11 @@ export default function ProfilePage() {
                     <CardContent className="p-2">
                         <div className="space-y-1">
                             <Button asChild variant="ghost" className="w-full justify-start gap-3 text-base h-12">
+                                <Link href="/admin">
+                                    <Shield className="w-5 h-5 text-muted-foreground" /> Админ самбар
+                                </Link>
+                            </Button>
+                            <Button asChild variant="ghost" className="w-full justify-start gap-3 text-base h-12">
                                 <Link href="/privacy">
                                     <FileText className="w-5 h-5 text-muted-foreground" /> Үйлчилгээний нөхцөл
                                 </Link>

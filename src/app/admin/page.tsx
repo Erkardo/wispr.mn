@@ -1,24 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/firebase';
-import { getDashboardStats, checkAdminAccess, type DashboardStats } from './actions';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Users, MessageSquare, DollarSign, Activity } from 'lucide-react';
-import {
-    BarChart,
-    Bar,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    ResponsiveContainer,
-    LineChart,
-    Line
-} from 'recharts';
-
+import { useUser } from '@/firebase';
+// ...
 export default function AdminPage() {
-    const { user, loading: authLoading } = useAuth();
+    const { user, loading: authLoading } = useUser();
     const [isAdmin, setIsAdmin] = useState(false);
     const [checkingAccess, setCheckingAccess] = useState(true);
     const [stats, setStats] = useState<DashboardStats | null>(null);

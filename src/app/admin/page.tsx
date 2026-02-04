@@ -53,10 +53,15 @@ export default function AdminPage() {
         if (isAdmin && mounted) {
             setLoading(true);
             getDashboardStats()
-                .then(setStats)
+                .then((res) => {
+                    if (res.success && res.data) {
+                        setStats(res.data);
+                    } else {
+                        throw new Error(res.error || "Failed to load dashboard stats.");
+                    }
+                })
                 .catch((err) => {
                     console.error("Stats fetch failed:", err);
-                    // Show the actual error message from the server (e.g. "Missing Firebase Admin Credentials")
                     setError(err.message || "Failed to load dashboard stats.");
                 })
                 .finally(() => setLoading(false));
@@ -85,7 +90,21 @@ export default function AdminPage() {
             <div className="flex min-h-screen items-center justify-center p-4">
                 <Card className="max-w-md text-center p-8 border-destructive/20 bg-destructive/5">
                     <h1 className="text-xl font-bold mb-4 text-destructive">System Error</h1>
-                    <p className="text-muted-foreground">{error}</p>
+                    <p className="text-muted-foreground mb-4">{error}</p>
+                    <button
+                        onClick={async () => {
+                            try {
+                                const { debugEnvVars } = await import('./actions');
+                                const vars = await debugEnvVars();
+                                alert(JSON.stringify(vars, null, 2));
+                            } catch (e: any) {
+                                alert("Debug failed: " + e.message);
+                            }
+                        }}
+                        className="px-4 py-2 bg-white text-gray-800 border rounded hover:bg-gray-50 text-xs"
+                    >
+                        Debug Env Vars
+                    </button>
                 </Card>
             </div>
         );
@@ -237,6 +256,23 @@ export default function AdminPage() {
                             </CardContent>
                         </Card>
 
+                        {/* Debug Section */}
+                        <div className="flex justify-end mt-8">
+                            <button
+                                onClick={async () => {
+                                    try {
+                                        const { debugEnvVars } = await import('./actions');
+                                        const vars = await debugEnvVars();
+                                        alert(JSON.stringify(vars, null, 2));
+                                    } catch (e: any) {
+                                        alert("Debug failed: " + e.message);
+                                    }
+                                }}
+                                className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 text-xs"
+                            >
+                                Debug Env Vars
+                            </button>
+                        </div>
                     </>
                 ) : null}
             </div>

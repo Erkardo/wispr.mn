@@ -1,7 +1,7 @@
 'use server';
 
-import { getAdminDb } from '@/lib/admin-db';
-import { Timestamp } from 'firebase-admin/firestore';
+// import { getAdminDb } from '@/lib/admin-db';
+// import { Timestamp } from 'firebase-admin/firestore';
 
 export type DashboardStats = {
     totalUsers: number;
@@ -26,151 +26,100 @@ export type DayStat = {
 };
 
 // Check if user is admin based on email
-// Check if user is admin based on email
 export async function checkAdminAccess(email: string | null | undefined) {
-    if (!email) {
-        console.log("[AdminCheck] No email provided");
+    try {
+        if (!email) {
+            console.log("[AdminCheck] No email provided");
+            return false;
+        }
+
+        // Check various sources for admin email to debug
+        const envEmails = process.env.ADMIN_EMAILS || "";
+
+        console.log(`[AdminCheck] Server Side. Checking access for: ${email}`);
+        console.log(`[AdminCheck] PROCESSED ADMIN_EMAILS: ${envEmails.length > 0 ? 'Found' : 'Empty/Not Set'}`);
+
+        const adminEmails = envEmails.split(',').map(e => e.trim().toLowerCase());
+        const userEmail = email.trim().toLowerCase();
+
+        const isMatch = adminEmails.includes(userEmail);
+        console.log(`[AdminCheck] Comparing '${userEmail}' against configured list. Match: ${isMatch}`);
+
+        return isMatch;
+    } catch (error) {
+        console.error("Error checking admin access:", error);
         return false;
     }
-
-    // Check various sources for admin email to debug
-    const envEmails = process.env.ADMIN_EMAILS || "";
-
-    console.log(`[AdminCheck] Server Side. Checking access for: ${email}`);
-    console.log(`[AdminCheck] PROCESSED ADMIN_EMAILS: ${envEmails.length > 0 ? 'Found' : 'Empty/Not Set'}`);
-
-    const adminEmails = envEmails.split(',').map(e => e.trim().toLowerCase());
-    const userEmail = email.trim().toLowerCase();
-
-    const isMatch = adminEmails.includes(userEmail);
-    console.log(`[AdminCheck] Comparing '${userEmail}' against configured list. Match: ${isMatch}`);
-
-    return isMatch;
 }
 
-export async function getDashboardStats(): Promise<DashboardStats> {
-    const db = getAdminDb();
+export type DashboardStatsResponse = {
+    success: boolean;
+    data?: DashboardStats;
+    error?: string;
+};
 
-    // 1. Total Counts (Efficiently using count())
-    const usersCountSnap = await db.collection('complimentOwners').count().get();
-    const confessionsCountSnap = await db.collection('confessions').count().get();
-    const wisprsCountSnap = await db.collectionGroup('compliments').count().get();
+export async function getDashboardStats(): Promise<DashboardStatsResponse> {
+    try {
+        console.log("Starting getDashboardStats...");
+        // const db = getAdminDb();
 
-    // 2. Revenue (Sum of PAID invoices) - This requires reading all PAID invoices
-    const paidInvoicesSnap = await db.collection('invoices')
-        .where('status', '==', 'PAID')
-        .get();
+        // MOCK DATA TO TEST CONNECTION
+        return {
+            success: true,
+            data: {
+                totalUsers: 123,
+                totalWisprs: 456,
+                totalConfessions: 789,
+                totalRevenue: 100000,
+                recentActivity: [],
+                dailyStats: []
+            }
+        };
 
-    let totalRevenue = 0;
-    paidInvoicesSnap.forEach(doc => {
-        totalRevenue += (doc.data().amount || 0);
-    });
+        /*
+        // 1. Total Counts (Efficiently using count())
+        const usersCountSnap = await db.collection('complimentOwners').count().get();
+        // ... (rest of the code mocked out)
+        */
 
-    // 3. Recent Activity (Sample)
-    const activity: ActivityItem[] = [];
+        /*
+        // Sort and limit activity
+        activity.sort((a, b) => b.time - a.time);
 
-    // Get last 5 confessions
-    const recentConfessions = await db.collection('confessions')
-        .orderBy('createdAt', 'desc')
-        .limit(5)
-        .get();
+        // 4. Daily Stats (Last 7 days)
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        // const sevenDaysAgoTimestamp = Timestamp.fromDate(sevenDaysAgo); // This line is commented out as per instruction
 
-    recentConfessions.forEach(doc => {
-        const data = doc.data();
-        activity.push({
-            type: 'confession',
-            message: `New confession: "${data.text.substring(0, 30)}..."`,
-            time: data.createdAt?.toMillis() || Date.now()
-        });
-    });
+        // const recentStatsInvoices = await db.collection('invoices')
+        //     .where('status', '==', 'PAID')
+        //     .where('createdAt', '>=', sevenDaysAgoTimestamp)
+        //     .get();
 
-    // Get last 5 payments
-    const recentPayments = await db.collection('invoices')
-        .where('status', '==', 'PAID')
-        .orderBy('createdAt', 'desc')
-        .limit(5)
-        .get();
+        // const recentStatsConfessions = await db.collection('confessions')
+        //     .where('createdAt', '>=', sevenDaysAgoTimestamp)
+        //     .get();
 
-    recentPayments.forEach(doc => {
-        const data = doc.data();
-        activity.push({
-            type: 'payment',
-            message: `Payment received: ${data.amount}₮`,
-            time: data.createdAt?.toMillis() || Date.now()
-        });
-    });
-
-    // Sort and limit activity
-    activity.sort((a, b) => b.time - a.time);
-
-    // 4. Daily Stats (Last 7 days)
-    // Note: Aggregating this purely on-the-fly from raw docs might be expensive if scale is huge.
-    // For MVP, we'll approximate or fetch recent 7 days of docs. 
-    // Ideally, you'd have a scheduled function aggregating this into a 'stats' collection.
-
-    // For now, let's keep it simple: Just return the 7 days placeholders 
-    // or do a lightweight query if documents are few. 
-    // Let's implement a real query for LAST 7 DAYS of *invoices* and *confessions*.
-
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    const sevenDaysAgoTimestamp = Timestamp.fromDate(sevenDaysAgo);
-
-    const recentStatsInvoices = await db.collection('invoices')
-        .where('status', '==', 'PAID')
-        .where('createdAt', '>=', sevenDaysAgoTimestamp)
-        .get();
-
-    const recentStatsConfessions = await db.collection('confessions')
-        .where('createdAt', '>=', sevenDaysAgoTimestamp)
-        .get();
-
-    // We can't easily get 'users' by createdAt unless we stored it. 
-    // complimentOwners doesn't seem to have createdAt in the type definition, relying on implied or different field.
-    // We'll check if we can skip users chart for now or add it later.
-
-    const dailyMap = new Map<string, DayStat>();
-
-    // Initialize last 7 days
-    for (let i = 0; i < 7; i++) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        const dateStr = d.toISOString().split('T')[0]; // YYYY-MM-DD
-        dailyMap.set(dateStr, { date: dateStr, wisprs: 0, users: 0, payments: 0 });
+        // const dailyMap = new Map<string, DayStat>();
+        */
+    } catch (e: any) {
+        console.error("Dashboard Stats Error:", e);
+        return { success: false, error: e.message || "Failed to fetch stats" };
     }
+}
 
-    recentStatsInvoices.forEach(doc => {
-        const data = doc.data();
-        if (data.createdAt) {
-            const dateStr = data.createdAt.toDate().toISOString().split('T')[0];
-            if (dailyMap.has(dateStr)) {
-                const stat = dailyMap.get(dateStr)!;
-                stat.payments += data.amount;
-                dailyMap.set(dateStr, stat);
-            }
-        }
-    });
-
-    recentStatsConfessions.forEach(doc => {
-        const data = doc.data();
-        if (data.createdAt) {
-            const dateStr = data.createdAt.toDate().toISOString().split('T')[0];
-            if (dailyMap.has(dateStr)) {
-                const stat = dailyMap.get(dateStr)!;
-                stat.wisprs += 1; // Actually confessions, but we'll use 'wisprs' field for chart
-                dailyMap.set(dateStr, stat);
-            }
-        }
-    });
-
-    const dailyStats = Array.from(dailyMap.values()).sort((a, b) => a.date.localeCompare(b.date));
+// Debugging helper to check env vars on server
+export async function debugEnvVars() {
+    const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+    const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+    const adminEmails = process.env.ADMIN_EMAILS;
 
     return {
-        totalUsers: usersCountSnap.data().count,
-        totalWisprs: wisprsCountSnap.data().count,
-        totalConfessions: confessionsCountSnap.data().count,
-        totalRevenue: totalRevenue,
-        recentActivity: activity.slice(0, 10),
-        dailyStats: dailyStats
+        projectId: projectId ? `${projectId.substring(0, 5)}...` : 'MISSING',
+        clientEmail: clientEmail ? `${clientEmail.substring(0, 5)}...` : 'MISSING',
+        privateKey: privateKey ? `Length: ${privateKey.length}, Starts with: ${privateKey.substring(0, 10)}...` : 'MISSING',
+        adminEmails: adminEmails ? adminEmails : 'MISSING',
+        nodeEnv: process.env.NODE_ENV
     };
 }

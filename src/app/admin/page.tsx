@@ -2,45 +2,90 @@
 
 import { useState, useEffect } from 'react';
 import { useUser } from '@/firebase';
-// ...
+import { getDashboardStats, checkAdminAccess, type DashboardStats } from './actions';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Loader2, Users, MessageSquare, DollarSign, Activity, Shield } from 'lucide-react';
+import {
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+    LineChart,
+    Line
+} from 'recharts';
+
 export default function AdminPage() {
     const { user, loading: authLoading } = useUser();
+    const [mounted, setMounted] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
     const [checkingAccess, setCheckingAccess] = useState(true);
     const [stats, setStats] = useState<DashboardStats | null>(null);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     useEffect(() => {
         async function verify() {
             if (!authLoading && user) {
-                // In a real app, this check should also be enforced by Middleware/Layout
-                const hasAccess = await checkAdminAccess(user.email);
-                setIsAdmin(true); // TEMPORARILY: Allow all logged in users (or restrict via simple logic later) if you want to test immediately. 
-                // BUT strict logic: setIsAdmin(hasAccess);
-                // For the user request, I will respect the email check logic but warn them to set the env var.
-                setIsAdmin(hasAccess);
-                setCheckingAccess(false);
+                try {
+                    const hasAccess = await checkAdminAccess(user.email);
+                    setIsAdmin(hasAccess);
+                } catch (err: any) {
+                    console.error("Admin check failed:", err);
+                    setError("Failed to verify admin status: " + (err.message || "Unknown error"));
+                } finally {
+                    setCheckingAccess(false);
+                }
             } else if (!authLoading && !user) {
                 setCheckingAccess(false);
             }
         }
-        verify();
-    }, [user, authLoading]);
+        if (mounted) verify();
+    }, [user, authLoading, mounted]);
 
     useEffect(() => {
-        if (isAdmin) {
+        if (isAdmin && mounted) {
             setLoading(true);
             getDashboardStats()
                 .then(setStats)
-                .catch(console.error)
+                .catch((err) => {
+                    console.error("Stats fetch failed:", err);
+                    setError("Failed to load dashboard stats. Check server logs.");
+                })
                 .finally(() => setLoading(false));
         }
-    }, [isAdmin]);
+    }, [isAdmin, mounted]);
+
+    // Prevent hydration mismatch and SSR errors with Recharts by not rendering until mounted
+    if (!mounted) {
+        return (
+            <div className="flex min-h-screen items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
+    }
 
     if (authLoading || checkingAccess) {
         return (
             <div className="flex min-h-screen items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="flex min-h-screen items-center justify-center p-4">
+                <Card className="max-w-md text-center p-8 border-destructive/20 bg-destructive/5">
+                    <h1 className="text-xl font-bold mb-4 text-destructive">System Error</h1>
+                    <p className="text-muted-foreground">{error}</p>
+                </Card>
             </div>
         );
     }

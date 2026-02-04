@@ -23,6 +23,7 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 import { createQpayInvoiceAction } from '../payments/actions';
+import { checkAdminAccess } from '@/app/admin/actions';
 import { QPayDialog } from '@/components/payments/QpayDialog';
 import { Separator } from '@/components/ui/separator';
 
@@ -80,6 +81,22 @@ export default function ProfilePage() {
         setTotalHints(dailyHints + (ownerData.bonusHints || 0));
 
     }, [ownerData]);
+
+    const [isAdmin, setIsAdmin] = useState(false);
+
+    useEffect(() => {
+        const checkAdmin = async () => {
+            if (user?.email && !user.isAnonymous) {
+                try {
+                    const hasAccess = await checkAdminAccess(user.email);
+                    setIsAdmin(hasAccess);
+                } catch (e) {
+                    console.error("Failed to check admin status", e);
+                }
+            }
+        };
+        checkAdmin();
+    }, [user]);
 
     const handleCreateInvoice = async (pkg: HintPackage) => {
         if (!user) {
@@ -338,11 +355,13 @@ export default function ProfilePage() {
                     </CardHeader>
                     <CardContent className="p-2">
                         <div className="space-y-1">
-                            <Button asChild variant="ghost" className="w-full justify-start gap-3 text-base h-12">
-                                <Link href="/admin">
-                                    <Shield className="w-5 h-5 text-muted-foreground" /> Админ самбар
-                                </Link>
-                            </Button>
+                            {isAdmin && (
+                                <Button asChild variant="ghost" className="w-full justify-start gap-3 text-base h-12">
+                                    <Link href="/admin">
+                                        <Shield className="w-5 h-5 text-muted-foreground" /> Админ самбар
+                                    </Link>
+                                </Button>
+                            )}
                             <Button asChild variant="ghost" className="w-full justify-start gap-3 text-base h-12">
                                 <Link href="/privacy">
                                     <FileText className="w-5 h-5 text-muted-foreground" /> Үйлчилгээний нөхцөл

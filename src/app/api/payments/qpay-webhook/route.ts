@@ -63,87 +63,103 @@ async function processWebhook(payload: any) {
     return { status: 400, error: 'Missing identifiers' };
   }
 
-  const invoicesRef = collection(db, 'invoices');
-  let invoiceDocToProcess = null;
-
-  // DEBUG: List all pending invoices to help identify ID mismatches
   try {
-    const debugQuery = query(invoicesRef, where('status', '==', 'PENDING'), limit(10));
-    const debugSnap = await getDocs(debugQuery);
-    console.log(`Found ${debugSnap.size} pending invoices for debugging:`);
-    debugSnap.forEach(d => {
-      console.log(` - Doc: ${d.id}, qpayInvoiceId: ${d.data().qpayInvoiceId} (type: ${typeof d.data().qpayInvoiceId}), localInvoiceId: ${d.data().localInvoiceId}`);
+    const invoicesRef = collection(db, 'invoices');
+    let invoiceDocToProcess = null;
+
+    // DEBUG: List all pending invoices to help identify ID mismatches
+    try {
+      const debugQuery = query(invoicesRef, where('status', '==', 'PENDING'), limit(20));
+      const debugSnap = await getDocs(debugQuery);
+      console.log(`Found ${debugSnap.size} pending invoices for debugging. Headers qId: ${qId}, lId: ${lId}`);
+      debugSnap.forEach(d => {
+        const data = d.data();
+        console.log(` - Doc: ${d.id}, qpayInvoiceId: ${data.qpayInvoiceId} (val: ${typeof data.qpayInvoiceId}), localInvoiceId: ${data.localInvoiceId}`);
+      });
+    } catch (e) {
+      console.error("Debug log failed:", e);
+    }
+
+    // 1. Try to find by QPay ID (qId) 
+    if (qId) {
+      console.log(`Searching by qpayInvoiceId: ${qId}`);
+      let q = query(invoicesRef, where('qpayInvoiceId', '==', qId), where('status', '==', 'PENDING'));
+      let snap = await getDocs(q);
+
+      if (snap.empty && !isNaN(Number(qId))) {
+        console.log(`Trying qpayInvoiceId as number: ${Number(qId)}`);
+        q = query(invoicesRef, where('qpayInvoiceId', '==', Number(qId)), where('status', '==', 'PENDING'));
+        snap = await getDocs(q);
+      }
+
+      if (!snap.empty) {
+        invoiceDocToProcess = snap.docs[0];
+        console.log(`Found invoice by qpayInvoiceId: ${invoiceDocToProcess.id}`);
+      }
+    }
+
+    // 2. If not found, try finding by Local ID (lId)
+    if (!invoiceDocToProcess && lId) {
+      console.log(`Searching by localInvoiceId: ${lId}`);
+      let q = query(invoicesRef, where('localInvoiceId', '==', lId), where('status', '==', 'PENDING'));
+      let snap = await getDocs(q);
+
+      if (snap.empty && !isNaN(Number(lId))) {
+        console.log(`Trying localInvoiceId as number: ${Number(lId)}`);
+        q = query(invoicesRef, where('localInvoiceId', '==', Number(lId)), where('status', '==', 'PENDING'));
+        snap = await getDocs(q);
+      }
+
+      if (!snap.empty) {
+        invoiceDocToProcess = snap.docs[0];
+        console.log(`Found invoice by localInvoiceId: ${invoiceDocToProcess.id}`);
+      }
+    }
+
+    // 3. Last resort: match raw qId against localInvoiceId
+    if (!invoiceDocToProcess && qId) {
+      console.log(`Searching by localInvoiceId using qId: ${qId}`);
+      let q = query(invoicesRef, where('localInvoiceId', '==', qId), where('status', '==', 'PENDING'));
+      let snap = await getDocs(q);
+      if (!snap.empty) {
+        invoiceDocToProcess = snap.docs[0];
+        console.log(`Found invoice by localInvoiceId (using qId match): ${invoiceDocToProcess.id}`);
+      }
+    }
+
+    if (!invoiceDocToProcess) {
+      console.log(`Invoice NOT FOUND in DB for qId: ${qId}, lId: ${lId}`);
+      return { status: 404, error: 'Invoice not found' };
+    }
+
+    const batch = writeBatch(db);
+    const invoiceData = invoiceDocToProcess.data();
+    const invoiceRef = doc(db, 'invoices', invoiceDocToProcess.id);
+    const ownerRef = doc(db, 'complimentOwners', invoiceData.ownerId);
+
+    // Update Invoice
+    batch.update(invoiceRef, {
+      status: 'PAID',
+      paidAt: serverTimestamp(),
+      qpayPaymentId: qId // Store the actual payment ID received
     });
-  } catch (e) {
-    console.error("Debug log failed:", e);
+
+    // Update Owner Hints
+    batch.set(ownerRef, {
+      ownerId: invoiceData.ownerId,
+      bonusHints: increment(invoiceData.numHints || 0)
+    }, { merge: true });
+
+    await batch.commit();
+    console.log(`SUCCESS: Credited ${invoiceData.numHints} hints to ${invoiceData.ownerId}`);
+
+    return { status: 200, success: true };
+  } catch (error: any) {
+    console.error("FATAL WEBHOOK ERROR:", error);
+    return { status: 500, error: error.message };
   }
-
-  // 1. Try to find by QPay ID (qId) 
-  if (qId) {
-    // Try as String
-    let q = query(invoicesRef, where('qpayInvoiceId', '==', qId), where('status', '==', 'PENDING'));
-    let snap = await getDocs(q);
-
-    // If not found and it looks like a number, try as Number
-    if (snap.empty && !isNaN(Number(qId))) {
-      console.log(`Trying qpayInvoiceId as number: ${Number(qId)}`);
-      q = query(invoicesRef, where('qpayInvoiceId', '==', Number(qId)), where('status', '==', 'PENDING'));
-      snap = await getDocs(q);
-    }
-
-    if (!snap.empty) {
-      invoiceDocToProcess = snap.docs[0];
-    }
-  }
-
-  // 2. If not found, try finding by Local ID (lId)
-  if (!invoiceDocToProcess && lId) {
-    let q = query(invoicesRef, where('localInvoiceId', '==', lId), where('status', '==', 'PENDING'));
-    let snap = await getDocs(q);
-
-    if (snap.empty && !isNaN(Number(lId))) {
-      q = query(invoicesRef, where('localInvoiceId', '==', Number(lId)), where('status', '==', 'PENDING'));
-      snap = await getDocs(q);
-    }
-
-    if (!snap.empty) {
-      invoiceDocToProcess = snap.docs[0];
-    }
-  }
-
-  // 3. Last resort: match raw qId against localInvoiceId
-  if (!invoiceDocToProcess && qId) {
-    let q = query(invoicesRef, where('localInvoiceId', '==', qId), where('status', '==', 'PENDING'));
-    let snap = await getDocs(q);
-    if (!snap.empty) {
-      invoiceDocToProcess = snap.docs[0];
-    }
-  }
-
-  if (!invoiceDocToProcess) {
-    console.log(`Invoice NOT FOUND in DB for qId: ${qId}, lId: ${lId}`);
-    return { status: 404, error: 'Invoice not found' };
-  }
-
-  const batch = writeBatch(db);
-  const invoiceData = invoiceDocToProcess.data();
-  const invoiceRef = doc(db, 'invoices', invoiceDocToProcess.id);
-  const ownerRef = doc(db, 'complimentOwners', invoiceData.ownerId);
-
-  // Update Invoice
-  batch.update(invoiceRef, { status: 'PAID', paidAt: serverTimestamp() });
-
-  // Update Owner Hints
-  batch.set(ownerRef, {
-    ownerId: invoiceData.ownerId,
-    bonusHints: increment(invoiceData.numHints)
-  }, { merge: true });
-
-  await batch.commit();
-  console.log(`SUCCESS: Credited ${invoiceData.numHints} hints to ${invoiceData.ownerId}`);
-
-  return { status: 200, success: true };
 }
+
 
 
 

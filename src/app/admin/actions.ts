@@ -26,10 +26,26 @@ export type DayStat = {
 };
 
 // Check if user is admin based on email
+// Check if user is admin based on email
 export async function checkAdminAccess(email: string | null | undefined) {
-    if (!email) return false;
-    const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim()) || [];
-    return adminEmails.includes(email);
+    if (!email) {
+        console.log("[AdminCheck] No email provided");
+        return false;
+    }
+
+    // Check various sources for admin email to debug
+    const envEmails = process.env.ADMIN_EMAILS || "";
+
+    console.log(`[AdminCheck] Server Side. Checking access for: ${email}`);
+    console.log(`[AdminCheck] PROCESSED ADMIN_EMAILS: ${envEmails.length > 0 ? 'Found' : 'Empty/Not Set'}`);
+
+    const adminEmails = envEmails.split(',').map(e => e.trim().toLowerCase());
+    const userEmail = email.trim().toLowerCase();
+
+    const isMatch = adminEmails.includes(userEmail);
+    console.log(`[AdminCheck] Comparing '${userEmail}' against configured list. Match: ${isMatch}`);
+
+    return isMatch;
 }
 
 export async function getDashboardStats(): Promise<DashboardStats> {

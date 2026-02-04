@@ -43,14 +43,6 @@ if (!projectId || !clientEmail || !privateKey) {
 } else {
     // Basic validation log (masked)
     try {
-        const lines = privateKey.split('\n');
-        console.log(`[Admin SDK] Credentials Check:`);
-        console.log(` - Project ID: ${projectId}`);
-        console.log(` - Client Email: ${clientEmail}`);
-        console.log(` - Key Length: ${privateKey.length}, Lines: ${lines.length}`);
-        console.log(` - Key Start: ${JSON.stringify(privateKey.substring(0, 35))}...`);
-        console.log(` - Key End: ...${JSON.stringify(privateKey.substring(privateKey.length - 35))}`);
-
         if (!privateKey.includes('-----BEGIN PRIVATE KEY-----')) {
             console.error("[Admin SDK] Invalid Private Key format: Missing header");
         }

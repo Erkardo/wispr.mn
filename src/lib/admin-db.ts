@@ -7,18 +7,29 @@ const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
 const formatPrivateKey = (key: string | undefined) => {
     if (!key) return undefined;
 
-    // 1. Remove any surrounding double quotes if they exist (sometimes introduced by copy-pasting)
+    // 1. Remove any surrounding double quotes
     let cleanKey = key.replace(/^"|"$/g, '');
 
-    // 2. Handle escaped newlines (common in Vercel/env vars)
+    // 2. Handle escaped newlines
     if (cleanKey.includes('\\n')) {
         cleanKey = cleanKey.replace(/\\n/g, '\n');
     }
 
-    // 3. Ensure correct headers are present (re-add if stripped or malformed, though usually they are there)
-    // This is a basic check. If the key is totally messed up, it will still fail, but this handles common env var issues.
+    cleanKey = cleanKey.trim();
 
-    return cleanKey.trim();
+    // 3. Ensure headers are on their own lines (crucial for OpenSSL)
+    const header = '-----BEGIN PRIVATE KEY-----';
+    const footer = '-----END PRIVATE KEY-----';
+
+    if (cleanKey.includes(header) && !cleanKey.includes(`${header}\n`)) {
+        cleanKey = cleanKey.replace(header, `${header}\n`);
+    }
+
+    if (cleanKey.includes(footer) && !cleanKey.includes(`\n${footer}`)) {
+        cleanKey = cleanKey.replace(footer, `\n${footer}`);
+    }
+
+    return cleanKey;
 };
 
 const privateKey = formatPrivateKey(process.env.FIREBASE_PRIVATE_KEY);
@@ -30,6 +41,11 @@ if (!projectId || !clientEmail || !privateKey) {
 } else {
     // Basic validation log (masked)
     try {
+        const lines = privateKey.split('\n');
+        console.log(`[Admin SDK] Key Check - Length: ${privateKey.length}, Lines: ${lines.length}`);
+        console.log(`[Admin SDK] Key Start: ${JSON.stringify(privateKey.substring(0, 35))}...`);
+        console.log(`[Admin SDK] Key End: ...${JSON.stringify(privateKey.substring(privateKey.length - 35))}`);
+
         if (!privateKey.includes('-----BEGIN PRIVATE KEY-----')) {
             console.error("[Admin SDK] Invalid Private Key format: Missing header");
         }

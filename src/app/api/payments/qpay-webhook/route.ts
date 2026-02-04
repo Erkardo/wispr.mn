@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { collection, query, where, getDocs, writeBatch, increment, doc, serverTimestamp, limit } from 'firebase/firestore';
+import { getAdminDb } from '@/lib/admin-db';
+import { FieldValue } from 'firebase-admin/firestore';
 import { createHmac } from 'crypto';
+
 
 /**
  * !!! SECURITY WARNING !!!
@@ -64,90 +65,83 @@ async function processWebhook(payload: any) {
   }
 
   try {
-    const invoicesRef = collection(db, 'invoices');
-    let invoiceDocToProcess = null;
-
-    // DEBUG: List all pending invoices to help identify ID mismatches
-    try {
-      const debugQuery = query(invoicesRef, where('status', '==', 'PENDING'), limit(20));
-      const debugSnap = await getDocs(debugQuery);
-      console.log(`Found ${debugSnap.size} pending invoices for debugging. Headers qId: ${qId}, lId: ${lId}`);
-      debugSnap.forEach(d => {
-        const data = d.data();
-        console.log(` - Doc: ${d.id}, qpayInvoiceId: ${data.qpayInvoiceId} (val: ${typeof data.qpayInvoiceId}), localInvoiceId: ${data.localInvoiceId}`);
-      });
-    } catch (e) {
-      console.error("Debug log failed:", e);
-    }
+    // USE ADMIN DB
+    const db = getAdminDb();
+    const invoicesRef = db.collection('invoices');
+    let invoiceDocToProcess: FirebaseFirestore.DocumentSnapshot<FirebaseFirestore.DocumentData> | null = null;
+    let invoiceIdToProcess: string | null = null;
 
     // 1. Try to find by QPay ID (qId) 
     if (qId) {
       console.log(`Searching by qpayInvoiceId: ${qId}`);
-      let q = query(invoicesRef, where('qpayInvoiceId', '==', qId), where('status', '==', 'PENDING'));
-      let snap = await getDocs(q);
+      // Admin SDK uses .where() chaining
+      let snap = await invoicesRef.where('qpayInvoiceId', '==', qId).where('status', '==', 'PENDING').get();
 
       if (snap.empty && !isNaN(Number(qId))) {
         console.log(`Trying qpayInvoiceId as number: ${Number(qId)}`);
-        q = query(invoicesRef, where('qpayInvoiceId', '==', Number(qId)), where('status', '==', 'PENDING'));
-        snap = await getDocs(q);
+        snap = await invoicesRef.where('qpayInvoiceId', '==', Number(qId)).where('status', '==', 'PENDING').get();
       }
 
       if (!snap.empty) {
         invoiceDocToProcess = snap.docs[0];
-        console.log(`Found invoice by qpayInvoiceId: ${invoiceDocToProcess.id}`);
+        invoiceIdToProcess = invoiceDocToProcess.id;
+        console.log(`Found invoice by qpayInvoiceId: ${invoiceIdToProcess}`);
       }
     }
 
     // 2. If not found, try finding by Local ID (lId)
     if (!invoiceDocToProcess && lId) {
       console.log(`Searching by localInvoiceId: ${lId}`);
-      let q = query(invoicesRef, where('localInvoiceId', '==', lId), where('status', '==', 'PENDING'));
-      let snap = await getDocs(q);
+      let snap = await invoicesRef.where('localInvoiceId', '==', lId).where('status', '==', 'PENDING').get();
 
       if (snap.empty && !isNaN(Number(lId))) {
         console.log(`Trying localInvoiceId as number: ${Number(lId)}`);
-        q = query(invoicesRef, where('localInvoiceId', '==', Number(lId)), where('status', '==', 'PENDING'));
-        snap = await getDocs(q);
+        snap = await invoicesRef.where('localInvoiceId', '==', Number(lId)).where('status', '==', 'PENDING').get();
       }
 
       if (!snap.empty) {
         invoiceDocToProcess = snap.docs[0];
-        console.log(`Found invoice by localInvoiceId: ${invoiceDocToProcess.id}`);
+        invoiceIdToProcess = invoiceDocToProcess.id;
+        console.log(`Found invoice by localInvoiceId: ${invoiceIdToProcess}`);
       }
     }
 
     // 3. Last resort: match raw qId against localInvoiceId
     if (!invoiceDocToProcess && qId) {
       console.log(`Searching by localInvoiceId using qId: ${qId}`);
-      let q = query(invoicesRef, where('localInvoiceId', '==', qId), where('status', '==', 'PENDING'));
-      let snap = await getDocs(q);
+      const snap = await invoicesRef.where('localInvoiceId', '==', qId).where('status', '==', 'PENDING').get();
       if (!snap.empty) {
         invoiceDocToProcess = snap.docs[0];
-        console.log(`Found invoice by localInvoiceId (using qId match): ${invoiceDocToProcess.id}`);
+        invoiceIdToProcess = invoiceDocToProcess.id;
+        console.log(`Found invoice by localInvoiceId (using qId match): ${invoiceIdToProcess}`);
       }
     }
 
-    if (!invoiceDocToProcess) {
+    if (!invoiceDocToProcess || !invoiceIdToProcess) {
       console.log(`Invoice NOT FOUND in DB for qId: ${qId}, lId: ${lId}`);
       return { status: 404, error: 'Invoice not found' };
     }
 
-    const batch = writeBatch(db);
+    const batch = db.batch();
     const invoiceData = invoiceDocToProcess.data();
-    const invoiceRef = doc(db, 'invoices', invoiceDocToProcess.id);
-    const ownerRef = doc(db, 'complimentOwners', invoiceData.ownerId);
+
+    // Safety check just in case
+    if (!invoiceData) return { status: 404, error: 'Invoice data is empty' };
+
+    const invoiceRef = invoicesRef.doc(invoiceIdToProcess);
+    const ownerRef = db.collection('complimentOwners').doc(invoiceData.ownerId);
 
     // Update Invoice
     batch.update(invoiceRef, {
       status: 'PAID',
-      paidAt: serverTimestamp(),
-      qpayPaymentId: qId // Store the actual payment ID received
+      paidAt: FieldValue.serverTimestamp(), // Use Admin SDK FieldValue
+      qpayPaymentId: qId || null
     });
 
     // Update Owner Hints
     batch.set(ownerRef, {
       ownerId: invoiceData.ownerId,
-      bonusHints: increment(invoiceData.numHints || 0)
+      bonusHints: FieldValue.increment(invoiceData.numHints || 0) // Use Admin SDK FieldValue
     }, { merge: true });
 
     await batch.commit();
@@ -155,10 +149,11 @@ async function processWebhook(payload: any) {
 
     return { status: 200, success: true };
   } catch (error: any) {
-    console.error("FATAL WEBHOOK ERROR:", error);
+    console.error("FATAL WEBHOOK ERROR (ADMIN):", error);
     return { status: 500, error: error.message };
   }
 }
+
 
 
 

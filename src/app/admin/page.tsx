@@ -56,7 +56,8 @@ export default function AdminPage() {
                 .then(setStats)
                 .catch((err) => {
                     console.error("Stats fetch failed:", err);
-                    setError("Failed to load dashboard stats. Check server logs.");
+                    // Show the actual error message from the server (e.g. "Missing Firebase Admin Credentials")
+                    setError(err.message || "Failed to load dashboard stats.");
                 })
                 .finally(() => setLoading(false));
         }

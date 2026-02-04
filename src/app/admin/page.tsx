@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/components/AuthProvider';
+import { useAuth } from '@/firebase';
 import { getDashboardStats, checkAdminAccess, type DashboardStats } from './actions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Users, MessageSquare, DollarSign, Activity } from 'lucide-react';
@@ -189,7 +189,7 @@ export default function AdminPage() {
                                         <div key={i} className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0">
                                             <div className="flex items-center gap-2">
                                                 <span className={`h-2 w-2 rounded-full ${item.type === 'payment' ? 'bg-green-500' :
-                                                        item.type === 'confession' ? 'bg-pink-500' : 'bg-blue-500'
+                                                    item.type === 'confession' ? 'bg-pink-500' : 'bg-blue-500'
                                                     }`} />
                                                 <span className="text-sm font-medium">{item.message}</span>
                                             </div>

@@ -364,30 +364,12 @@ export async function getAdminUsersList(): Promise<{ success: boolean; users: Us
         users.sort((a, b) => b.createdAt - a.createdAt);
 
         return { success: true, users };
-        const data = doc.data();
 
-        // Calculate actual hints remaining (logic from profile page: daily + bonus)
-        let dailyHints = 5;
-        // Check if reset today? Simplified for admin view: just assume 5 base + bonus
-        // Ideally should replicate the 'isToday' logic but let's stick to raw data for now.
-        const hintsRemaining = (5 - (data.hintsUsedToday || 0)) + (data.bonusHints || 0);
 
-        return {
-            uid: doc.id,
-            email: data.email || null,
-            displayName: data.displayName || 'Anonymous',
-            photoURL: data.photoURL || null,
-            hintsRemaining: hintsRemaining,
-            createdAt: data.createdAt?.toMillis() || 0,
-            lastLogin: data.lastLogin?.toMillis()
-        };
-    });
-
-    return { success: true, users };
-} catch (e) {
-    console.error("Failed to fetch user list", e);
-    return { success: false, users: [] };
-}
+    } catch (e) {
+        console.error("Failed to fetch user list", e);
+        return { success: false, users: [] };
+    }
 }
 
 // Debugging helper to check env vars on server

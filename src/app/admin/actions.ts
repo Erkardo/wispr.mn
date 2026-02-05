@@ -75,12 +75,11 @@ export async function getDashboardStats(): Promise<DashboardStatsResponse> {
         try {
             db = getAdminDb();
         } catch (dbError) {
-            console.warn("Failed to initialize Admin DB (likely missing credentials). Using empty stats.", dbError);
+            console.warn("Failed to initialize Admin DB. Using empty stats.", dbError);
             return { success: true, data: mockData };
         }
 
-        // 1. Total Counts
-        // Use try-catch for individual queries to ensure partial failures don't crash everything
+        // 1. Total Counts & Header Stats
         const [usersSnap, wisprsSnap, confessionsSnap, paymentsSnap] = await Promise.all([
             db.collection('complimentOwners').count().get().catch(() => ({ data: () => ({ count: 0 }) })),
             db.collection('wisprs').count().get().catch(() => ({ data: () => ({ count: 0 }) })),
@@ -91,13 +90,15 @@ export async function getDashboardStats(): Promise<DashboardStatsResponse> {
         const totalUsers = usersSnap.data().count;
         const totalWisprs = wisprsSnap.data().count;
         const totalConfessions = confessionsSnap.data().count;
-        const totalPayments = paymentsSnap.data().count;
+        const totalPayments = paymentsSnap.data().count; // Count of paid invoices
 
-        // Calculate Revenue (Approximation based on assuming avg invoice or fetching all - fetching all might be heavy)
-        // For now, let's just count paid invoices * avg price or fetch recent ones.
-        // To be accurate, we should sum 'amount'. 
-        // Aggregation queries:
-        const revenueSnap = await db.collection('invoices').where('status', '==', 'PAID').select('amount').get().catch(() => ({ empty: true, docs: [] }));
+        // Calculate Total Revenue
+        const revenueSnap = await db.collection('invoices')
+            .where('status', '==', 'PAID')
+            .select('amount')
+            .get()
+            .catch(() => ({ empty: true, docs: [] }));
+
         let totalRevenue = 0;
         if (!revenueSnap.empty) {
             revenueSnap.docs.forEach((doc: any) => {
@@ -106,10 +107,10 @@ export async function getDashboardStats(): Promise<DashboardStatsResponse> {
             });
         }
 
-        // 2. Recent Activity
+        // 2. Recent Activity (for list)
         const activity: ActivityItem[] = [];
 
-        // Fetch recent items (limit 5 each)
+        // Fetch recent items
         const [recentUsers, recentWisprs, recentConfessions, recentPayments] = await Promise.all([
             db.collection('complimentOwners').orderBy('createdAt', 'desc').limit(5).get().catch(() => ({ docs: [] })),
             db.collection('wisprs').orderBy('createdAt', 'desc').limit(5).get().catch(() => ({ docs: [] })),
@@ -117,6 +118,7 @@ export async function getDashboardStats(): Promise<DashboardStatsResponse> {
             db.collection('invoices').where('status', '==', 'PAID').orderBy('updatedAt', 'desc').limit(5).get().catch(() => ({ docs: [] }))
         ]);
 
+        // Process Recent Items
         recentUsers.docs.forEach((d: any) => {
             const data = d.data();
             activity.push({
@@ -154,26 +156,89 @@ export async function getDashboardStats(): Promise<DashboardStatsResponse> {
         });
 
         activity.sort((a, b) => b.time - a.time);
-        const recentActivity = activity.slice(0, 10);
+        const recentActivity = activity.slice(0, 15); // Increased limit for better list
 
-        // 3. Daily Stats (Last 7 days)
-        // This is complex to do efficiently without proper aggregation, we'll mock or do simple logic
-        // For safety/speed, let's return empty daily stats or simple mock for now, 
-        // effectively restoring the functionality but robustly.
+        // 3. Daily Stats (Last 7 Days) - Real Aggregation
+        const dailyMap = new Map<string, DayStat>();
 
-        // Let's generate last 7 days keys
-        const dailyStats: DayStat[] = [];
+        // Initialize last 7 days with 0
         for (let i = 6; i >= 0; i--) {
             const d = new Date();
             d.setDate(d.getDate() - i);
-            const dateStr = d.toISOString().split('T')[0];
-            dailyStats.push({
-                date: dateStr.slice(5), // MM-DD
+            const dateKey = d.toISOString().split('T')[0]; // YYYY-MM-DD
+            const displayDate = dateKey.slice(5); // MM-DD
+            dailyMap.set(dateKey, {
+                date: displayDate,
                 wisprs: 0,
                 users: 0,
                 payments: 0
             });
         }
+
+        // Calculate start date for query (7 days ago)
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const sevenDaysAgoTimestamp = Timestamp.fromDate(sevenDaysAgo);
+
+        // Run queries for last 7 days
+        // Note: This reads all docs from last 7 days. Ensure this matches your usage limits.
+        const [weeklyPayments, weeklyUsers, weeklyConfessions] = await Promise.all([
+            db.collection('invoices')
+                .where('status', '==', 'PAID')
+                .where('updatedAt', '>=', sevenDaysAgoTimestamp)
+                .select('updatedAt', 'amount')
+                .get()
+                .catch(() => ({ docs: [] })),
+            db.collection('complimentOwners')
+                .where('createdAt', '>=', sevenDaysAgoTimestamp)
+                .select('createdAt')
+                .get()
+                .catch(() => ({ docs: [] })),
+            db.collection('confessions')
+                .where('createdAt', '>=', sevenDaysAgoTimestamp)
+                .select('createdAt')
+                .get()
+                .catch(() => ({ docs: [] }))
+        ]);
+
+        // Aggregate Payments
+        weeklyPayments.docs.forEach((doc: any) => {
+            const data = doc.data();
+            if (data.updatedAt) {
+                const dateKey = data.updatedAt.toDate().toISOString().split('T')[0];
+                if (dailyMap.has(dateKey)) {
+                    const stat = dailyMap.get(dateKey)!;
+                    stat.payments += (data.amount || 0);
+                }
+            }
+        });
+
+        // Aggregate Users
+        weeklyUsers.docs.forEach((doc: any) => {
+            const data = doc.data();
+            if (data.createdAt) {
+                const dateKey = data.createdAt.toDate().toISOString().split('T')[0];
+                if (dailyMap.has(dateKey)) {
+                    const stat = dailyMap.get(dateKey)!;
+                    stat.users += 1;
+                }
+            }
+        });
+
+        // Aggregate Confessions (mapped to 'wisprs' in DayStat for chart simplicity or separate?)
+        // The chart expects 'wisprs' key for the line chart. Let's use it for confessions count.
+        weeklyConfessions.docs.forEach((doc: any) => {
+            const data = doc.data();
+            if (data.createdAt) {
+                const dateKey = data.createdAt.toDate().toISOString().split('T')[0];
+                if (dailyMap.has(dateKey)) {
+                    const stat = dailyMap.get(dateKey)!;
+                    stat.wisprs += 1;
+                }
+            }
+        });
+
+        const dailyStats = Array.from(dailyMap.values());
 
         return {
             success: true,

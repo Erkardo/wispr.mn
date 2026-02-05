@@ -42,16 +42,33 @@ export type DayStat = {
 };
 
 // Check if user is admin based on email
-export async function checkAdminAccess(email: string | null | undefined) {
+import { getAuth } from 'firebase-admin/auth';
+
+// Check if user is admin based on ID Token
+export async function checkAdminAccess(idToken?: string) {
     try {
-        if (!email) {
-            console.log("[AdminCheck] No email provided");
-            return false;
+        if (!idToken) {
+            console.log("[AdminCheck] No token provided");
+            return { isAdmin: false };
         }
 
-        // Check various sources for admin email to debug
-        const envEmails = process.env.ADMIN_EMAILS || "";
+        // Ensure Admin SDK is initialized
+        try {
+            getAdminDb();
+        } catch (e) {
+            console.error("Failed to init admin db for auth check", e);
+            return { isAdmin: false };
+        }
 
+        const decodedToken = await getAuth().verifyIdToken(idToken);
+        const email = decodedToken.email;
+
+        if (!email) {
+            console.log("[AdminCheck] Token verified but no email found");
+            return { isAdmin: false };
+        }
+
+        const envEmails = process.env.ADMIN_EMAILS || "";
         console.log(`[AdminCheck] Server Side. Checking access for: ${email}`);
 
         const adminEmails = envEmails.split(',').map(e => e.trim().toLowerCase());
@@ -60,10 +77,10 @@ export async function checkAdminAccess(email: string | null | undefined) {
         const isMatch = adminEmails.includes(userEmail);
         console.log(`[AdminCheck] Match result: ${isMatch}`);
 
-        return isMatch;
+        return { isAdmin: isMatch, email: userEmail };
     } catch (error) {
         console.error("Error checking admin access:", error);
-        return false;
+        return { isAdmin: false };
     }
 }
 

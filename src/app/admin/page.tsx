@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useUser } from '@/firebase/auth/use-user';
 import {
     AreaChart,
     Area,
@@ -30,9 +31,10 @@ import {
 } from "@/components/ui/table";
 
 export default function AdminPage() {
+    const { user, loading: authLoading } = useUser();
     const [stats, setStats] = useState<DashboardStats | null>(null);
     const [usersList, setUsersList] = useState<UserDetail[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [pageLoading, setPageLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isAdmin, setIsAdmin] = useState(false);
 
@@ -41,12 +43,24 @@ export default function AdminPage() {
 
     useEffect(() => {
         async function init() {
+            if (authLoading) return;
+
+            if (!user) {
+                // Not logged in
+                setError("You must be logged in to view this page.");
+                setPageLoading(false);
+                return;
+            }
+
             try {
-                // 1. Check Access
-                const access = await checkAdminAccess();
+                // 1. Get Token & Check Access
+                const token = await user.getIdToken();
+                // We pass the token to the server action
+                const access = await checkAdminAccess(token);
+
                 if (!access.isAdmin) {
                     setError("Access Denied: You are not an admin.");
-                    setLoading(false);
+                    setPageLoading(false);
                     return;
                 }
                 setIsAdmin(true);
@@ -69,13 +83,13 @@ export default function AdminPage() {
                 console.error("Admin init error:", err);
                 setError("An unexpected error occurred.");
             } finally {
-                setLoading(false);
+                setPageLoading(false);
             }
         }
         init();
-    }, []);
+    }, [user, authLoading]);
 
-    if (loading) {
+    if (authLoading || pageLoading) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
                 <Loader2 className="h-12 w-12 animate-spin text-indigo-600 mb-4" />
@@ -290,8 +304,8 @@ export default function AdminPage() {
                                     {stats?.recentActivity.map((item, i) => (
                                         <div key={i} className="flex items-start gap-4 pb-4 border-b last:border-0 last:pb-0">
                                             <div className={`p-2 rounded-full shrink-0 ${item.type === 'payment' ? 'bg-green-100 text-green-600' :
-                                                    item.type === 'user' ? 'bg-blue-100 text-blue-600' :
-                                                        'bg-gray-100 text-gray-600'
+                                                item.type === 'user' ? 'bg-blue-100 text-blue-600' :
+                                                    'bg-gray-100 text-gray-600'
                                                 }`}>
                                                 {item.type === 'payment' ? <CreditCard className="h-4 w-4" /> :
                                                     item.type === 'user' ? <UserPlus className="h-4 w-4" /> :

@@ -3,6 +3,35 @@
 import { getAdminDb, getAdminAuth } from '@/lib/admin-db';
 import { Timestamp } from 'firebase-admin/firestore';
 
+
+export type ActivityItem = {
+    type: 'user' | 'wispr' | 'confession' | 'payment';
+    message: string;
+    time: number;
+};
+
+export type DayStat = {
+    date: string;
+    wisprs: number;
+    users: number;
+    payments: number;
+};
+
+export type UserDetail = {
+    uid: string;
+    email: string;
+    displayName: string;
+    photoURL: string | null;
+    hintsRemaining: number;
+    createdAt: number;
+    lastLogin?: number;
+};
+
+export type DashboardStatsResponse = {
+    success: boolean;
+    data: DashboardStats;
+};
+
 // Update type definition
 export type DashboardStats = {
     totalUsers: number;
@@ -227,6 +256,12 @@ export async function getAdminUsersList(): Promise<{ success: boolean; users: Us
         console.error("Failed to fetch user list from Auth:", e);
         return { success: false, users: [] };
     }
+}
+
+export async function checkAdminAccess(email?: string | null): Promise<boolean> {
+    if (!email) return false;
+    const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim()) || [];
+    return adminEmails.includes(email);
 }
 
 // Debugging helper to check env vars on server

@@ -1,6 +1,6 @@
 'use server';
 
-import { getAdminDb } from '@/lib/admin-db';
+import { getAdminDb, getAdminAuth } from '@/lib/admin-db';
 import { Timestamp } from 'firebase-admin/firestore';
 
 export type DashboardStats = {
@@ -115,7 +115,11 @@ export async function getDashboardStats(): Promise<DashboardStatsResponse> {
         // 1. Total Counts & Header Stats
         const [usersSnap, wisprsSnap, confessionsSnap, paymentsSnap] = await Promise.all([
             db.collection('complimentOwners').count().get().catch(() => ({ data: () => ({ count: 0 }) })),
-            db.collection('wisprs').count().get().catch(() => ({ data: () => ({ count: 0 }) })),
+            // CRITICAL FIX: Use collectionGroup to count ALL complments across all users
+            db.collectionGroup('compliments').count().get().catch((e) => {
+                console.error("Wispr count failed:", e);
+                return { data: () => ({ count: 0 }) }
+            }),
             db.collection('confessions').count().get().catch(() => ({ data: () => ({ count: 0 }) })),
             db.collection('invoices').where('status', '==', 'PAID').count().get().catch(() => ({ data: () => ({ count: 0 }) }))
         ]);
@@ -135,8 +139,7 @@ export async function getDashboardStats(): Promise<DashboardStatsResponse> {
         let totalRevenue = 0;
         if (!revenueSnap.empty) {
             revenueSnap.docs.forEach((doc: any) => {
-                const data = doc.data();
-                totalRevenue += (data.amount || 0);
+                totalRevenue += (doc.data().amount || 0);
             });
         }
 
@@ -144,11 +147,15 @@ export async function getDashboardStats(): Promise<DashboardStatsResponse> {
         const activity: ActivityItem[] = [];
 
         // Fetch recent items
-        const [recentUsers, recentWisprs, recentConfessions, recentPayments] = await Promise.all([
+        const [recentUsers, recentConfessions, recentPayments, recentWisprs] = await Promise.all([
             db.collection('complimentOwners').orderBy('createdAt', 'desc').limit(5).get().catch(() => ({ docs: [] })),
-            db.collection('wisprs').orderBy('createdAt', 'desc').limit(5).get().catch(() => ({ docs: [] })),
             db.collection('confessions').orderBy('createdAt', 'desc').limit(5).get().catch(() => ({ docs: [] })),
-            db.collection('invoices').where('status', '==', 'PAID').orderBy('updatedAt', 'desc').limit(5).get().catch(() => ({ docs: [] }))
+            db.collection('invoices').where('status', '==', 'PAID').orderBy('updatedAt', 'desc').limit(5).get().catch(() => ({ docs: [] })),
+            // Try to get recent wisprs. Might fail if no index on collectionGroup.
+            db.collectionGroup('compliments').orderBy('createdAt', 'desc').limit(5).get().catch((e) => {
+                console.warn("Recent Wisprs fetch failed (likely missing index):", e);
+                return { docs: [] };
+            })
         ]);
 
         // Process Recent Items
@@ -330,49 +337,48 @@ export async function getDashboardStats(): Promise<DashboardStatsResponse> {
 
 export async function getAdminUsersList(): Promise<{ success: boolean; users: UserDetail[] }> {
     try {
+        const auth = getAdminAuth();
         const db = getAdminDb();
-        // Fetch ALL users (limit 1000 to cover all current potential users)
-        const usersSnap = await db.collection('complimentOwners')
-            .limit(1000)
-            .get();
 
-        const users: UserDetail[] = usersSnap.docs.map(doc => {
-            const data = doc.data();
+        // 1. Fetch Users from Authentication Service (Source of Truth for Identity)
+        const listUsersResult = await auth.listUsers(1000); // Fetch up to 1000 users
+        const authUsers = listUsersResult.users;
 
-            // Robust Name Resolution
-            let finalDisplayName: string | null = (data.displayName as string) || null;
-            if (!finalDisplayName) {
-                if (data.email) finalDisplayName = (data.email as string).split('@')[0];
-                else finalDisplayName = 'Нэргүй Хэрэглэгч';
-            }
+        // 2. Fetch Firestore Data for Hint Stats (Source of Truth for usage)
+        const statsSnapshot = await db.collection('complimentOwners').get();
+        const statsMap = new Map();
+        statsSnapshot.docs.forEach(doc => {
+            statsMap.set(doc.id, doc.data());
+        });
 
-            // Hint Calculation: 
-            // Default Daily: 5
-            // Used Today: data.hintsUsedToday || 0
-            // Bonus: data.bonusHints || 0
-            // Safest display:
+        // 3. Merge Data
+        const users: UserDetail[] = authUsers.map(u => {
+            const stats = statsMap.get(u.uid) || {};
+
+            // Hint Logic
             const daily = 5;
-            const usedToday = typeof data.hintsUsedToday === 'number' ? data.hintsUsedToday : 0;
-            const bonus = typeof data.bonusHints === 'number' ? data.bonusHints : 0;
+            const usedToday = typeof stats.hintsUsedToday === 'number' ? stats.hintsUsedToday : 0;
+            const bonus = typeof stats.bonusHints === 'number' ? stats.bonusHints : 0;
             const hintsRemaining = Math.max(0, (daily - usedToday)) + bonus;
 
             return {
-                uid: doc.id,
-                email: data.email || "Имэйлгүй",
-                displayName: finalDisplayName,
-                photoURL: data.photoURL || null,
+                uid: u.uid,
+                email: u.email || "Имэйлгүй",
+                displayName: u.displayName || "Нэргүй Хэрэглэгч",
+                photoURL: u.photoURL || null,
                 hintsRemaining: hintsRemaining,
-                createdAt: data.createdAt?.toMillis() || 0,
-                lastLogin: data.lastLogin?.toMillis()
+                createdAt: new Date(u.metadata.creationTime).getTime(),
+                lastLogin: u.metadata.lastSignInTime ? new Date(u.metadata.lastSignInTime).getTime() : undefined
             };
         });
 
-        // Sort in memory locally to avoid index requirement
+        // Sort by Created At Desc
         users.sort((a, b) => b.createdAt - a.createdAt);
 
         return { success: true, users };
+
     } catch (e) {
-        console.error("Failed to fetch user list", e);
+        console.error("Failed to fetch user list from Auth:", e);
         return { success: false, users: [] };
     }
 }

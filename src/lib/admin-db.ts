@@ -1,5 +1,6 @@
 import { initializeApp, getApps, cert, getApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
+import { getAuth } from 'firebase-admin/auth';
 
 const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 const clientEmailRaw = process.env.FIREBASE_CLIENT_EMAIL;
@@ -72,4 +73,11 @@ export function getAdminDb() {
         getApp();
     }
     return getFirestore();
+}
+
+export function getAdminAuth() {
+    if (!getApps().length) {
+        getAdminDb(); // Ensure app is initialized
+    }
+    return getAuth();
 }

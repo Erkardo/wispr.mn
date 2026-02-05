@@ -14,7 +14,8 @@ export const StoryPreview = forwardRef<HTMLDivElement, StoryPreviewProps>(({ mod
         <div
             ref={ref}
             className={cn(
-                "relative aspect-[9/16] w-full max-w-sm mx-auto rounded-2xl overflow-hidden flex flex-col justify-between items-center text-center shadow-2xl",
+                "relative aspect-[9/16] w-full overflow-hidden flex flex-col justify-between items-center text-center shadow-2xl",
+                mode === 'preview' ? "max-w-sm mx-auto rounded-2xl" : "rounded-none",
                 `bg-gradient-to-br ${design.gradient}`,
                 design.textColor
             )}
@@ -108,12 +109,14 @@ export const StoryPreview = forwardRef<HTMLDivElement, StoryPreviewProps>(({ mod
                 </div>
 
                 {/* Fake NGL "Send me a generic message" look */}
-                <div className="mt-4 bg-white/90 text-black px-6 py-4 rounded-xl shadow-xl max-w-[80%] backdrop-blur-sm">
-                    <div className="flex items-center gap-2 mb-2">
-                        <span className="text-2xl">🤫</span>
-                        <span className="font-bold">Надад wispr илгээгээрэй!</span>
+                {mode === 'preview' && (
+                    <div className="mt-4 bg-white/90 text-black px-6 py-4 rounded-xl shadow-xl max-w-[80%] backdrop-blur-sm">
+                        <div className="flex items-center gap-2 mb-2">
+                            <span className="text-2xl">🤫</span>
+                            <span className="font-bold">Надад wispr илгээгээрэй!</span>
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
 
             {/* Bottom Logo */}

@@ -56,7 +56,9 @@ export function StoryGenerator({ ownerData }: { ownerData: WithId<ComplimentOwne
       // Generate the image blob from the HIDDEN clean version
       const blob = await htmlToImage.toBlob(elementToCapture, {
         cacheBust: true,
-        pixelRatio: 3, // High quality for stories
+        pixelRatio: 1, // Standard, since we enforced 1080x1920 size
+        width: 1080,
+        height: 1920,
         skipFonts: false,
         style: { display: 'flex' } // Force display flex for proper capture even if hidden
       });
@@ -151,7 +153,7 @@ export function StoryGenerator({ ownerData }: { ownerData: WithId<ComplimentOwne
 
       {/* HIDDEN CAPTURE AREA (Off-screen, Clean Mode) */}
       {/* We use absolute positioning off-screen instead of display:none so it can render for capture */}
-      <div className="absolute top-0 left-[-9999px] w-[600px] h-[1067px] pointer-events-none opacity-0">
+      <div className="fixed top-0 left-[-9999px] w-[1080px] h-[1920px] pointer-events-none opacity-0">
         {/* Fixed width/height for consistent high-res output */}
         <StoryPreview
           ref={hiddenRef}

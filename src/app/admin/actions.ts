@@ -156,7 +156,7 @@ export async function getDashboardStats(): Promise<DashboardStatsResponse> {
             const data = d.data();
             activity.push({
                 type: 'user',
-                message: `New user: ${data.displayName || 'Anonymous'}`,
+                message: `Шинэ хэрэглэгч: ${data.displayName || 'Нэргүй'}`,
                 time: data.createdAt?.toMillis() || Date.now()
             });
         });
@@ -165,7 +165,7 @@ export async function getDashboardStats(): Promise<DashboardStatsResponse> {
             const data = d.data();
             activity.push({
                 type: 'wispr',
-                message: `New wispr sent`,
+                message: `Шинэ wispr илгээгдлээ`,
                 time: data.createdAt?.toMillis() || Date.now()
             });
         });
@@ -174,7 +174,7 @@ export async function getDashboardStats(): Promise<DashboardStatsResponse> {
             const data = d.data();
             activity.push({
                 type: 'confession',
-                message: `New confession`,
+                message: `Шинэ confession ирлээ`,
                 time: data.createdAt?.toMillis() || Date.now()
             });
         });
@@ -183,7 +183,7 @@ export async function getDashboardStats(): Promise<DashboardStatsResponse> {
             const data = d.data();
             activity.push({
                 type: 'payment',
-                message: `Payment: ${data.amount}₮`,
+                message: `Төлбөр: ${data.amount}₮`,
                 time: data.updatedAt?.toMillis() || Date.now()
             });
         });
@@ -343,7 +343,7 @@ export async function getAdminUsersList(): Promise<{ success: boolean; users: Us
             let finalDisplayName: string | null = (data.displayName as string) || null;
             if (!finalDisplayName) {
                 if (data.email) finalDisplayName = (data.email as string).split('@')[0];
-                else finalDisplayName = 'Anonymous User';
+                else finalDisplayName = 'Нэргүй Хэрэглэгч';
             }
 
             // Hint Calculation: 
@@ -358,7 +358,7 @@ export async function getAdminUsersList(): Promise<{ success: boolean; users: Us
 
             return {
                 uid: doc.id,
-                email: data.email || null,
+                email: data.email || "Имэйлгүй",
                 displayName: finalDisplayName,
                 photoURL: data.photoURL || null,
                 hintsRemaining: hintsRemaining,

@@ -45,7 +45,7 @@ export default function AdminPage() {
             if (authLoading) return;
 
             if (!user) {
-                setError("You must be logged in to view this page.");
+                setError("Та энэ хуудсыг үзэхийн тулд нэвтэрсэн байх шаардлагатай.");
                 setPageLoading(false);
                 return;
             }
@@ -56,7 +56,7 @@ export default function AdminPage() {
                 const access = await checkAdminAccess(token);
 
                 if (!access.isAdmin) {
-                    setError("Access Denied: You are not an admin.");
+                    setError("Хандах эрхгүй: Та админ биш байна.");
                     setPageLoading(false);
                     return;
                 }
@@ -66,7 +66,7 @@ export default function AdminPage() {
                 if (response.success && response.data) {
                     setStats(response.data);
                 } else {
-                    setError("Failed to load dashboard data.");
+                    setError("Мэдээлэл ачааллахад алдаа гарлаа.");
                 }
 
                 // 3. Fetch Users List
@@ -78,7 +78,7 @@ export default function AdminPage() {
 
             } catch (err) {
                 console.error("Admin init error:", err);
-                setError("An unexpected error occurred.");
+                setError("Тодорхойгүй алдаа гарлаа.");
             } finally {
                 setPageLoading(false);
             }
@@ -90,7 +90,7 @@ export default function AdminPage() {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
                 <Loader2 className="h-12 w-12 animate-spin text-indigo-600 mb-4" />
-                <p className="text-gray-500 font-medium">Loading Dashboard...</p>
+                <p className="text-gray-500 font-medium">Удирдлагын самбарыг ачааллаж байна...</p>
             </div>
         );
     }
@@ -100,10 +100,10 @@ export default function AdminPage() {
             <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">
                 <div className="bg-white p-8 rounded-2xl shadow-xl text-center max-w-md w-full border border-red-100">
                     <Shield className="h-16 w-16 text-red-500 mx-auto mb-4" />
-                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Access Restricted</h1>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Хандах эрхгүй</h1>
                     <p className="text-gray-600 mb-6">{error}</p>
                     <Button onClick={() => window.location.href = '/'} variant="outline">
-                        Return to Home
+                        Нүүр хуудас руу буцах
                     </Button>
                 </div>
             </div>
@@ -121,19 +121,19 @@ export default function AdminPage() {
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900">Dashboard</h1>
-                        <p className="text-sm md:text-base text-muted-foreground">System Overview & Performance</p>
+                        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900">Удирдлагын Самбар</h1>
+                        <p className="text-sm md:text-base text-muted-foreground">Системийн ерөнхий төлөв байдал.</p>
                     </div>
                     <Badge variant="outline" className="w-fit px-3 py-1 h-8 bg-white self-start md:self-center">
-                        {new Date().toLocaleDateString()}
+                        {new Date().toLocaleDateString('mn-MN')}
                     </Badge>
                 </div>
 
                 <Tabs defaultValue="overview" className="space-y-6">
                     <TabsList className="bg-white p-1 border shadow-sm w-full md:w-auto h-auto min-h-[44px] flex flex-wrap md:flex-nowrap justify-start gap-1">
-                        <TabsTrigger value="overview" className="flex-1 md:flex-none py-2">Overview</TabsTrigger>
-                        <TabsTrigger value="users" className="flex-1 md:flex-none py-2">Users ({usersList.length})</TabsTrigger>
-                        <TabsTrigger value="finance" className="flex-1 md:flex-none py-2">Finance</TabsTrigger>
+                        <TabsTrigger value="overview" className="flex-1 md:flex-none py-2">Тойм</TabsTrigger>
+                        <TabsTrigger value="users" className="flex-1 md:flex-none py-2">Хэрэглэгчид ({usersList.length})</TabsTrigger>
+                        <TabsTrigger value="finance" className="flex-1 md:flex-none py-2">Санхүү</TabsTrigger>
                     </TabsList>
 
                     {/* OVERVIEW TAB */}
@@ -150,7 +150,7 @@ export default function AdminPage() {
                                 <CardContent className="p-6 flex flex-col justify-between h-full">
                                     <div className="flex justify-between items-start">
                                         <div>
-                                            <p className="text-indigo-100 font-medium text-sm">Total Revenue</p>
+                                            <p className="text-indigo-100 font-medium text-sm">Нийт Орлого</p>
                                             <h3 className="text-3xl font-bold mt-2 tracking-tight">
                                                 {stats?.totalRevenue.toLocaleString()}₮
                                             </h3>
@@ -161,7 +161,7 @@ export default function AdminPage() {
                                     </div>
                                     <div className="mt-4 text-xs text-indigo-100 flex items-center">
                                         <TrendingUp className="h-3 w-3 mr-1" />
-                                        Lifetime Earnings
+                                        Нийт олсон орлого
                                     </div>
                                 </CardContent>
                             </Card>
@@ -171,7 +171,7 @@ export default function AdminPage() {
                                 <CardContent className="p-6 flex flex-col justify-between h-full">
                                     <div className="flex justify-between items-start">
                                         <div>
-                                            <p className="text-gray-500 font-medium text-sm">Total Users</p>
+                                            <p className="text-gray-500 font-medium text-sm">Нийт Хэрэглэгчид</p>
                                             <h3 className="text-3xl font-bold mt-2 text-gray-900">{stats?.totalUsers}</h3>
                                         </div>
                                         <div className="bg-blue-50 p-2 rounded-lg">
@@ -180,7 +180,7 @@ export default function AdminPage() {
                                     </div>
                                     <div className="mt-4 text-xs text-green-600 font-medium flex items-center">
                                         <ArrowUpRight className="h-3 w-3 mr-1" />
-                                        {usersList.length > 0 ? usersList.length : stats?.totalUsers} Active
+                                        {usersList.length > 0 ? usersList.length : stats?.totalUsers} Идэвхтэй хаяг
                                     </div>
                                 </CardContent>
                             </Card>
@@ -190,7 +190,7 @@ export default function AdminPage() {
                                 <CardContent className="p-6 flex flex-col justify-between h-full">
                                     <div className="flex justify-between items-start">
                                         <div>
-                                            <p className="text-gray-500 font-medium text-sm">Wisprs Sent</p>
+                                            <p className="text-gray-500 font-medium text-sm">Илгээсэн Wispr</p>
                                             <h3 className="text-3xl font-bold mt-2 text-gray-900">{stats?.totalWisprs}</h3>
                                         </div>
                                         <div className="bg-pink-50 p-2 rounded-lg">
@@ -198,7 +198,7 @@ export default function AdminPage() {
                                         </div>
                                     </div>
                                     <div className="mt-4 text-xs text-gray-500">
-                                        Hints utilized
+                                        Ашигласан Hint
                                     </div>
                                 </CardContent>
                             </Card>
@@ -216,7 +216,7 @@ export default function AdminPage() {
                                         </div>
                                     </div>
                                     <div className="mt-4 text-xs text-gray-500">
-                                        Anonymous posts
+                                        Нэрээ нууцалсан мессеж
                                     </div>
                                 </CardContent>
                             </Card>
@@ -226,8 +226,8 @@ export default function AdminPage() {
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             <Card className="border-none shadow-sm col-span-1">
                                 <CardHeader>
-                                    <CardTitle>Revenue Trend</CardTitle>
-                                    <CardDescription>Income over last 7 days</CardDescription>
+                                    <CardTitle>Орлогын түүх</CardTitle>
+                                    <CardDescription>Сүүлийн 7 хоногийн орлого</CardDescription>
                                 </CardHeader>
                                 <CardContent className="h-[250px] w-full pl-0">
                                     <ResponsiveContainer width="100%" height="100%">
@@ -240,7 +240,7 @@ export default function AdminPage() {
                                             </defs>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                                             <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#aaa' }} />
-                                            <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+                                            <Tooltip formatter={(value: any) => [`${value}₮`, 'Орлого']} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
                                             <Area type="monotone" dataKey="payments" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
                                         </AreaChart>
                                     </ResponsiveContainer>
@@ -249,8 +249,8 @@ export default function AdminPage() {
 
                             <Card className="border-none shadow-sm col-span-1">
                                 <CardHeader>
-                                    <CardTitle>Activity</CardTitle>
-                                    <CardDescription>New Users vs Wisprs</CardDescription>
+                                    <CardTitle>Идэвх</CardTitle>
+                                    <CardDescription>Шинэ хэрэглэгч болон Wispr</CardDescription>
                                 </CardHeader>
                                 <CardContent className="h-[250px] w-full pl-0">
                                     <ResponsiveContainer width="100%" height="100%">
@@ -258,8 +258,8 @@ export default function AdminPage() {
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                                             <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#aaa' }} />
                                             <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-                                            <Bar dataKey="wisprs" name="Wisprs" fill="#ec4899" radius={[4, 4, 0, 0]} barSize={20} />
-                                            <Bar dataKey="users" name="Users" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={20} />
+                                            <Bar dataKey="wisprs" name="Шинэ Wispr" fill="#ec4899" radius={[4, 4, 0, 0]} barSize={20} />
+                                            <Bar dataKey="users" name="Шинэ Хэрэглэгч" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={20} />
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </CardContent>
@@ -272,13 +272,13 @@ export default function AdminPage() {
                         <Card className="border-none shadow-sm">
                             <CardHeader className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
                                 <div>
-                                    <CardTitle>User Directory</CardTitle>
-                                    <CardDescription>Management of registered accounts</CardDescription>
+                                    <CardTitle>Хэрэглэгчийн Жагсаалт</CardTitle>
+                                    <CardDescription>Бүртгэлтэй хэрэглэгчдийг удирдах</CardDescription>
                                 </div>
                                 <div className="relative w-full md:w-64">
                                     <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
                                     <Input
-                                        placeholder="Search by name or email..."
+                                        placeholder="Нэр эсвэл имэйлээр хайх..."
                                         className="pl-9 bg-gray-50 border-gray-200"
                                         value={userSearch}
                                         onChange={(e) => setUserSearch(e.target.value)}
@@ -291,11 +291,11 @@ export default function AdminPage() {
                                     <Table>
                                         <TableHeader className="bg-gray-50/50">
                                             <TableRow>
-                                                <TableHead className="w-[250px]">User Profile</TableHead>
-                                                <TableHead>Joined</TableHead>
-                                                <TableHead>Balance</TableHead>
-                                                <TableHead>Last Active</TableHead>
-                                                <TableHead className="text-right">Action</TableHead>
+                                                <TableHead className="w-[250px]">Хэрэглэгч</TableHead>
+                                                <TableHead>Бүртгүүлсэн</TableHead>
+                                                <TableHead>Үлдэгдэл</TableHead>
+                                                <TableHead>Сүүлд орсон</TableHead>
+                                                <TableHead className="text-right">Үйлдэл</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -310,27 +310,27 @@ export default function AdminPage() {
                                                                 </AvatarFallback>
                                                             </Avatar>
                                                             <div className="flex flex-col max-w-[150px] sm:max-w-none">
-                                                                <span className="font-medium text-sm text-gray-900 truncate" title={u.displayName || 'Anonymous'}>
-                                                                    {u.displayName || 'Anonymous'}
+                                                                <span className="font-medium text-sm text-gray-900 truncate" title={u.displayName || 'Нэргүй'}>
+                                                                    {u.displayName || 'Нэргүй'}
                                                                 </span>
-                                                                <span className="text-xs text-gray-500 truncate" title={u.email || 'No Email'}>
-                                                                    {u.email || 'No email attached'}
+                                                                <span className="text-xs text-gray-500 truncate" title={u.email || 'Имэйлгүй'}>
+                                                                    {u.email || 'Имэйлгүй'}
                                                                 </span>
                                                             </div>
                                                         </div>
                                                     </TableCell>
                                                     <TableCell className="text-gray-500 text-sm whitespace-nowrap">
-                                                        {new Date(u.createdAt).toLocaleDateString()}
+                                                        {new Date(u.createdAt).toLocaleDateString('mn-MN')}
                                                     </TableCell>
                                                     <TableCell>
                                                         <div className="flex items-center gap-2">
                                                             <Badge variant={u.hintsRemaining > 5 ? "default" : "secondary"}>
-                                                                {u.hintsRemaining} Hints
+                                                                {u.hintsRemaining} Hint
                                                             </Badge>
                                                         </div>
                                                     </TableCell>
                                                     <TableCell className="text-gray-500 text-sm whitespace-nowrap">
-                                                        {u.lastLogin ? new Date(u.lastLogin).toLocaleDateString() : '-'}
+                                                        {u.lastLogin ? new Date(u.lastLogin).toLocaleDateString('mn-MN') : '-'}
                                                     </TableCell>
                                                     <TableCell className="text-right">
                                                         <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400">
@@ -341,7 +341,7 @@ export default function AdminPage() {
                                             )) : (
                                                 <TableRow>
                                                     <TableCell colSpan={5} className="h-32 text-center text-gray-500">
-                                                        No users found.
+                                                        Хэрэглэгч олдсонгүй.
                                                     </TableCell>
                                                 </TableRow>
                                             )}
@@ -358,8 +358,8 @@ export default function AdminPage() {
                             <Card className="border-none shadow-sm md:col-span-1 bg-green-50/50 border-green-100">
                                 <CardHeader className="pb-2">
                                     <div className="text-xs font-semibold text-green-600 uppercase tracking-wider">Monetization</div>
-                                    <CardTitle className="text-lg font-bold text-gray-900">Paid Hints</CardTitle>
-                                    <CardDescription>Total hints purchased</CardDescription>
+                                    <CardTitle className="text-lg font-bold text-gray-900">Зарагдсан Hint</CardTitle>
+                                    <CardDescription>Худалдаж авсан нийт Hint</CardDescription>
                                 </CardHeader>
                                 <CardContent>
                                     <div className="text-4xl font-black text-green-700">
@@ -371,15 +371,15 @@ export default function AdminPage() {
                             <Card className="border-none shadow-sm md:col-span-1 bg-blue-50/50 border-blue-100">
                                 <CardHeader className="pb-2">
                                     <div className="text-xs font-semibold text-blue-600 uppercase tracking-wider">Engagement</div>
-                                    <CardTitle className="text-lg font-bold text-gray-900">Total Usage</CardTitle>
-                                    <CardDescription>Hints consumed by users</CardDescription>
+                                    <CardTitle className="text-lg font-bold text-gray-900">Нийт Ашиглалт</CardTitle>
+                                    <CardDescription>Хэрэглэгчдийн ашигласан Hint</CardDescription>
                                 </CardHeader>
                                 <CardContent>
                                     <div className="text-4xl font-black text-blue-700">
                                         {stats?.hintStats?.hintsUsed || 0}
                                     </div>
                                     <p className="text-xs text-blue-600/80 mt-2">
-                                        Mapped to Wisprs sent
+                                        Илгээсэн Wispr-тэй дүйцнэ
                                     </p>
                                 </CardContent>
                             </Card>
@@ -387,8 +387,8 @@ export default function AdminPage() {
                             <Card className="border-none shadow-sm md:col-span-1 bg-purple-50/50 border-purple-100">
                                 <CardHeader className="pb-2">
                                     <div className="text-xs font-semibold text-purple-600 uppercase tracking-wider">System</div>
-                                    <CardTitle className="text-lg font-bold text-gray-900">Bonus Distributed</CardTitle>
-                                    <CardDescription>Free hints given</CardDescription>
+                                    <CardTitle className="text-lg font-bold text-gray-900">Бонус Hint</CardTitle>
+                                    <CardDescription>Системээс өгсөн үнэгүй Hint</CardDescription>
                                 </CardHeader>
                                 <CardContent>
                                     <div className="text-4xl font-black text-purple-700">
@@ -401,8 +401,8 @@ export default function AdminPage() {
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             <Card className="border-none shadow-sm">
                                 <CardHeader>
-                                    <CardTitle>Top Spenders (Recent)</CardTitle>
-                                    <CardDescription>Latest confirmed payments</CardDescription>
+                                    <CardTitle>Топ Худалдан авалтууд</CardTitle>
+                                    <CardDescription>Баталгаажсан сүүлийн төлбөрүүд</CardDescription>
                                 </CardHeader>
                                 <CardContent>
                                     <div className="space-y-4">
@@ -416,17 +416,17 @@ export default function AdminPage() {
                                                             <DollarSign className="h-4 w-4" />
                                                         </div>
                                                         <div>
-                                                            <p className="text-sm font-medium text-gray-900">Paid Invoice</p>
-                                                            <p className="text-xs text-gray-500">{new Date(p.time).toLocaleDateString()}</p>
+                                                            <p className="text-sm font-medium text-gray-900">Төлсөн Нэхэмжлэх</p>
+                                                            <p className="text-xs text-gray-500">{new Date(p.time).toLocaleDateString('mn-MN')}</p>
                                                         </div>
                                                     </div>
                                                     <span className="font-bold text-green-700">
-                                                        {p.message.replace('Payment: ', '')}
+                                                        {p.message.replace('Төлбөр: ', '')}
                                                     </span>
                                                 </div>
                                             ))}
                                         {(!stats?.recentActivity.some(a => a.type === 'payment')) && (
-                                            <p className="text-center text-gray-500 py-8">No recent payments to display.</p>
+                                            <p className="text-center text-gray-500 py-8">Төлбөр алга.</p>
                                         )}
                                     </div>
                                 </CardContent>

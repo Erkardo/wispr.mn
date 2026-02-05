@@ -178,9 +178,15 @@ export default function AdminPage() {
                                             <Users className="h-5 w-5 text-blue-600" />
                                         </div>
                                     </div>
-                                    <div className="mt-4 text-xs text-green-600 font-medium flex items-center">
-                                        <ArrowUpRight className="h-3 w-3 mr-1" />
-                                        {usersList.length > 0 ? usersList.length : stats?.totalUsers} Идэвхтэй хаяг
+                                    <div className="mt-4 flex flex-col gap-1">
+                                        <div className="text-xs text-green-600 font-medium flex items-center">
+                                            <UserPlus className="h-3 w-3 mr-1" />
+                                            {stats?.userBreakdown?.verified || 0} Бүртгэлтэй
+                                        </div>
+                                        <div className="text-xs text-gray-400 font-medium flex items-center">
+                                            <Users className="h-3 w-3 mr-1" />
+                                            {stats?.userBreakdown?.anonymous || 0} Зочин
+                                        </div>
                                     </div>
                                 </CardContent>
                             </Card>

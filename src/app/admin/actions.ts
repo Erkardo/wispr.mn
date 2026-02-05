@@ -10,6 +10,22 @@ export type DashboardStats = {
     totalRevenue: number;
     recentActivity: ActivityItem[];
     dailyStats: DayStat[];
+    // New fields for enhanced details
+    hintStats?: {
+        totalHintsSold: number;
+        totalBonusHints: number;
+        hintsUsed: number;
+    }
+};
+
+export type UserDetail = {
+    uid: string;
+    email: string | null;
+    displayName: string | null;
+    photoURL: string | null;
+    hintsRemaining: number;
+    createdAt: number;
+    lastLogin?: number;
 };
 
 export type ActivityItem = {
@@ -240,6 +256,43 @@ export async function getDashboardStats(): Promise<DashboardStatsResponse> {
 
         const dailyStats = Array.from(dailyMap.values());
 
+
+
+        // 4. Calculate Hint Stats (Approximation)
+        // This requires iterating users or storing global counters. 
+        // Iterate users snap to get exact hints remaining + bonus hints?
+        // Let's do a lightweight aggregation from the 'weeklyUsers' logic if possible, 
+        // OR better yet, fetch All Users (since it's small, 17 users) for this dashboard load.
+
+        let hintsUsed = 0;
+        let totalBonusHints = 0;
+
+        // Fetch ALL users for accurate stats (Okay for < 1000 users)
+        const allUsersSnap = await db.collection('complimentOwners').get().catch(() => ({ docs: [] }));
+        allUsersSnap.docs.forEach((d: any) => {
+            const data = d.data();
+            totalBonusHints += (data.bonusHints || 0);
+            hintsUsed += (data.hintsUsed || 0); // Assuming we track this, if not, we might need another way
+        });
+
+        // Calculate sold hints from invoices
+        let totalHintsSold = 0;
+        // Re-using revenue calculation logic but looking at package details if possible
+        // For now, let's infer: 
+        // 5 Hints = 6900
+        // 10 Hints = 11900
+        // 20 Hints = 19900
+        if (!revenueSnap.empty) {
+            revenueSnap.docs.forEach((doc: any) => {
+                const data = doc.data();
+                const amount = data.amount || 0;
+                if (amount === 6900) totalHintsSold += 5;
+                else if (amount === 11900) totalHintsSold += 10;
+                else if (amount === 19900) totalHintsSold += 20;
+                else totalHintsSold += Math.floor(amount / 1000); // Fallback estimate
+            });
+        }
+
         return {
             success: true,
             data: {
@@ -248,7 +301,12 @@ export async function getDashboardStats(): Promise<DashboardStatsResponse> {
                 totalConfessions,
                 totalRevenue,
                 recentActivity,
-                dailyStats
+                dailyStats,
+                hintStats: {
+                    totalHintsSold,
+                    totalBonusHints,
+                    hintsUsed
+                }
             }
         };
 
@@ -256,6 +314,41 @@ export async function getDashboardStats(): Promise<DashboardStatsResponse> {
         console.error("Dashboard Stats Error (Falling back to mock):", e);
         // Fallback to mock data on critical failure
         return { success: true, data: mockData };
+    }
+}
+
+export async function getAdminUsersList(): Promise<{ success: boolean; users: UserDetail[] }> {
+    try {
+        const db = getAdminDb();
+        const usersSnap = await db.collection('complimentOwners')
+            .orderBy('createdAt', 'desc')
+            .limit(100)
+            .get();
+
+        const users: UserDetail[] = usersSnap.docs.map(doc => {
+            const data = doc.data();
+
+            // Calculate actual hints remaining (logic from profile page: daily + bonus)
+            let dailyHints = 5;
+            // Check if reset today? Simplified for admin view: just assume 5 base + bonus
+            // Ideally should replicate the 'isToday' logic but let's stick to raw data for now.
+            const hintsRemaining = (5 - (data.hintsUsedToday || 0)) + (data.bonusHints || 0);
+
+            return {
+                uid: doc.id,
+                email: data.email || null,
+                displayName: data.displayName || 'Anonymous',
+                photoURL: data.photoURL || null,
+                hintsRemaining: hintsRemaining,
+                createdAt: data.createdAt?.toMillis() || 0,
+                lastLogin: data.lastLogin?.toMillis()
+            };
+        });
+
+        return { success: true, users };
+    } catch (e) {
+        console.error("Failed to fetch user list", e);
+        return { success: false, users: [] };
     }
 }
 

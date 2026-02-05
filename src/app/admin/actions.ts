@@ -275,40 +275,34 @@ export async function getDashboardStats(): Promise<DashboardStatsResponse> {
 
 
 
-        // 4. Calculate Hint Stats (Approximation)
-        // This requires iterating users or storing global counters. 
-        // Iterate users snap to get exact hints remaining + bonus hints?
-        // Let's do a lightweight aggregation from the 'weeklyUsers' logic if possible, 
-        // OR better yet, fetch All Users (since it's small, 17 users) for this dashboard load.
-
-        let hintsUsed = 0;
+        // 4. Calculate Hint Stats
+        // "Hints Used" is effectively "Total Wisprs" sent (assuming 1 hint per wispr)
+        // This is more accurate than summing a user field that might not exist.
+        const hintsUsed = totalWisprs;
         let totalBonusHints = 0;
 
-        // Fetch ALL users for accurate stats (Okay for < 1000 users)
+        // Fetch ALL users for accurate Bonus stats
         const allUsersSnap = await db.collection('complimentOwners').get().catch(() => ({ docs: [] }));
         allUsersSnap.docs.forEach((d: any) => {
             const data = d.data();
             totalBonusHints += (data.bonusHints || 0);
-            hintsUsed += (data.hintsUsed || 0); // Assuming we track this, if not, we might need another way
         });
 
         // Calculate sold hints from invoices
         let totalHintsSold = 0;
-        // Re-using revenue calculation logic but looking at package details if possible
-        // For now, let's infer: 
-        // 5 Hints = 6900
-        // 10 Hints = 11900
-        // 20 Hints = 19900
+        // Invoices analysis
         if (!revenueSnap.empty) {
             revenueSnap.docs.forEach((doc: any) => {
                 const data = doc.data();
                 const amount = data.amount || 0;
+                // Specific package matching
                 if (amount === 6900) totalHintsSold += 5;
                 else if (amount === 11900) totalHintsSold += 10;
                 else if (amount === 19900) totalHintsSold += 20;
-                else totalHintsSold += Math.floor(amount / 1000); // Fallback estimate
+                else totalHintsSold += Math.floor(amount / 1000); // Fallback: 1 hint per 1000₮
             });
         }
+
 
         return {
             success: true,
@@ -337,22 +331,35 @@ export async function getDashboardStats(): Promise<DashboardStatsResponse> {
 export async function getAdminUsersList(): Promise<{ success: boolean; users: UserDetail[] }> {
     try {
         const db = getAdminDb();
+        // Fetch ALL users (limit 1000 to cover all current potential users)
         const usersSnap = await db.collection('complimentOwners')
-            .limit(100)
+            .limit(1000)
             .get();
 
         const users: UserDetail[] = usersSnap.docs.map(doc => {
             const data = doc.data();
-            // ... mapping logic remains the same ...
-            // Calculate actual hints remaining (logic from profile page: daily + bonus)
-            // Check if reset today? Simplified for admin view: just assume 5 base + bonus
-            // Ideally should replicate the 'isToday' logic but let's stick to raw data for now.
-            const hintsRemaining = (5 - (data.hintsUsedToday || 0)) + (data.bonusHints || 0);
+
+            // Robust Name Resolution
+            let finalDisplayName: string | null = (data.displayName as string) || null;
+            if (!finalDisplayName) {
+                if (data.email) finalDisplayName = (data.email as string).split('@')[0];
+                else finalDisplayName = 'Anonymous User';
+            }
+
+            // Hint Calculation: 
+            // Default Daily: 5
+            // Used Today: data.hintsUsedToday || 0
+            // Bonus: data.bonusHints || 0
+            // Safest display:
+            const daily = 5;
+            const usedToday = typeof data.hintsUsedToday === 'number' ? data.hintsUsedToday : 0;
+            const bonus = typeof data.bonusHints === 'number' ? data.bonusHints : 0;
+            const hintsRemaining = Math.max(0, (daily - usedToday)) + bonus;
 
             return {
                 uid: doc.id,
                 email: data.email || null,
-                displayName: data.displayName || 'Anonymous',
+                displayName: finalDisplayName,
                 photoURL: data.photoURL || null,
                 hintsRemaining: hintsRemaining,
                 createdAt: data.createdAt?.toMillis() || 0,
@@ -364,8 +371,6 @@ export async function getAdminUsersList(): Promise<{ success: boolean; users: Us
         users.sort((a, b) => b.createdAt - a.createdAt);
 
         return { success: true, users };
-
-
     } catch (e) {
         console.error("Failed to fetch user list", e);
         return { success: false, users: [] };

@@ -36,9 +36,8 @@ export default function AdminPage() {
     const [usersList, setUsersList] = useState<UserDetail[]>([]);
     const [pageLoading, setPageLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [isAdmin, setIsAdmin] = useState(false);
 
-    // Search state for users
+    // Search state
     const [userSearch, setUserSearch] = useState('');
 
     useEffect(() => {
@@ -46,7 +45,6 @@ export default function AdminPage() {
             if (authLoading) return;
 
             if (!user) {
-                // Not logged in
                 setError("You must be logged in to view this page.");
                 setPageLoading(false);
                 return;
@@ -55,7 +53,6 @@ export default function AdminPage() {
             try {
                 // 1. Get Token & Check Access
                 const token = await user.getIdToken();
-                // We pass the token to the server action
                 const access = await checkAdminAccess(token);
 
                 if (!access.isAdmin) {
@@ -63,7 +60,6 @@ export default function AdminPage() {
                     setPageLoading(false);
                     return;
                 }
-                setIsAdmin(true);
 
                 // 2. Fetch Dashboard Stats
                 const response = await getDashboardStats();
@@ -73,10 +69,11 @@ export default function AdminPage() {
                     setError("Failed to load dashboard data.");
                 }
 
-                // 3. Fetch Users List (for the Users tab)
+                // 3. Fetch Users List
                 const usersResp = await getAdminUsersList();
                 if (usersResp.success) {
                     setUsersList(usersResp.users);
+                    console.log("Users fetched:", usersResp.users.length);
                 }
 
             } catch (err) {
@@ -93,7 +90,7 @@ export default function AdminPage() {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
                 <Loader2 className="h-12 w-12 animate-spin text-indigo-600 mb-4" />
-                <p className="text-gray-500 font-medium">Verifying admin access & loading data...</p>
+                <p className="text-gray-500 font-medium">Loading Dashboard...</p>
             </div>
         );
     }
@@ -124,276 +121,227 @@ export default function AdminPage() {
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Dashboard</h1>
-                        <p className="text-muted-foreground">Welcome back. Overview of system performance.</p>
+                        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900">Dashboard</h1>
+                        <p className="text-sm md:text-base text-muted-foreground">System Overview & Performance</p>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="px-3 py-1 h-8 bg-white">
-                            {new Date().toLocaleDateString()}
-                        </Badge>
-                    </div>
+                    <Badge variant="outline" className="w-fit px-3 py-1 h-8 bg-white self-start md:self-center">
+                        {new Date().toLocaleDateString()}
+                    </Badge>
                 </div>
 
-                <Tabs defaultValue="overview" className="space-y-4">
-                    <TabsList className="bg-white p-1 border shadow-sm w-full md:w-auto overflow-x-auto flex justify-start">
-                        <TabsTrigger value="overview" className="flex-1 md:flex-none">Overview</TabsTrigger>
-                        <TabsTrigger value="users" className="flex-1 md:flex-none">Users ({usersList.length})</TabsTrigger>
-                        <TabsTrigger value="finance" className="flex-1 md:flex-none">Finance & Hints</TabsTrigger>
+                <Tabs defaultValue="overview" className="space-y-6">
+                    <TabsList className="bg-white p-1 border shadow-sm w-full md:w-auto h-auto min-h-[44px] flex flex-wrap md:flex-nowrap justify-start gap-1">
+                        <TabsTrigger value="overview" className="flex-1 md:flex-none py-2">Overview</TabsTrigger>
+                        <TabsTrigger value="users" className="flex-1 md:flex-none py-2">Users ({usersList.length})</TabsTrigger>
+                        <TabsTrigger value="finance" className="flex-1 md:flex-none py-2">Finance</TabsTrigger>
                     </TabsList>
 
                     {/* OVERVIEW TAB */}
                     <TabsContent value="overview" className="space-y-6">
-                        {/* KPI Cards */}
+                        {/* 
+                           Bulletproof Mobile Layout: 
+                           Start with grid-cols-1 (1 card per row) on mobile.
+                           Switch to grid-cols-2 on sm (>640px).
+                           Switch to grid-cols-4 on lg (>1024px).
+                        */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <Card className="border-none shadow-sm bg-gradient-to-br from-indigo-500 to-purple-600 text-white overflow-hidden relative group">
-                                <CardContent className="p-6">
-                                    <div className="flex items-center justify-between">
+                            {/* Revenue Card (Gradient) */}
+                            <Card className="border-none shadow-sm bg-gradient-to-br from-indigo-500 to-purple-600 text-white relative overflow-hidden">
+                                <CardContent className="p-6 flex flex-col justify-between h-full">
+                                    <div className="flex justify-between items-start">
                                         <div>
                                             <p className="text-indigo-100 font-medium text-sm">Total Revenue</p>
-                                            <h3 className="text-3xl font-bold mt-2">
+                                            <h3 className="text-3xl font-bold mt-2 tracking-tight">
                                                 {stats?.totalRevenue.toLocaleString()}₮
                                             </h3>
                                         </div>
-                                        <div className="bg-white/20 p-3 rounded-xl backdrop-blur-sm">
-                                            <DollarSign className="h-6 w-6 text-white" />
+                                        <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
+                                            <DollarSign className="h-5 w-5 text-white" />
                                         </div>
                                     </div>
-                                    <div className="mt-4 flex items-center text-xs text-indigo-100">
+                                    <div className="mt-4 text-xs text-indigo-100 flex items-center">
                                         <TrendingUp className="h-3 w-3 mr-1" />
-                                        <span>+12.5% from last month</span>
+                                        Lifetime Earnings
                                     </div>
                                 </CardContent>
                             </Card>
 
-                            <Card className="border-none shadow-sm bg-white hover:shadow-md transition-shadow">
-                                <CardContent className="p-6">
-                                    <div className="flex items-center justify-between">
+                            {/* Users Card */}
+                            <Card className="border-none shadow-sm bg-white">
+                                <CardContent className="p-6 flex flex-col justify-between h-full">
+                                    <div className="flex justify-between items-start">
                                         <div>
                                             <p className="text-gray-500 font-medium text-sm">Total Users</p>
                                             <h3 className="text-3xl font-bold mt-2 text-gray-900">{stats?.totalUsers}</h3>
                                         </div>
-                                        <div className="bg-blue-50 p-3 rounded-xl">
-                                            <Users className="h-6 w-6 text-blue-600" />
+                                        <div className="bg-blue-50 p-2 rounded-lg">
+                                            <Users className="h-5 w-5 text-blue-600" />
                                         </div>
                                     </div>
-                                    <div className="mt-4 flex items-center text-xs text-green-600 font-medium">
+                                    <div className="mt-4 text-xs text-green-600 font-medium flex items-center">
                                         <ArrowUpRight className="h-3 w-3 mr-1" />
-                                        <span>Active accounts</span>
+                                        {usersList.length > 0 ? usersList.length : stats?.totalUsers} Active
                                     </div>
                                 </CardContent>
                             </Card>
 
-                            <Card className="border-none shadow-sm bg-white hover:shadow-md transition-shadow">
-                                <CardContent className="p-6">
-                                    <div className="flex items-center justify-between">
+                            {/* Wisprs Card */}
+                            <Card className="border-none shadow-sm bg-white">
+                                <CardContent className="p-6 flex flex-col justify-between h-full">
+                                    <div className="flex justify-between items-start">
                                         <div>
-                                            <p className="text-gray-500 font-medium text-sm">Total Wisprs</p>
+                                            <p className="text-gray-500 font-medium text-sm">Wisprs Sent</p>
                                             <h3 className="text-3xl font-bold mt-2 text-gray-900">{stats?.totalWisprs}</h3>
                                         </div>
-                                        <div className="bg-pink-50 p-3 rounded-xl">
-                                            <MessageSquare className="h-6 w-6 text-pink-600" />
+                                        <div className="bg-pink-50 p-2 rounded-lg">
+                                            <MessageSquare className="h-5 w-5 text-pink-600" />
                                         </div>
                                     </div>
-                                    <div className="mt-4 flex items-center text-xs text-gray-500">
-                                        <span>Hints sent</span>
+                                    <div className="mt-4 text-xs text-gray-500">
+                                        Hints utilized
                                     </div>
                                 </CardContent>
                             </Card>
 
-                            <Card className="border-none shadow-sm bg-white hover:shadow-md transition-shadow">
-                                <CardContent className="p-6">
-                                    <div className="flex items-center justify-between">
+                            {/* Confessions Card */}
+                            <Card className="border-none shadow-sm bg-white">
+                                <CardContent className="p-6 flex flex-col justify-between h-full">
+                                    <div className="flex justify-between items-start">
                                         <div>
                                             <p className="text-gray-500 font-medium text-sm">Confessions</p>
                                             <h3 className="text-3xl font-bold mt-2 text-gray-900">{stats?.totalConfessions}</h3>
                                         </div>
-                                        <div className="bg-orange-50 p-3 rounded-xl">
-                                            <Activity className="h-6 w-6 text-orange-600" />
+                                        <div className="bg-orange-50 p-2 rounded-lg">
+                                            <Activity className="h-5 w-5 text-orange-600" />
                                         </div>
                                     </div>
-                                    <div className="mt-4 flex items-center text-xs text-gray-500">
-                                        <span>Anonymous messages</span>
+                                    <div className="mt-4 text-xs text-gray-500">
+                                        Anonymous posts
                                     </div>
                                 </CardContent>
                             </Card>
                         </div>
 
-                        {/* Charts Section */}
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
-                            <Card className="border-none shadow-sm h-[350px]">
+                        {/* Charts Area */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <Card className="border-none shadow-sm col-span-1">
                                 <CardHeader>
-                                    <CardTitle>Revenue Overview</CardTitle>
-                                    <CardDescription>Daily revenue for the last 7 days</CardDescription>
+                                    <CardTitle>Revenue Trend</CardTitle>
+                                    <CardDescription>Income over last 7 days</CardDescription>
                                 </CardHeader>
-                                <CardContent className="h-[250px] w-full">
+                                <CardContent className="h-[250px] w-full pl-0">
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <AreaChart data={stats?.dailyStats}>
+                                        <AreaChart data={stats?.dailyStats} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                                             <defs>
                                                 <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                                                     <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
                                                     <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
                                                 </linearGradient>
                                             </defs>
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
-                                            <XAxis
-                                                dataKey="date"
-                                                axisLine={false}
-                                                tickLine={false}
-                                                tick={{ fontSize: 12, fill: '#6B7280' }}
-                                                tickMargin={10}
-                                            />
-                                            <YAxis
-                                                hide={true} // Hide Y axis for cleaner look, tooltip is enough
-                                            />
-                                            <Tooltip
-                                                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                                                formatter={(value: any) => [`${value}₮`, 'Revenue']}
-                                            />
-                                            <Area
-                                                type="monotone"
-                                                dataKey="payments"
-                                                stroke="#6366f1"
-                                                strokeWidth={3}
-                                                fillOpacity={1}
-                                                fill="url(#colorRevenue)"
-                                            />
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                                            <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#aaa' }} />
+                                            <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+                                            <Area type="monotone" dataKey="payments" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
                                         </AreaChart>
                                     </ResponsiveContainer>
                                 </CardContent>
                             </Card>
 
-                            <Card className="border-none shadow-sm h-[350px]">
+                            <Card className="border-none shadow-sm col-span-1">
                                 <CardHeader>
-                                    <CardTitle>User Activity</CardTitle>
-                                    <CardDescription>New confessions and wisprs</CardDescription>
+                                    <CardTitle>Activity</CardTitle>
+                                    <CardDescription>New Users vs Wisprs</CardDescription>
                                 </CardHeader>
-                                <CardContent className="h-[250px]">
+                                <CardContent className="h-[250px] w-full pl-0">
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={stats?.dailyStats} barSize={20}>
-                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
-                                            <XAxis
-                                                dataKey="date"
-                                                axisLine={false}
-                                                tickLine={false}
-                                                tick={{ fontSize: 12, fill: '#6B7280' }}
-                                                tickMargin={10}
-                                            />
-                                            <Tooltip
-                                                cursor={{ fill: 'transparent' }}
-                                                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                                            />
-                                            <Legend iconType="circle" />
-                                            <Bar name="New Wisprs" dataKey="wisprs" fill="#ec4899" radius={[4, 4, 0, 0]} />
-                                            <Bar name="New Users" dataKey="users" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                                        <BarChart data={stats?.dailyStats} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                                            <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#aaa' }} />
+                                            <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+                                            <Bar dataKey="wisprs" name="Wisprs" fill="#ec4899" radius={[4, 4, 0, 0]} barSize={20} />
+                                            <Bar dataKey="users" name="Users" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={20} />
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </CardContent>
                             </Card>
                         </div>
-
-                        {/* Recent Activity List */}
-                        <Card className="border-none shadow-sm">
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Activity className="h-5 w-5 text-gray-500" />
-                                    Recent Activity
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-4">
-                                    {stats?.recentActivity.map((item, i) => (
-                                        <div key={i} className="flex items-start gap-4 pb-4 border-b last:border-0 last:pb-0">
-                                            <div className={`p-2 rounded-full shrink-0 ${item.type === 'payment' ? 'bg-green-100 text-green-600' :
-                                                item.type === 'user' ? 'bg-blue-100 text-blue-600' :
-                                                    'bg-gray-100 text-gray-600'
-                                                }`}>
-                                                {item.type === 'payment' ? <CreditCard className="h-4 w-4" /> :
-                                                    item.type === 'user' ? <UserPlus className="h-4 w-4" /> :
-                                                        <Activity className="h-4 w-4" />}
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-medium text-gray-900">{item.message}</p>
-                                                <p className="text-xs text-gray-500">
-                                                    {new Date(item.time).toLocaleString()}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                    {(!stats?.recentActivity || stats.recentActivity.length === 0) && (
-                                        <p className="text-sm text-gray-500 text-center py-4">No recent activity.</p>
-                                    )}
-                                </div>
-                            </CardContent>
-                        </Card>
                     </TabsContent>
 
-                    {/* USERS TAB */}
+                    {/* USERS TAB - Improved Table */}
                     <TabsContent value="users" className="space-y-6">
                         <Card className="border-none shadow-sm">
-                            <CardHeader className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <CardHeader className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
                                 <div>
-                                    <CardTitle>Users Directory</CardTitle>
-                                    <CardDescription>All registered users and their status.</CardDescription>
+                                    <CardTitle>User Directory</CardTitle>
+                                    <CardDescription>Management of registered accounts</CardDescription>
                                 </div>
                                 <div className="relative w-full md:w-64">
-                                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+                                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
                                     <Input
-                                        type="search"
-                                        placeholder="Search users..."
-                                        className="pl-9 w-full"
+                                        placeholder="Search by name or email..."
+                                        className="pl-9 bg-gray-50 border-gray-200"
                                         value={userSearch}
                                         onChange={(e) => setUserSearch(e.target.value)}
                                     />
                                 </div>
                             </CardHeader>
-                            <CardContent>
-                                <div className="rounded-md border overflow-x-auto">
+                            <CardContent className="p-0">
+                                {/* Wrap table in overflow-x-auto for mobile horizontal scrolling */}
+                                <div className="overflow-x-auto">
                                     <Table>
-                                        <TableHeader>
+                                        <TableHeader className="bg-gray-50/50">
                                             <TableRow>
-                                                <TableHead>User</TableHead>
+                                                <TableHead className="w-[250px]">User Profile</TableHead>
                                                 <TableHead>Joined</TableHead>
-                                                <TableHead>Hints Left</TableHead>
+                                                <TableHead>Balance</TableHead>
                                                 <TableHead>Last Active</TableHead>
-                                                <TableHead className="text-right">Actions</TableHead>
+                                                <TableHead className="text-right">Action</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                            {filteredUsers.length > 0 ? filteredUsers.map((user) => (
-                                                <TableRow key={user.uid}>
+                                            {filteredUsers.length > 0 ? filteredUsers.map((u) => (
+                                                <TableRow key={u.uid} className="hover:bg-gray-50/50">
                                                     <TableCell>
                                                         <div className="flex items-center gap-3">
-                                                            <Avatar>
-                                                                <AvatarImage src={user.photoURL || undefined} />
-                                                                <AvatarFallback>{user.displayName?.substring(0, 2).toUpperCase() || 'UN'}</AvatarFallback>
+                                                            <Avatar className="h-9 w-9 border border-gray-100">
+                                                                <AvatarImage src={u.photoURL || undefined} />
+                                                                <AvatarFallback className="bg-indigo-50 text-indigo-600 font-medium">
+                                                                    {u.displayName?.slice(0, 2).toUpperCase() || 'UN'}
+                                                                </AvatarFallback>
                                                             </Avatar>
-                                                            <div className="flex flex-col">
-                                                                <span className="font-medium text-sm text-gray-900">{user.displayName || 'Anonymous'}</span>
-                                                                <span className="text-xs text-gray-500">{user.email}</span>
+                                                            <div className="flex flex-col max-w-[150px] sm:max-w-none">
+                                                                <span className="font-medium text-sm text-gray-900 truncate" title={u.displayName || 'Anonymous'}>
+                                                                    {u.displayName || 'Anonymous'}
+                                                                </span>
+                                                                <span className="text-xs text-gray-500 truncate" title={u.email || 'No Email'}>
+                                                                    {u.email || 'No email attached'}
+                                                                </span>
                                                             </div>
                                                         </div>
                                                     </TableCell>
-                                                    <TableCell className="text-gray-500 text-sm">
-                                                        {new Date(user.createdAt).toLocaleDateString()}
+                                                    <TableCell className="text-gray-500 text-sm whitespace-nowrap">
+                                                        {new Date(u.createdAt).toLocaleDateString()}
                                                     </TableCell>
                                                     <TableCell>
-                                                        <Badge variant={user.hintsRemaining > 5 ? "default" : "secondary"}>
-                                                            {user.hintsRemaining} Hints
-                                                        </Badge>
+                                                        <div className="flex items-center gap-2">
+                                                            <Badge variant={u.hintsRemaining > 5 ? "default" : "secondary"}>
+                                                                {u.hintsRemaining} Hints
+                                                            </Badge>
+                                                        </div>
                                                     </TableCell>
-                                                    <TableCell className="text-gray-500 text-sm">
-                                                        {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'N/A'}
+                                                    <TableCell className="text-gray-500 text-sm whitespace-nowrap">
+                                                        {u.lastLogin ? new Date(u.lastLogin).toLocaleDateString() : '-'}
                                                     </TableCell>
                                                     <TableCell className="text-right">
-                                                        <Button variant="ghost" size="icon">
-                                                            <GripVertical className="h-4 w-4 text-gray-400" />
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400">
+                                                            <GripVertical className="h-4 w-4" />
                                                         </Button>
                                                     </TableCell>
                                                 </TableRow>
                                             )) : (
                                                 <TableRow>
-                                                    <TableCell colSpan={5} className="text-center h-24 text-gray-500">
-                                                        No users found matching "{userSearch}"
+                                                    <TableCell colSpan={5} className="h-32 text-center text-gray-500">
+                                                        No users found.
                                                     </TableCell>
                                                 </TableRow>
                                             )}
@@ -404,100 +352,88 @@ export default function AdminPage() {
                         </Card>
                     </TabsContent>
 
-                    {/* FINANCE & HINTS TAB */}
+                    {/* FINANCE TAB */}
                     <TabsContent value="finance" className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            {/* Summary Cards */}
-                            <Card className="border-none shadow-sm md:col-span-1 bg-indigo-50 border-indigo-100">
+                            <Card className="border-none shadow-sm md:col-span-1 bg-green-50/50 border-green-100">
                                 <CardHeader className="pb-2">
-                                    <CardTitle className="text-sm font-medium text-indigo-800">Hints Sold</CardTitle>
+                                    <div className="text-xs font-semibold text-green-600 uppercase tracking-wider">Monetization</div>
+                                    <CardTitle className="text-lg font-bold text-gray-900">Paid Hints</CardTitle>
+                                    <CardDescription>Total hints purchased</CardDescription>
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="text-3xl font-bold text-indigo-900">
+                                    <div className="text-4xl font-black text-green-700">
                                         {stats?.hintStats?.totalHintsSold || 0}
                                     </div>
-                                    <p className="text-xs text-indigo-600 mt-1">Paid packages</p>
                                 </CardContent>
                             </Card>
-                            <Card className="border-none shadow-sm md:col-span-1 bg-purple-50 border-purple-100">
+
+                            <Card className="border-none shadow-sm md:col-span-1 bg-blue-50/50 border-blue-100">
                                 <CardHeader className="pb-2">
-                                    <CardTitle className="text-sm font-medium text-purple-800">Bonus Hints</CardTitle>
+                                    <div className="text-xs font-semibold text-blue-600 uppercase tracking-wider">Engagement</div>
+                                    <CardTitle className="text-lg font-bold text-gray-900">Total Usage</CardTitle>
+                                    <CardDescription>Hints consumed by users</CardDescription>
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="text-3xl font-bold text-purple-900">
-                                        {stats?.hintStats?.totalBonusHints || 0}
-                                    </div>
-                                    <p className="text-xs text-purple-600 mt-1">System gifted / Daily resets</p>
-                                </CardContent>
-                            </Card>
-                            <Card className="border-none shadow-sm md:col-span-1 bg-amber-50 border-amber-100">
-                                <CardHeader className="pb-2">
-                                    <CardTitle className="text-sm font-medium text-amber-800">Hints Consumed</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="text-3xl font-bold text-amber-900">
+                                    <div className="text-4xl font-black text-blue-700">
                                         {stats?.hintStats?.hintsUsed || 0}
                                     </div>
-                                    <p className="text-xs text-amber-600 mt-1">Total hints used by users</p>
+                                    <p className="text-xs text-blue-600/80 mt-2">
+                                        Mapped to Wisprs sent
+                                    </p>
+                                </CardContent>
+                            </Card>
+
+                            <Card className="border-none shadow-sm md:col-span-1 bg-purple-50/50 border-purple-100">
+                                <CardHeader className="pb-2">
+                                    <div className="text-xs font-semibold text-purple-600 uppercase tracking-wider">System</div>
+                                    <CardTitle className="text-lg font-bold text-gray-900">Bonus Distributed</CardTitle>
+                                    <CardDescription>Free hints given</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-4xl font-black text-purple-700">
+                                        {stats?.hintStats?.totalBonusHints || 0}
+                                    </div>
                                 </CardContent>
                             </Card>
                         </div>
 
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            {/* Hint Breakdown Visualization (Simplified) */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             <Card className="border-none shadow-sm">
                                 <CardHeader>
-                                    <CardTitle>Revenue Sources</CardTitle>
-                                    <CardDescription>Breakdown of paid services</CardDescription>
-                                </CardHeader>
-                                <CardContent className="flex items-center justify-center h-[200px] text-gray-500">
-                                    {/* Placeholder for Pie Chart if needed, using simple text for now */}
-                                    {stats?.totalRevenue ? (
-                                        <div className="text-center">
-                                            <p className="text-3xl font-bold text-gray-900">100%</p>
-                                            <p>Hint Packages</p>
-                                            <p className="text-sm text-gray-400 mt-2">Currently the only revenue stream</p>
-                                        </div>
-                                    ) : (
-                                        <p>No revenue data yet</p>
-                                    )}
-                                </CardContent>
-                            </Card>
-
-                            <Card className="border-none shadow-sm">
-                                <CardHeader>
-                                    <CardTitle>Top Spenders</CardTitle>
-                                    <CardDescription>Users who purchased hints</CardDescription>
+                                    <CardTitle>Top Spenders (Recent)</CardTitle>
+                                    <CardDescription>Latest confirmed payments</CardDescription>
                                 </CardHeader>
                                 <CardContent>
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead>User</TableHead>
-                                                <TableHead className="text-right">Amount</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {/* We can reuse Recent Activity 'payment' items or fetch dedicated list */}
-                                            {stats?.recentActivity.filter(a => a.type === 'payment').slice(0, 5).map((pay, i) => (
-                                                <TableRow key={i}>
-                                                    <TableCell className="font-medium">User (via Invoice)</TableCell>
-                                                    <TableCell className="text-right text-green-600 font-bold">
-                                                        {pay.message.replace('Payment: ', '')}
-                                                    </TableCell>
-                                                </TableRow>
+                                    <div className="space-y-4">
+                                        {stats?.recentActivity
+                                            .filter(a => a.type === 'payment')
+                                            .slice(0, 8)
+                                            .map((p, i) => (
+                                                <div key={i} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="bg-green-100 p-2 rounded-full text-green-600">
+                                                            <DollarSign className="h-4 w-4" />
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-medium text-gray-900">Paid Invoice</p>
+                                                            <p className="text-xs text-gray-500">{new Date(p.time).toLocaleDateString()}</p>
+                                                        </div>
+                                                    </div>
+                                                    <span className="font-bold text-green-700">
+                                                        {p.message.replace('Payment: ', '')}
+                                                    </span>
+                                                </div>
                                             ))}
-                                            {(!stats?.recentActivity.some(a => a.type === 'payment')) && (
-                                                <TableRow>
-                                                    <TableCell colSpan={2} className="text-center py-4 text-gray-500">No recent payments</TableCell>
-                                                </TableRow>
-                                            )}
-                                        </TableBody>
-                                    </Table>
+                                        {(!stats?.recentActivity.some(a => a.type === 'payment')) && (
+                                            <p className="text-center text-gray-500 py-8">No recent payments to display.</p>
+                                        )}
+                                    </div>
                                 </CardContent>
                             </Card>
                         </div>
                     </TabsContent>
+
                 </Tabs>
             </div>
         </div>

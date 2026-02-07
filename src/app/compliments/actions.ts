@@ -9,26 +9,29 @@ import { db } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
 
 
-export async function submitComplimentAction(text: string): Promise<{ success: boolean; message: string; filteredText?: string }> {
-    if (!text.trim()) {
-        return { success: false, message: 'Wispr-ээ бичнэ үү.' };
+export async function submitComplimentAction(text: string, audioUrl?: string, duration?: number): Promise<{ success: boolean; message: string; filteredText?: string }> {
+    if (!text.trim() && !audioUrl) {
+        return { success: false, message: 'Wispr-ээ бичнэ үү эсвэл дуут зурвас үлдээнэ үү.' };
     }
 
     try {
-        const { isSafe, filteredText } = await filterCompliment({ text });
+        let isSafe = true;
+        let filteredText = text;
 
-        if (!isSafe) {
-            return { success: false, message: 'Зохисгүй агуулга илэрлээ. Wispr-ээ засаад дахин оролдоно уу.' };
+        if (text.trim()) {
+            const result = await filterCompliment({ text });
+            isSafe = result.isSafe;
+            filteredText = result.filteredText;
         }
 
-        if (!filteredText) {
-            return { success: false, message: 'Үгээ шалгаад дахин оролдоно уу.' };
+        if (!isSafe) {
+            return { success: false, message: 'Зохисгүй агуулга илэрлээ.' };
         }
 
         return { success: true, message: 'Амжилттай шүүгдлээ', filteredText };
     } catch (error) {
         console.error('Wispr шүүхэд алдаа гарлаа:', error);
-        return { success: false, message: 'Алдаа гарлаа. Түр хүлээгээд дахин оролдоно уу.' };
+        return { success: false, message: 'Алдаа гарлаа.' };
     }
 }
 

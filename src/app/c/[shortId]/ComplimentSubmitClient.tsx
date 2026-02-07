@@ -4,17 +4,51 @@ import { ComplimentForm } from '@/components/compliments/ComplimentForm';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Heart, Loader2, Frown } from 'lucide-react';
 import { useFirestore, useUser } from '@/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { getTheme } from '@/lib/themes';
+import { PollCard } from '@/components/polls/PollCard';
+import type { Poll, ComplimentOwner } from '@/types';
 
 export function ComplimentSubmitClient({ shortId }: { shortId: string }) {
     const firestore = useFirestore();
     const [isLoading, setIsLoading] = useState(true);
     const [ownerId, setOwnerId] = useState<string | null>(null);
     const [error, setError] = useState<Error | null>(null);
+    const [ownerData, setOwnerData] = useState<ComplimentOwner | null>(null);
     const { user } = useUser();
+    const [activePoll, setActivePoll] = useState<Poll | null>(null);
+
+    // Fetch active poll
+    useEffect(() => {
+        if (!firestore || !ownerId) return;
+
+        const fetchPoll = async () => {
+            try {
+                const pollsRef = collection(firestore, 'complimentOwners', ownerId, 'polls');
+                // Order by createdAt desc to get newest. limit 1.
+                // Note: requires index if large, but dev env should be fine.
+                // Using query without orderBy for now to avoid index error in dev if not set up.
+                const q = query(pollsRef, where('isActive', '==', true));
+                const snap = await getDocs(q);
+                if (!snap.empty) {
+                    // Start with the first active one found (client side sort if needed)
+                    const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Poll));
+                    // Sort by createdAt desc in JS
+                    docs.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+                    setActivePoll(docs[0]);
+                } else {
+                    setActivePoll(null);
+                }
+            } catch (e) {
+                console.error("Failed to fetch poll", e);
+            }
+        };
+
+        fetchPoll();
+    }, [firestore, ownerId]);
 
     useEffect(() => {
         if (!firestore || !shortId) {
@@ -22,23 +56,49 @@ export function ComplimentSubmitClient({ shortId }: { shortId: string }) {
             return;
         }
 
-        const fetchOwnerId = async () => {
+        const fetchOwnerData = async () => {
             const shortLinkRef = doc(firestore, 'shortLinks', shortId);
             try {
                 const docSnap = await getDoc(shortLinkRef);
                 if (docSnap.exists()) {
-                    setOwnerId(docSnap.data().ownerId);
+                    const oId = docSnap.data().ownerId;
+                    setOwnerId(oId);
+
+                    // Fetch owner data for theme
+                    const ownerRef = doc(firestore, 'complimentOwners', oId);
+                    const ownerSnap = await getDoc(ownerRef);
+                    if (ownerSnap.exists()) {
+                        setOwnerData(ownerSnap.data() as ComplimentOwner);
+                    }
                 }
             } catch (e: any) {
-                console.error("Failed to fetch short link:", e);
+                console.error("Failed to fetch short link or owner:", e);
                 setError(e);
             } finally {
                 setIsLoading(false);
             }
         };
 
-        fetchOwnerId();
+        fetchOwnerData();
     }, [firestore, shortId]);
+
+    // Theme logic
+    const theme = getTheme(ownerData?.theme);
+    const themeStyles = {
+        '--primary': theme.colors.primary,
+        '--background': theme.colors.background,
+        '--card': theme.colors.card,
+        '--foreground': theme.colors.text,
+        '--muted-foreground': theme.colors.muted,
+        '--border': theme.colors.border,
+    } as React.CSSProperties;
+
+    // Helper for applying background style safely (since some are colors, some might be gradients in future?)
+    // For now themes.ts has space-separated HSL channels.
+    // We need to apply them to the root div.
+    // The previous bg class was: bg-gradient-to-br from-background via-accent/5 to-background
+    // We can keep it or override it.
+    // If we change --background variable, 'bg-background' utility will use it.
 
     if (isLoading) {
         return (
@@ -87,14 +147,22 @@ export function ComplimentSubmitClient({ shortId }: { shortId: string }) {
     }
 
     return (
-        <div className="flex min-h-[calc(100vh-56px)] flex-col items-center justify-center bg-gradient-to-br from-background via-accent/5 to-background dark:from-background dark:via-accent/10 dark:to-background p-4">
-            <Card className="w-full max-w-md shadow-2xl bg-card/80 backdrop-blur-lg border-primary/20">
+        <div
+            style={themeStyles}
+            className="flex min-h-[calc(100vh-56px)] flex-col items-center justify-center bg-background p-4 transition-colors duration-500"
+        >
+            {activePoll && (
+                <div className="w-full max-w-md animate-in fade-in slide-in-from-top-4 mb-6">
+                    <PollCard poll={activePoll} publicView={true} />
+                </div>
+            )}
+            <Card className="w-full max-w-md shadow-2xl bg-card backdrop-blur-lg border-primary/20">
                 <CardHeader className="text-center">
                     <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit mb-4 ring-8 ring-primary/5">
                         <Heart className="h-8 w-8 text-primary" />
                     </div>
                     <CardTitle className="font-bold text-2xl">Wispr илгээгээрэй</CardTitle>
-                    <CardDescription>Хэн болохыг тань хэн ч мэдэхгүй. Сэтгэлийнхээ дулаан үгсийг wispr болгон үлдээгээрэй.</CardDescription>
+                    <CardDescription className="text-muted-foreground">Хэн болохыг тань хэн ч мэдэхгүй. Сэтгэлийнхээ дулаан үгсийг wispr болгон үлдээгээрэй.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     {ownerId && <ComplimentForm ownerId={ownerId} />}

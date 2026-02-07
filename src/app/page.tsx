@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { Gem } from 'lucide-react';
+import { PollManager } from '@/components/polls/PollManager';
 
 function AnonymousLoginPrompt() {
   return (
@@ -126,11 +127,17 @@ export default function HomePage() {
           <TabsList>
             <TabsTrigger value="compliments">Wispr-үүд</TabsTrigger>
             <TabsTrigger value="confessions">Сэтгэлийн үгс</TabsTrigger>
+            <TabsTrigger value="polls">Санал асуулга</TabsTrigger>
           </TabsList>
         </div>
         <TabsContent value="compliments">
           <div className="container mx-auto max-w-2xl p-4 py-8">
             {pageContent}
+          </div>
+        </TabsContent>
+        <TabsContent value="polls">
+          <div className="container mx-auto max-w-2xl p-4 py-8">
+            <PollManager />
           </div>
         </TabsContent>
       </Tabs>

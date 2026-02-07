@@ -4,7 +4,8 @@ import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from '@/fireb
 import { Header } from '@/components/Header';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Gift, HelpCircle, Shield, MessageCircle, Gem, LogOut, Loader2, Users, ShoppingCart, FileText } from 'lucide-react';
+import { Gift, HelpCircle, Shield, MessageCircle, Gem, LogOut, Loader2, Users, ShoppingCart, FileText, Palette, Trophy } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -26,6 +27,9 @@ import { createQpayInvoiceAction } from '../payments/actions';
 import { checkAdminAccess } from '@/app/admin/actions';
 import { QPayDialog } from '@/components/payments/QpayDialog';
 import { Separator } from '@/components/ui/separator';
+import { ThemeSelector } from '@/components/profile/ThemeSelector';
+import { LevelProgress } from '@/components/gamification/LevelProgress';
+import { BadgeList } from '@/components/gamification/BadgeList';
 
 
 type HintPackage = {
@@ -261,6 +265,45 @@ export default function ProfilePage() {
                         </div>
                     </CardContent>
                 </Card>
+
+                <Tabs defaultValue="themes" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="themes" className="gap-2">
+                            <Palette className="h-4 w-4" />
+                            <span>Загвар</span>
+                        </TabsTrigger>
+                        <TabsTrigger value="achievements" className="gap-2">
+                            <Trophy className="h-4 w-4" />
+                            <span>Амжилт</span>
+                        </TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="themes" className="mt-4 space-y-4">
+                        <ThemeSelector currentThemeId={ownerData?.theme} ownerData={ownerData} />
+                    </TabsContent>
+                    <TabsContent value="achievements" className="mt-4 space-y-4">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Миний амжилтууд</CardTitle>
+                                <CardDescription>Таны цуглуулсан оноо болон тэмдэгүүд</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-8">
+                                <LevelProgress xp={ownerData?.xp || 0} />
+
+                                <div className="pt-4">
+                                    <h3 className="text-sm font-medium mb-4">Тэмдэгүүд</h3>
+                                    <BadgeList
+                                        ownerId={user.uid}
+                                        earnedBadges={ownerData?.badges || []}
+                                        stats={{
+                                            totalCompliments: ownerData?.totalCompliments || 0,
+                                            xp: ownerData?.xp || 0
+                                        }}
+                                    />
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                </Tabs>
 
                 {/* Hint & Payment Section */}
                 <Card className="relative overflow-hidden bg-gradient-to-br from-violet-600 via-indigo-600 to-blue-600 shadow-xl border-none">

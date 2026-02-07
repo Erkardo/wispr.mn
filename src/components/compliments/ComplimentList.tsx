@@ -28,6 +28,7 @@ import { Badge } from '@/components/ui/badge';
 import { Logo } from '@/components/Logo';
 import { createQpayInvoiceAction } from '@/app/payments/actions';
 import { QPayDialog } from '../payments/QpayDialog';
+import { AudioPlayer } from '../ui/AudioPlayer';
 
 
 const reactionEmojis = ['💛', '😄', '✨'];
@@ -186,6 +187,16 @@ function ComplimentCard({
     setTimeout(() => {
       setIsRevealed(true);
       setIsRevealing(false);
+
+      // Trigger confetti
+      import('canvas-confetti').then((confetti) => {
+        confetti.default({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+      });
+
       if (!firestore || !compliment.id) {
         console.warn("handleReveal: Firestore not available or compliment ID missing");
         return;
@@ -444,7 +455,7 @@ function ComplimentCard({
             {isSharing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
           </Button>
         </CardHeader>
-        <CardContent className="relative flex flex-col items-center justify-center p-10 text-center aspect-[16/10] overflow-hidden">
+        <CardContent className="relative flex flex-col items-center justify-center p-6 md:p-10 text-center aspect-[16/10] overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.1)_0%,_rgba(255,255,255,0)_50%)]"></div>
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[14rem] opacity-10 select-none -rotate-12">{selectedStyle?.emoji}</div>
 
@@ -454,6 +465,12 @@ function ComplimentCard({
           )} style={{ textShadow: '0 2px 6px rgba(0,0,0,0.2)' }}>
             {compliment.text}
           </p>
+
+          {compliment.audioUrl && (
+            <div className="mt-6 z-10 w-full max-w-xs backdrop-blur-md bg-black/20 rounded-xl">
+              <AudioPlayer src={compliment.audioUrl} duration={compliment.duration} className="border-white/20 bg-transparent text-white" />
+            </div>
+          )}
 
           <div className="absolute bottom-4 flex items-center gap-2 text-sm opacity-80 font-medium z-10 select-none text-white/90">
             <UserX className="h-4 w-4" />

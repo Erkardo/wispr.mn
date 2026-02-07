@@ -14,7 +14,7 @@ export function ShareLink({ ownerData, ownerLoading }: { ownerData: WithId<Compl
   const { toast } = useToast();
   const firestore = useFirestore();
   const { user } = useUser();
-  
+
   const [isCreating, setIsCreating] = useState(false);
 
   const shareUrl = ownerData?.shareUrl || '';
@@ -23,12 +23,12 @@ export function ShareLink({ ownerData, ownerLoading }: { ownerData: WithId<Compl
   const handleCreateLink = async () => {
     if (!user || !firestore) return;
     setIsCreating(true);
-    
+
     try {
       const shortId = Math.random().toString(36).slice(2, 10);
       const appUrl = window.location.origin;
       const newShareUrl = `${appUrl}/c/${shortId}`;
-      
+
       const ownerRef = doc(firestore, 'complimentOwners', user.uid);
       const shortLinkRef = doc(firestore, 'shortLinks', shortId);
       const batch = writeBatch(firestore);
@@ -44,7 +44,7 @@ export function ShareLink({ ownerData, ownerLoading }: { ownerData: WithId<Compl
         ownerId: user.uid
       };
       batch.set(shortLinkRef, shortLinkDocData);
-      
+
       await batch.commit();
 
       toast({
@@ -55,20 +55,20 @@ export function ShareLink({ ownerData, ownerLoading }: { ownerData: WithId<Compl
 
     } catch (error: any) {
       if (error.name === 'FirebaseError' && error.code === 'permission-denied') {
-          const permissionError = new FirestorePermissionError({
-              path: `batch write for ${user.uid}`,
-              operation: 'write',
-              requestResourceData: { from: 'handleCreateLink' },
-          });
-          errorEmitter.emit('permission-error', permissionError);
+        const permissionError = new FirestorePermissionError({
+          path: `batch write for ${user.uid}`,
+          operation: 'write',
+          requestResourceData: { from: 'handleCreateLink' },
+        });
+        errorEmitter.emit('permission-error', permissionError);
       } else {
-          console.error("Error creating share link:", error);
-          toast({
-              title: 'Алдаа гарлаа',
-              description: 'Линк үүсгэхэд алдаа гарлаа. Түр хүлээгээд дахин оролдоно уу.',
-              variant: 'destructive',
-          });
-          setIsCreating(false);
+        console.error("Error creating share link:", error);
+        toast({
+          title: 'Алдаа гарлаа',
+          description: 'Линк үүсгэхэд алдаа гарлаа. Түр хүлээгээд дахин оролдоно уу.',
+          variant: 'destructive',
+        });
+        setIsCreating(false);
       }
     }
   };
@@ -93,8 +93,8 @@ export function ShareLink({ ownerData, ownerLoading }: { ownerData: WithId<Compl
         });
       } catch (error) {
         if (!(error instanceof Error && error.name === 'NotAllowedError')) {
-            navigator.clipboard.writeText(shareText);
-            toast({ title: "Хуулагдлаа!", description: "Түгээх боломжгүй тул текстийг хууллаа." })
+          navigator.clipboard.writeText(shareText);
+          toast({ title: "Хуулагдлаа!", description: "Түгээх боломжгүй тул текстийг хууллаа." })
         }
       }
     } else {
@@ -105,42 +105,46 @@ export function ShareLink({ ownerData, ownerLoading }: { ownerData: WithId<Compl
 
   if (ownerLoading) {
     return (
-        <Card>
-            <CardHeader>
-                <Skeleton className="h-6 w-40" />
-                <Skeleton className="h-4 w-full mt-2" />
-                 <Skeleton className="h-4 w-3/4" />
-            </CardHeader>
-            <CardContent>
-                <div className="flex flex-col gap-3">
-                     <Skeleton className="h-12 w-full" />
-                    <div className="grid grid-cols-2 gap-2">
-                        <Skeleton className="h-10 w-full" />
-                        <Skeleton className="h-10 w-full" />
-                    </div>
-                </div>
-            </CardContent>
-        </Card>
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-6 w-40" />
+          <Skeleton className="h-4 w-full mt-2" />
+          <Skeleton className="h-4 w-3/4" />
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col gap-3">
+            <Skeleton className="h-12 w-full" />
+            <div className="grid grid-cols-2 gap-2">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     )
   }
 
   if (!ownerData) {
-     return (
-        <Card className="border-primary/20 bg-primary/5">
-            <CardHeader>
-                <CardTitle className="font-bold text-xl">Таны хувийн линк</CardTitle>
-                <CardDescription>
-                Найзууддаа илгээж, тэдний wispr-үүдийг энд хүлээж авахын тулд өөрийн хувийн линкээ үүсгэнэ үү.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <Button onClick={handleCreateLink} disabled={isCreating} className="w-full" size="lg">
-                    {isCreating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LinkIcon className="mr-2 h-4 w-4" />}
-                    Миний линкийг үүсгэх
-                </Button>
-            </CardContent>
-        </Card>
-     );
+    return (
+      <Card className="border-primary/20 bg-primary/5 overflow-hidden relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent animate-shimmer" style={{ backgroundSize: '200% 100%' }} />
+        <CardHeader className="relative">
+          <CardTitle className="font-bold text-xl">Таны хувийн линк</CardTitle>
+          <CardDescription>
+            Найзууддаа илгээж, тэдний wispr-үүдийг энд хүлээж авахын тулд өөрийн хувийн линкээ үүсгэнэ үү.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="relative">
+          <Button onClick={handleCreateLink} disabled={isCreating} className="w-full relative overflow-hidden group" size="lg">
+            <span className="relative z-10 flex items-center justify-center font-bold">
+              {isCreating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LinkIcon className="mr-2 h-4 w-4" />}
+              Миний линкийг үүсгэх
+            </span>
+            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+          </Button>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
@@ -153,21 +157,21 @@ export function ShareLink({ ownerData, ownerLoading }: { ownerData: WithId<Compl
       </CardHeader>
       <CardContent>
         <div className="flex flex-col gap-3">
-            <div className="flex w-full items-center gap-2 rounded-lg bg-secondary p-4 border">
-                <p className="text-sm text-muted-foreground overflow-x-auto whitespace-nowrap flex-1">
-                    {shareUrl}
-                </p>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-                 <Button onClick={handleShare} className="w-full">
-                    <Share2 className="mr-2 h-4 w-4" />
-                    Түгээх
-                </Button>
-                <Button onClick={handleCopyLink} variant="secondary" className="w-full">
-                    <Copy className="mr-2 h-4 w-4" />
-                    Линк хуулах
-                </Button>
-            </div>
+          <div className="flex w-full items-center gap-2 rounded-lg bg-secondary p-4 border">
+            <p className="text-sm text-muted-foreground overflow-x-auto whitespace-nowrap flex-1">
+              {shareUrl}
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Button onClick={handleShare} className="w-full">
+              <Share2 className="mr-2 h-4 w-4" />
+              Түгээх
+            </Button>
+            <Button onClick={handleCopyLink} variant="secondary" className="w-full">
+              <Copy className="mr-2 h-4 w-4" />
+              Линк хуулах
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>

@@ -10,6 +10,11 @@ export type ComplimentOwner = {
   lastHintResetAt?: Timestamp;
   referredBy?: string;
   bonusHints?: number;
+  theme?: string; // e.g. 'default', 'dark', 'love', 'ocean'
+  xp?: number;
+  level?: number;
+  badges?: string[]; // e.g. ['first_wispr', '100_club']
+  totalCompliments?: number;
 };
 
 export type ShortLink = {
@@ -30,6 +35,8 @@ export type Compliment = {
   isRead?: boolean;
   hints?: string[];
   hintContext?: HintContext;
+  audioUrl?: string;
+  duration?: number;
 };
 
 export type ReactionEmoji = '❤️' | '👍' | '😢' | '🔥';
@@ -51,5 +58,30 @@ export type Invoice = {
   numHints: number;
   qpayInvoiceId?: string;
   localInvoiceId: string;
+  createdAt: Timestamp;
+};
+
+export type PollOption = {
+  id: string;
+  text: string;
+  votes: number;
+};
+
+export type Poll = {
+  id: string;
+  ownerId: string;
+  question: string;
+  type: 'text' | 'choice';
+  options?: PollOption[];
+  isActive: boolean;
+  createdAt: Timestamp;
+  responseCount: number;
+};
+
+export type PollResponse = {
+  id: string;
+  pollId: string;
+  answerText?: string;
+  optionId?: string;
   createdAt: Timestamp;
 };

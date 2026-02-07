@@ -14,6 +14,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // Try to fetch owner info for better SEO
   let title = "Wispr - Надад нэг сэтгэлийн үг үлдээгээч 💛";
   let description = "Нэргүйгээр сэтгэлийн үгээ хуваалцах хамгийн аюулгүй газар.";
+  let ogImageUrl = `https://wispr.mn/api/og?name=${encodeURIComponent('Найз')}`;
 
   try {
     const shortLinkSnap = await getDoc(doc(db, 'shortLinks', shortId));
@@ -24,6 +25,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         const name = ownerSnap.data().displayName || "найздаа";
         title = `Wispr: ${name}-д нэргүйгээр сэтгэлийн үг үлдээгээч 💛`;
         description = `${name}-д хэлж чадаагүй үгээ энд нэрээ нууцлан үлдээгээрэй. Хэн болохыг тань хэн ч мэдэхгүй.`;
+        ogImageUrl = `https://wispr.mn/api/og?name=${encodeURIComponent(name)}`;
       }
     }
   } catch (e) {
@@ -37,11 +39,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title,
       description,
       type: 'website',
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+        }
+      ]
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
+      images: [ogImageUrl],
     }
   };
 }

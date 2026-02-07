@@ -91,7 +91,7 @@ export function PollCard({ poll, isOwner, onUpdate, publicView }: PollCardProps)
                 <div className="flex justify-between items-start gap-4">
                     <div>
                         <CardTitle className="text-lg font-bold leading-tight">{poll.question}</CardTitle>
-                        <CardDescription className="flex items-center gap-2 mt-1">
+                        <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
                             {poll.createdAt && (
                                 <span>{formatDistanceToNow(poll.createdAt.toDate(), { addSuffix: true, locale: mn })}</span>
                             )}
@@ -100,7 +100,7 @@ export function PollCard({ poll, isOwner, onUpdate, publicView }: PollCardProps)
                             ) : (
                                 <Badge variant="secondary">Хаагдсан</Badge>
                             )}
-                        </CardDescription>
+                        </div>
                     </div>
                     {isOwner && (
                         <div className="flex gap-1 shrink-0">

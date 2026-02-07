@@ -1,8 +1,8 @@
 'use server';
 
-import { db } from '@/lib/db';
-import { collection, addDoc, serverTimestamp, doc, updateDoc, increment, getDoc, setDoc, query, where, getDocs, orderBy, limit, runTransaction, type Transaction } from 'firebase/firestore';
-import type { Poll, PollResponse } from '@/types';
+import { getAdminDb } from '@/lib/admin-db';
+import { FieldValue } from 'firebase-admin/firestore';
+import type { Poll } from '@/types';
 import { revalidatePath } from 'next/cache';
 
 export async function createPollAction(ownerId: string, question: string, options: string[] = []): Promise<{ success: boolean; message: string; pollId?: string }> {
@@ -11,11 +11,8 @@ export async function createPollAction(ownerId: string, question: string, option
             return { success: false, message: 'Мэдээлэл дутуу байна.' };
         }
 
-        const pollsRef = collection(db, 'complimentOwners', ownerId, 'polls');
-
-        // Deactivate previous polls? Or allow multiple?
-        // Let's allow multiple but maybe only show the latest active one on profile.
-        // Or we can set all others to inactive.
+        const db = getAdminDb();
+        const pollsRef = db.collection('complimentOwners').doc(ownerId).collection('polls');
 
         const newPollData = {
             ownerId,
@@ -27,11 +24,11 @@ export async function createPollAction(ownerId: string, question: string, option
                 votes: 0
             })),
             isActive: true,
-            createdAt: serverTimestamp(),
+            createdAt: FieldValue.serverTimestamp(),
             responseCount: 0
         };
 
-        const docRef = await addDoc(pollsRef, newPollData);
+        const docRef = await pollsRef.add(newPollData);
 
         revalidatePath('/');
         return { success: true, message: 'Санал асуулга амжилттай үүслээ.', pollId: docRef.id };
@@ -43,14 +40,14 @@ export async function createPollAction(ownerId: string, question: string, option
 }
 
 export async function votePollAction(ownerId: string, pollId: string, answer: string | string[]): Promise<{ success: boolean; message: string }> {
-    // answer is optionId for choice type, or text for text type.
     try {
-        const pollRef = doc(db, 'complimentOwners', ownerId, 'polls', pollId);
+        const db = getAdminDb();
+        const pollRef = db.collection('complimentOwners').doc(ownerId).collection('polls').doc(pollId);
 
-        await runTransaction(db, async (transaction: Transaction) => {
+        await db.runTransaction(async (transaction) => {
             const pollSnap = await transaction.get(pollRef);
 
-            if (!pollSnap.exists()) {
+            if (!pollSnap.exists) {
                 throw new Error('Санал асуулга олдсонгүй.');
             }
 
@@ -60,11 +57,10 @@ export async function votePollAction(ownerId: string, pollId: string, answer: st
                 throw new Error('Энэ санал асуулга хаагдсан байна.');
             }
 
-            const responsesRef = collection(db, 'complimentOwners', ownerId, 'polls', pollId, 'responses');
-            const newResponseRef = doc(responsesRef); // Generate ID for new response
+            const responsesRef = db.collection('complimentOwners').doc(ownerId).collection('polls').doc(pollId).collection('responses');
+            const newResponseRef = responsesRef.doc(); // Generate ID
 
             if (poll.type === 'choice') {
-                // Answer should be an optionId
                 const optionId = Array.isArray(answer) ? answer[0] : answer;
                 const optionIndex = poll.options?.findIndex(o => o.id === optionId);
 
@@ -72,42 +68,39 @@ export async function votePollAction(ownerId: string, pollId: string, answer: st
                     throw new Error('Буруу сонголт байна.');
                 }
 
-                // Update array atomically within transaction
                 const newOptions = [...(poll.options || [])];
                 newOptions[optionIndex].votes += 1;
 
                 transaction.update(pollRef, {
                     options: newOptions,
-                    responseCount: increment(1)
+                    responseCount: FieldValue.increment(1)
                 });
 
-                // Add detailed response
                 transaction.set(newResponseRef, {
                     pollId,
                     optionId,
-                    createdAt: serverTimestamp()
+                    createdAt: FieldValue.serverTimestamp()
                 });
 
             } else {
-                // Text response
                 const textAnswer = Array.isArray(answer) ? answer[0] : answer;
                 if (!textAnswer.trim()) {
                     throw new Error('Хариулт хоосон байна.');
                 }
 
                 transaction.update(pollRef, {
-                    responseCount: increment(1)
+                    responseCount: FieldValue.increment(1)
                 });
 
                 transaction.set(newResponseRef, {
                     pollId,
                     answerText: textAnswer,
-                    createdAt: serverTimestamp()
+                    createdAt: FieldValue.serverTimestamp()
                 });
             }
         });
 
-        revalidatePath('/'); // or revalidate path to owner's page
+        revalidatePath('/');
         return { success: true, message: 'Санал амжилттай илгээгдлээ.' };
 
     } catch (error: any) {
@@ -118,8 +111,9 @@ export async function votePollAction(ownerId: string, pollId: string, answer: st
 
 export async function togglePollStatusAction(ownerId: string, pollId: string, isActive: boolean) {
     try {
-        const pollRef = doc(db, 'complimentOwners', ownerId, 'polls', pollId);
-        await updateDoc(pollRef, { isActive });
+        const db = getAdminDb();
+        const pollRef = db.collection('complimentOwners').doc(ownerId).collection('polls').doc(pollId);
+        await pollRef.update({ isActive });
         revalidatePath('/');
         return { success: true };
     } catch (error) {
@@ -130,12 +124,9 @@ export async function togglePollStatusAction(ownerId: string, pollId: string, is
 
 export async function deletePollAction(ownerId: string, pollId: string) {
     try {
-        const pollRef = doc(db, 'complimentOwners', ownerId, 'polls', pollId);
-        // Note: Subcollections (responses) won't be deleted automatically in Firestore standard delete.
-        // For this app, it's fine to leave orphans or we should delete them recursively (admin sdk only usually).
-        // Since we use client sdk here, we can't easily do recursive delete without listing all.
-        // We'll just delete the parent doc for now.
-        await import('firebase/firestore').then(m => m.deleteDoc(pollRef));
+        const db = getAdminDb();
+        const pollRef = db.collection('complimentOwners').doc(ownerId).collection('polls').doc(pollId);
+        await pollRef.delete();
         revalidatePath('/');
         return { success: true };
     } catch (error) {

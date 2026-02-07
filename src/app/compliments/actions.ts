@@ -7,6 +7,8 @@ import type { Compliment } from '@/types';
 import { doc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
+import { getAdminDb } from '@/lib/admin-db';
+import { FieldValue } from 'firebase-admin/firestore';
 
 
 export async function submitComplimentAction(text: string, audioUrl?: string, duration?: number): Promise<{ success: boolean; message: string; filteredText?: string }> {
@@ -92,13 +94,15 @@ export async function createStoryAction(
 export async function addReactionToComplimentAction(complimentId: string, ownerId: string, reaction: string) {
     if (!complimentId || !reaction || !ownerId) return;
     try {
-        const complimentRef = doc(db, 'complimentOwners', ownerId, 'compliments', complimentId);
+        const db = getAdminDb(); // Using Admin SDK to bypass rules
+        const complimentRef = db.collection('complimentOwners').doc(ownerId).collection('compliments').doc(complimentId);
         const fieldToIncrement = `reactions.${reaction}`;
-        await updateDoc(complimentRef, {
-            [fieldToIncrement]: increment(1),
+
+        await complimentRef.update({
+            [fieldToIncrement]: FieldValue.increment(1),
         });
         revalidatePath('/');
     } catch (error) {
-        console.error('Wispr-т реакц нэмэхэд алдаа гарлаа:', error);
+        console.error('Wispr-т реакц нэмэхэд алдаа гарлаа (Admin SDK):', error);
     }
 }

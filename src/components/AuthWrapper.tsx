@@ -24,7 +24,7 @@ export function AuthWrapper({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (loading || !auth) return;
 
-    if (!user) {
+    if (!user && !isPublicPage) {
       signInAnonymously(auth).catch(error => {
         console.error("Anonymous sign-in failed:", error);
       });
@@ -71,7 +71,16 @@ export function AuthWrapper({ children }: { children: React.ReactNode }) {
   }, [user, loading, firestore]);
 
 
-  if (loading || !user) {
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // If not public page and no user, wait (or show cleaner redirect/loader)
+  if (!user && !isPublicPage) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

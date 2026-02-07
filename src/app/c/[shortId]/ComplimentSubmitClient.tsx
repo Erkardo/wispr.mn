@@ -58,21 +58,35 @@ export function ComplimentSubmitClient({ shortId }: { shortId: string }) {
 
         const fetchOwnerData = async () => {
             const shortLinkRef = doc(firestore, 'shortLinks', shortId);
+            let currentStep = 'fetching-short-link';
             try {
+                console.log("Attempting to fetch shortLink:", shortId);
                 const docSnap = await getDoc(shortLinkRef);
+
                 if (docSnap.exists()) {
                     const oId = docSnap.data().ownerId;
+                    console.log("ShortLink found. Owner ID:", oId);
                     setOwnerId(oId);
 
                     // Fetch owner data for theme
+                    currentStep = 'fetching-owner-profile';
                     const ownerRef = doc(firestore, 'complimentOwners', oId);
                     const ownerSnap = await getDoc(ownerRef);
+
                     if (ownerSnap.exists()) {
                         setOwnerData(ownerSnap.data() as ComplimentOwner);
+                    } else {
+                        console.error("Owner document does not exist for ID:", oId);
                     }
+                } else {
+                    console.error("ShortLink document does not exist:", shortId);
                 }
             } catch (e: any) {
-                console.error("Failed to fetch short link or owner:", e);
+                console.error(`Failed at step: ${currentStep}`, e);
+                // Log specific permission error if present
+                if (e.code === 'permission-denied') {
+                    console.error("PERMISSION DENIED for:", currentStep);
+                }
                 setError(e);
             } finally {
                 setIsLoading(false);

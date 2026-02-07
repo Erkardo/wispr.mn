@@ -1,0 +1,19 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Voice Wisprs
+    // Allow anyone to upload (write) to voice-wisprs folder
+    // Allow anyone to read (download)
+    match /voice-wisprs/{userId}/{fileName} {
+      allow read: if true;
+      allow write: if true; // Public upload allowed for guests
+    }
+
+    // Fallback: Deny everything else
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -2,10 +2,11 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Mic, Square, Trash2, Play, Pause, Loader2 } from 'lucide-react';
+import { Mic, Square, Trash2, Play, Pause, Loader2, Send, RotateCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { useUser, useFirestore, initializeFirebase } from '@/firebase';
+import { initializeFirebase } from '@/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface AudioRecorderProps {
     ownerId: string;
@@ -16,10 +17,12 @@ interface AudioRecorderProps {
 export function AudioRecorder({ ownerId, onAudioReady, onAudioRemoved }: AudioRecorderProps) {
     const [isRecording, setIsRecording] = useState(false);
     const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
-    const [audioUrl, setAudioUrl] = useState<string | null>(null);
+    const [audioUrl, setAudioUrl] = useState<string | null>(null); // Local URL for preview
+    const [remoteUrl, setRemoteUrl] = useState<string | null>(null); // Uploaded URL
     const [recordingDuration, setRecordingDuration] = useState(0);
     const [isUploading, setIsUploading] = useState(false);
     const [isPlaying, setIsPlaying] = useState(false);
+    const [uploadError, setUploadError] = useState(false);
 
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<Blob[]>([]);
@@ -34,6 +37,13 @@ export function AudioRecorder({ ownerId, onAudioReady, onAudioRemoved }: AudioRe
             if (audioUrl) URL.revokeObjectURL(audioUrl);
         };
     }, [audioUrl]);
+
+    // Auto-upload when blob is ready
+    useEffect(() => {
+        if (audioBlob && !remoteUrl && !isUploading && !uploadError) {
+            uploadAudio();
+        }
+    }, [audioBlob, remoteUrl, isUploading, uploadError]);
 
     const startRecording = async () => {
         try {
@@ -59,10 +69,11 @@ export function AudioRecorder({ ownerId, onAudioReady, onAudioRemoved }: AudioRe
             mediaRecorder.start();
             setIsRecording(true);
             setRecordingDuration(0);
+            setUploadError(false);
 
             timerRef.current = setInterval(() => {
                 setRecordingDuration(prev => {
-                    if (prev >= 60) { // Max 60 seconds
+                    if (prev >= 60) {
                         stopRecording();
                         return prev;
                     }
@@ -91,20 +102,10 @@ export function AudioRecorder({ ownerId, onAudioReady, onAudioRemoved }: AudioRe
     const uploadAudio = async () => {
         if (!audioBlob) return;
         setIsUploading(true);
+        setUploadError(false);
 
         try {
-            // Initialize storage manually if needed or get from firebase exports
-            // We need to make sure we use the same app instance or config
-            // Using `getStorage` from `firebase/storage` needs `firebaseApp`.
-            // Our hook `useFirestore` returns db, but we don't have `useStorage` hook yet.
-            // We can import `storage` from `src/firebase/index` if we exported it correctly.
-            // Or re-initialize.
-
-            // Let's assume we can get it from our updated `src/firebase/index.ts`.
-            // But since hooks are inside context usually, accessing `storage` directly might be better via a new hook or just direct import if singleton.
-            // Let's try importing `initializeFirebase` and getting storage.
             const { storage } = initializeFirebase();
-
             if (!storage) throw new Error("Storage not initialized");
 
             const filename = `voice-wisprs/${ownerId}/${Date.now()}.webm`;
@@ -113,57 +114,18 @@ export function AudioRecorder({ ownerId, onAudioReady, onAudioRemoved }: AudioRe
             await uploadBytes(storageRef, audioBlob);
             const url = await getDownloadURL(storageRef);
 
+            setRemoteUrl(url);
             onAudioReady(url, recordingDuration);
-            toast({ title: "Амжилттай", description: "Дуут зурвас хадгалагдлаа." });
+            // toast({ title: "Амжилттай", description: "Дуут зурвас хадгалагдлаа." }); // Too noisy?
 
         } catch (e) {
             console.error("Upload error:", e);
+            setUploadError(true);
             toast({ title: "Алдаа", description: "Дуут зурвас илгээхэд алдаа гарлаа.", variant: "destructive" });
         } finally {
             setIsUploading(false);
         }
     };
-
-    // We should probably upload ONLY when the user Submits the form.
-    // But `ComplimentForm` handles submission. 
-    // It's better to upload *before* form submit or *during* form submit.
-    // If we assume `onAudioReady` is called with the BLOB or URL?
-    // If we return URL, it means we must upload first.
-    // Let's auto-upload when recording stops? Or let user confirm?
-    // UI-wise: Record -> Stop -> Review (Play/Delete) -> (Implicitly ready to submit).
-    // The actual upload can happen when `ComplimentForm` submits. 
-    // But passing Blob to Server Action is not directly supported (needs FormData). 
-    // And `submitComplimentAction` currently takes JSON args mostly.
-    // Best practice: Upload from client to Storage, get URL, send URL to Server Action.
-
-    // So, we need to expose the upload function or do it automatically.
-    // Let's do it automatically after stop? No, user might want to re-record.
-    // Let's expose `audioBlob` and let parent handle upload? 
-    // Or handle upload internally and just give parent the URL when done.
-    // Let's handle upload internally but maybe trigger it via ref?
-    // OR simpler: When recording stops, we show "Uploading..." then "Ready".
-
-    // Let's go with: Record -> Stop -> "Confirm/Save"? 
-    // Or just "Recorded". And when parent submits, we act?
-    // But `ComplimentForm` doesn't know about `audioBlob` logic.
-
-    // Alternative: The `AudioRecorder` has a prop `uploadOnReady`. 
-    // Or just upload immediately after recording stops (with undo/delete option). 
-    // This is easiest. 
-    useEffect(() => {
-        if (audioBlob && !isUploading && !audioUrl?.startsWith('http')) {
-            // It has a local blob url.
-            // We can wait for user to click "Submit" on parent form?
-            // BUT parent form submit is `submitComplimentAction`.
-            // We can't easily hook into that process to upload *then* call action.
-            // Unless we pass a `upload` function to parent.
-
-            // Let's just upload immediately for now to keep it simple.
-            // If user cancels, we have a stray file. We can clean up later or use cloud functions.
-            uploadAudio();
-        }
-    }, [audioBlob]);
-
 
     const togglePlay = () => {
         if (!audioPlayerRef.current) return;
@@ -184,9 +146,10 @@ export function AudioRecorder({ ownerId, onAudioReady, onAudioRemoved }: AudioRe
     const deleteRecording = () => {
         setAudioBlob(null);
         setAudioUrl(null);
+        setRemoteUrl(null);
         setRecordingDuration(0);
+        setUploadError(false);
         onAudioRemoved();
-        // TODO: Delete from storage if already uploaded?
     };
 
     const formatTime = (seconds: number) => {
@@ -195,22 +158,100 @@ export function AudioRecorder({ ownerId, onAudioReady, onAudioRemoved }: AudioRe
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
+    // State: Recording
+    if (isRecording) {
+        return (
+            <div className="w-full flex flex-col items-center justify-center p-4 bg-red-50/10 border border-red-500/20 rounded-xl animate-in fade-in zoom-in-95 duration-200">
+                <div className="flex items-center gap-4 mb-2">
+                    <span className="text-red-500 font-mono font-bold text-lg animate-pulse">
+                        {formatTime(recordingDuration)}
+                    </span>
+                </div>
+
+                {/* Visualizer Wave */}
+                <div className="flex items-center justify-center gap-1 h-8 mb-4">
+                    {[...Array(5)].map((_, i) => (
+                        <motion.div
+                            key={i}
+                            className="w-1 bg-red-500 rounded-full"
+                            animate={{ height: [8, 24, 8] }}
+                            transition={{
+                                repeat: Infinity,
+                                duration: 0.8,
+                                ease: "easeInOut",
+                                delay: i * 0.1
+                            }}
+                        />
+                    ))}
+                </div>
+
+                <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="h-12 w-12 rounded-full shadow-lg hover:scale-105 transition-transform"
+                    onClick={stopRecording}
+                >
+                    <Square className="h-5 w-5 fill-current" />
+                </Button>
+                <p className="text-xs text-muted-foreground mt-2">Зогсоох</p>
+            </div>
+        );
+    }
+
+    // State: Review (Recorded)
     if (audioUrl) {
         return (
-            <div className="flex items-center gap-2 p-2 rounded-lg border bg-secondary/30">
-                <Button type="button" variant="ghost" size="icon" onClick={togglePlay} className="h-8 w-8">
-                    {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+            <div className="w-full flex items-center gap-3 p-3 rounded-xl border bg-secondary/30 relative overflow-hidden">
+                {/* Progress Bar Background (Optional complexity, skipping for simplicity) */}
+
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={togglePlay}
+                    className="h-10 w-10 text-primary bg-primary/10 hover:bg-primary/20 rounded-full shrink-0"
+                >
+                    {isPlaying ? <Pause className="h-5 w-5 fill-current" /> : <Play className="h-5 w-5 fill-current ml-0.5" />}
                 </Button>
-                <div className="flex-1 text-xs font-mono">
-                    {formatTime(recordingDuration)}
+
+                <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-center mb-1">
+                        <span className="text-xs font-bold text-primary">Voice Wispr</span>
+                        <span className="text-xs font-mono text-muted-foreground">{formatTime(recordingDuration)}</span>
+                    </div>
+                    {/* Fake waveform or progress bar */}
+                    <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
+                        <motion.div
+                            className="h-full bg-primary"
+                            initial={{ width: "0%" }}
+                            animate={{ width: isPlaying ? "100%" : "0%" }} // Simple placeholder animation
+                            transition={{ duration: recordingDuration, ease: "linear" }}
+                        />
+                    </div>
                 </div>
-                {isUploading ? (
-                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                ) : (
-                    <Button type="button" variant="ghost" size="icon" onClick={deleteRecording} className="h-8 w-8 hover:text-destructive text-muted-foreground">
+
+                <div className="flex items-center gap-1">
+                    {isUploading ? (
+                        <div className="flex items-center gap-2 px-2 text-xs text-muted-foreground">
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                            <span className="hidden sm:inline">Илгээж байна...</span>
+                        </div>
+                    ) : uploadError ? (
+                        <Button type="button" variant="ghost" size="icon" onClick={() => uploadAudio()} className="h-8 w-8 text-destructive hover:bg-destructive/10">
+                            <RotateCw className="h-4 w-4" />
+                        </Button>
+                    ) : (
+                        <div className="h-8 w-8 flex items-center justify-center text-green-500">
+                            <Send className="h-4 w-4" />
+                        </div>
+                    )}
+
+                    <Button type="button" variant="ghost" size="icon" onClick={deleteRecording} className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10">
                         <Trash2 className="h-4 w-4" />
                     </Button>
-                )}
+                </div>
+
                 <audio
                     ref={audioPlayerRef}
                     src={audioUrl}
@@ -222,16 +263,18 @@ export function AudioRecorder({ ownerId, onAudioReady, onAudioRemoved }: AudioRe
         );
     }
 
+    // State: Idle
     return (
         <Button
             type="button"
-            variant={isRecording ? "destructive" : "outline"}
-            size="sm"
-            onClick={isRecording ? stopRecording : startRecording}
-            className={isRecording ? "animate-pulse gap-2" : "gap-2"}
+            variant="outline"
+            onClick={startRecording}
+            className="w-full h-12 rounded-xl flex items-center justify-center gap-2 border-dashed border-2 hover:border-primary hover:bg-primary/5 transition-all text-muted-foreground hover:text-primary group"
         >
-            {isRecording ? <Square className="h-4 w-4 fill-current" /> : <Mic className="h-4 w-4" />}
-            {isRecording ? formatTime(recordingDuration) : "Дуут зурвас"}
+            <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                <Mic className="h-4 w-4" />
+            </div>
+            <span className="font-medium">Дуут зурвас үлдээх</span>
         </Button>
     );
 }

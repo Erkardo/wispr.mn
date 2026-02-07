@@ -14,8 +14,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Plus, Trash2 } from 'lucide-react';
-import { createPollAction } from '@/app/actions/polls';
-import { useUser } from '@/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { useUser, useFirestore } from '@/firebase';
 
 interface CreatePollDialogProps {
     onPollCreated: () => void;
@@ -27,10 +27,11 @@ export function CreatePollDialog({ onPollCreated }: CreatePollDialogProps) {
     const [question, setQuestion] = useState('');
     const [options, setOptions] = useState<string[]>(['', '']); // Start with 2 empty options
     const { user } = useUser();
+    const firestore = useFirestore();
     const { toast } = useToast();
 
     const handleCreate = async () => {
-        if (!user) return;
+        if (!user || !firestore) return;
 
         // Filter out empty options
         const validOptions = options.filter(o => o.trim() !== '');
@@ -47,19 +48,33 @@ export function CreatePollDialog({ onPollCreated }: CreatePollDialogProps) {
 
         setLoading(true);
         try {
-            const result = await createPollAction(user.uid, question, validOptions);
-            if (result.success) {
-                toast({ title: 'Амжилттай', description: 'Санал асуулга үүслээ.' });
-                setOpen(false);
-                setQuestion('');
-                setOptions(['', '']);
-                onPollCreated();
-            } else {
-                toast({ title: 'Алдаа', description: result.message, variant: 'destructive' });
-            }
+            const pollsRef = collection(firestore, 'complimentOwners', user.uid, 'polls');
+
+            const newPollData = {
+                ownerId: user.uid,
+                question,
+                type: validOptions.length > 0 ? 'choice' : 'text',
+                options: validOptions.map((text, index) => ({
+                    id: `opt-${index}-${Date.now()}`,
+                    text,
+                    votes: 0
+                })),
+                isActive: true,
+                createdAt: serverTimestamp(),
+                responseCount: 0
+            };
+
+            await addDoc(pollsRef, newPollData);
+
+            toast({ title: 'Амжилттай', description: 'Санал асуулга үүслээ.' });
+            setOpen(false);
+            setQuestion('');
+            setOptions(['', '']);
+            onPollCreated();
+
         } catch (e) {
             console.error(e);
-            toast({ title: 'Алдаа', description: 'Холболтын алдаа гарлаа.', variant: 'destructive' });
+            toast({ title: 'Алдаа', description: 'Санал асуулга үүсгэхэд алдаа гарлаа.', variant: 'destructive' });
         } finally {
             setLoading(false);
         }

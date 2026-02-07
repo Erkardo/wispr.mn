@@ -108,15 +108,7 @@ export const StoryPreview = forwardRef<HTMLDivElement, StoryPreviewProps>(({ mod
                     <span className="font-semibold text-sm opacity-90">wispr.mn</span>
                 </div>
 
-                {/* Fake NGL "Send me a generic message" look */}
-                {mode === 'preview' && (
-                    <div className="mt-4 bg-white/90 text-black px-6 py-4 rounded-xl shadow-xl max-w-[80%] backdrop-blur-sm">
-                        <div className="flex items-center gap-2 mb-2">
-                            <span className="text-2xl">🤫</span>
-                            <span className="font-bold">Надад wispr илгээгээрэй!</span>
-                        </div>
-                    </div>
-                )}
+                {/* Fake NGL "Send me a generic message" look - Removed per user request */}
             </div>
 
             {/* Bottom Logo */}

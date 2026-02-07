@@ -16,7 +16,8 @@ service cloud.firestore {
 
     // ========== Хэрэглэгчийн мэдээлэл ==========
     match /complimentOwners/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if true; // Public needs to read theme/name
+      allow write: if request.auth != null && request.auth.uid == userId;
       
       match /compliments/{complimentId} {
         allow read: if request.auth != null && request.auth.uid == userId;
@@ -25,15 +26,16 @@ service cloud.firestore {
       }
 
       match /polls/{pollId} {
-        allow read: if true; // Public can see polls
+        allow read: if true; // EXPLICIT PUBLIC READ
         allow write: if request.auth != null && request.auth.uid == userId;
         
         match /responses/{responseId} {
-           allow create: if true; // Public can vote
            allow read: if request.auth != null && request.auth.uid == userId;
+           allow create: if true; // Public can vote
         }
       }
 
+      // Fallback for other subcollections
       match /{allSubcollections=**} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }

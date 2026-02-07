@@ -55,7 +55,7 @@ export default function AdminPage() {
                 const token = await user.getIdToken();
                 const access = await checkAdminAccess(token);
 
-                if (!access.isAdmin) {
+                if (!access) {
                     setError("Хандах эрхгүй: Та админ биш байна.");
                     setPageLoading(false);
                     return;
@@ -149,18 +149,18 @@ export default function AdminPage() {
                             <Card className="border-none shadow-sm bg-gradient-to-br from-indigo-500 to-purple-600 text-white relative overflow-hidden">
                                 <CardContent className="p-6 flex flex-col justify-between h-full">
                                     <div className="flex justify-between items-start">
-                                        <div>
-                                            <p className="text-indigo-100 font-medium text-sm">Нийт Орлого</p>
-                                            <h3 className="text-3xl font-bold mt-2 tracking-tight">
+                                        <div className="overflow-hidden">
+                                            <p className="text-indigo-100 font-medium text-sm truncate">Нийт Орлого</p>
+                                            <h3 className="text-2xl md:text-3xl font-bold mt-2 tracking-tight truncate">
                                                 {stats?.totalRevenue.toLocaleString()}₮
                                             </h3>
                                         </div>
-                                        <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
+                                        <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm shrink-0 ml-2">
                                             <DollarSign className="h-5 w-5 text-white" />
                                         </div>
                                     </div>
-                                    <div className="mt-4 text-xs text-indigo-100 flex items-center">
-                                        <TrendingUp className="h-3 w-3 mr-1" />
+                                    <div className="mt-4 text-xs text-indigo-100 flex items-center truncate">
+                                        <TrendingUp className="h-3 w-3 mr-1 shrink-0" />
                                         Нийт олсон орлого
                                     </div>
                                 </CardContent>
@@ -170,21 +170,21 @@ export default function AdminPage() {
                             <Card className="border-none shadow-sm bg-white">
                                 <CardContent className="p-6 flex flex-col justify-between h-full">
                                     <div className="flex justify-between items-start">
-                                        <div>
-                                            <p className="text-gray-500 font-medium text-sm">Нийт Хэрэглэгчид</p>
-                                            <h3 className="text-3xl font-bold mt-2 text-gray-900">{stats?.totalUsers}</h3>
+                                        <div className="overflow-hidden">
+                                            <p className="text-gray-500 font-medium text-sm truncate">Нийт Хэрэглэгчид</p>
+                                            <h3 className="text-2xl md:text-3xl font-bold mt-2 text-gray-900 truncate">{stats?.totalUsers}</h3>
                                         </div>
-                                        <div className="bg-blue-50 p-2 rounded-lg">
+                                        <div className="bg-blue-50 p-2 rounded-lg shrink-0 ml-2">
                                             <Users className="h-5 w-5 text-blue-600" />
                                         </div>
                                     </div>
                                     <div className="mt-4 flex flex-col gap-1">
-                                        <div className="text-xs text-green-600 font-medium flex items-center">
-                                            <UserPlus className="h-3 w-3 mr-1" />
+                                        <div className="text-xs text-green-600 font-medium flex items-center truncate">
+                                            <UserPlus className="h-3 w-3 mr-1 shrink-0" />
                                             {stats?.userBreakdown?.verified || 0} Бүртгэлтэй
                                         </div>
-                                        <div className="text-xs text-gray-400 font-medium flex items-center">
-                                            <Users className="h-3 w-3 mr-1" />
+                                        <div className="text-xs text-gray-400 font-medium flex items-center truncate">
+                                            <Users className="h-3 w-3 mr-1 shrink-0" />
                                             {stats?.userBreakdown?.anonymous || 0} Зочин
                                         </div>
                                     </div>
@@ -195,15 +195,15 @@ export default function AdminPage() {
                             <Card className="border-none shadow-sm bg-white">
                                 <CardContent className="p-6 flex flex-col justify-between h-full">
                                     <div className="flex justify-between items-start">
-                                        <div>
-                                            <p className="text-gray-500 font-medium text-sm">Илгээсэн Wispr</p>
-                                            <h3 className="text-3xl font-bold mt-2 text-gray-900">{stats?.totalWisprs}</h3>
+                                        <div className="overflow-hidden">
+                                            <p className="text-gray-500 font-medium text-sm truncate">Илгээсэн Wispr</p>
+                                            <h3 className="text-2xl md:text-3xl font-bold mt-2 text-gray-900 truncate">{stats?.totalWisprs}</h3>
                                         </div>
-                                        <div className="bg-pink-50 p-2 rounded-lg">
+                                        <div className="bg-pink-50 p-2 rounded-lg shrink-0 ml-2">
                                             <MessageSquare className="h-5 w-5 text-pink-600" />
                                         </div>
                                     </div>
-                                    <div className="mt-4 text-xs text-gray-500">
+                                    <div className="mt-4 text-xs text-gray-500 truncate">
                                         Ашигласан Hint
                                     </div>
                                 </CardContent>
@@ -213,15 +213,15 @@ export default function AdminPage() {
                             <Card className="border-none shadow-sm bg-white">
                                 <CardContent className="p-6 flex flex-col justify-between h-full">
                                     <div className="flex justify-between items-start">
-                                        <div>
-                                            <p className="text-gray-500 font-medium text-sm">Confessions</p>
-                                            <h3 className="text-3xl font-bold mt-2 text-gray-900">{stats?.totalConfessions}</h3>
+                                        <div className="overflow-hidden">
+                                            <p className="text-gray-500 font-medium text-sm truncate">Confessions</p>
+                                            <h3 className="text-2xl md:text-3xl font-bold mt-2 text-gray-900 truncate">{stats?.totalConfessions}</h3>
                                         </div>
-                                        <div className="bg-orange-50 p-2 rounded-lg">
+                                        <div className="bg-orange-50 p-2 rounded-lg shrink-0 ml-2">
                                             <Activity className="h-5 w-5 text-orange-600" />
                                         </div>
                                     </div>
-                                    <div className="mt-4 text-xs text-gray-500">
+                                    <div className="mt-4 text-xs text-gray-500 truncate">
                                         Нэрээ нууцалсан мессеж
                                     </div>
                                 </CardContent>
@@ -297,10 +297,10 @@ export default function AdminPage() {
                                     <Table>
                                         <TableHeader className="bg-gray-50/50">
                                             <TableRow>
-                                                <TableHead className="w-[250px]">Хэрэглэгч</TableHead>
-                                                <TableHead>Бүртгүүлсэн</TableHead>
+                                                <TableHead className="w-[200px]">Хэрэглэгч</TableHead>
+                                                <TableHead className="hidden md:table-cell">Бүртгүүлсэн</TableHead>
                                                 <TableHead>Үлдэгдэл</TableHead>
-                                                <TableHead>Сүүлд орсон</TableHead>
+                                                <TableHead className="hidden md:table-cell">Сүүлд орсон</TableHead>
                                                 <TableHead className="text-right">Үйлдэл</TableHead>
                                             </TableRow>
                                         </TableHeader>
@@ -325,7 +325,7 @@ export default function AdminPage() {
                                                             </div>
                                                         </div>
                                                     </TableCell>
-                                                    <TableCell className="text-gray-500 text-sm whitespace-nowrap">
+                                                    <TableCell className="text-gray-500 text-sm whitespace-nowrap hidden md:table-cell">
                                                         {new Date(u.createdAt).toLocaleDateString('mn-MN')}
                                                     </TableCell>
                                                     <TableCell>
@@ -335,7 +335,7 @@ export default function AdminPage() {
                                                             </Badge>
                                                         </div>
                                                     </TableCell>
-                                                    <TableCell className="text-gray-500 text-sm whitespace-nowrap">
+                                                    <TableCell className="text-gray-500 text-sm whitespace-nowrap hidden md:table-cell">
                                                         {u.lastLogin ? new Date(u.lastLogin).toLocaleDateString('mn-MN') : '-'}
                                                     </TableCell>
                                                     <TableCell className="text-right">
@@ -399,6 +399,33 @@ export default function AdminPage() {
                                 <CardContent>
                                     <div className="text-4xl font-black text-purple-700">
                                         {stats?.hintStats?.totalBonusHints || 0}
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+
+                        {/* Package Breakdown */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <Card className="border-none shadow-sm md:col-span-3">
+                                <CardHeader>
+                                    <CardTitle>Багцын Борлуулалт</CardTitle>
+                                    <CardDescription>Хамгийн их зарагддаг багцууд</CardDescription>
+                                </CardHeader>
+                                <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    <div className="bg-gray-50 p-4 rounded-xl text-center border border-gray-100">
+                                        <div className="text-sm font-medium text-gray-500 mb-1">Small (6.9k)</div>
+                                        <div className="text-2xl font-bold text-gray-900">{stats?.packageBreakdown?.small || 0}</div>
+                                        <div className="text-xs text-gray-400 mt-1">ширхэг зарагдсан</div>
+                                    </div>
+                                    <div className="bg-indigo-50 p-4 rounded-xl text-center border border-indigo-100">
+                                        <div className="text-sm font-medium text-indigo-600 mb-1">Medium (11.9k)</div>
+                                        <div className="text-2xl font-bold text-indigo-900">{stats?.packageBreakdown?.medium || 0}</div>
+                                        <div className="text-xs text-indigo-400 mt-1">ширхэг зарагдсан</div>
+                                    </div>
+                                    <div className="bg-orange-50 p-4 rounded-xl text-center border border-orange-100">
+                                        <div className="text-sm font-medium text-orange-600 mb-1">Large (19.9k)</div>
+                                        <div className="text-2xl font-bold text-orange-900">{stats?.packageBreakdown?.large || 0}</div>
+                                        <div className="text-xs text-orange-400 mt-1">ширхэг зарагдсан</div>
                                     </div>
                                 </CardContent>
                             </Card>

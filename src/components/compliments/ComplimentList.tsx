@@ -119,8 +119,8 @@ function ComplimentCard({
   const [isHintRevealing, setIsHintRevealing] = useState(false);
   const [revealedHints, setRevealedHints] = useState<string[]>(compliment.hints || []);
 
-  const [totalHints, setTotalHints] = useState(5);
-  const [dailyHintsAvailable, setDailyHintsAvailable] = useState(5);
+  const [totalHints, setTotalHints] = useState(1);
+  const [dailyHintsAvailable, setDailyHintsAvailable] = useState(1);
 
   const [localReactions, setLocalReactions] = useState(compliment.reactions || {});
   const [isReacting, setIsReacting] = useState<string | null>(null);
@@ -139,8 +139,8 @@ function ComplimentCard({
 
   useEffect(() => {
     if (ownerLoading) {
-      setDailyHintsAvailable(5);
-      setTotalHints(5 + (ownerData?.bonusHints || 0));
+      setDailyHintsAvailable(1);
+      setTotalHints(1 + (ownerData?.bonusHints || 0));
       return;
     }
     if (ownerData) {
@@ -153,14 +153,14 @@ function ComplimentCard({
       }
 
 
-      const daily = 5 - dailyUsed;
+      const daily = 1;
       const bonus = ownerData.bonusHints || 0;
 
-      setDailyHintsAvailable(daily);
-      setTotalHints(daily + bonus);
+      setDailyHintsAvailable(daily - dailyUsed);
+      setTotalHints(Math.max(0, daily - dailyUsed) + bonus);
     } else {
-      setDailyHintsAvailable(5);
-      setTotalHints(5);
+      setDailyHintsAvailable(1);
+      setTotalHints(1);
     }
   }, [ownerData, ownerLoading]);
 

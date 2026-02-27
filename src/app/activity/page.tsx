@@ -105,7 +105,7 @@ export default function ActivityPage() {
 
   return (
     <>
-      <Header title="Идэвх" showBackButton={false} />
+      <Header title="Идэвх" />
       <div className="container mx-auto max-w-2xl p-4 py-8">
         {isLoading ? (
           <div className="space-y-4">

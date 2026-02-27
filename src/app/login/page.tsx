@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import Link from 'next/link';
+import { Header } from '@/components/Header';
 
 
 const GoogleIcon = () => (
@@ -26,11 +27,8 @@ export default function LoginPage() {
     if (auth) {
       const provider = new GoogleAuthProvider();
       try {
-        // Firebase handles account linking automatically for anonymous users
         await signInWithPopup(auth, provider);
       } catch (error: any) {
-        // This error occurs if the user closes the popup without signing in.
-        // It's a normal user action, so we can safely ignore it.
         if (error.code !== 'auth/cancelled-popup-request') {
           console.error('Error signing in with Google', error);
         }
@@ -48,25 +46,28 @@ export default function LoginPage() {
 
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-background via-accent/5 to-background p-4 text-center">
-      <div className="mx-auto w-fit mb-6 text-primary">
-        <Logo className="w-56" />
-      </div>
-      <p className="mt-2 max-w-sm text-muted-foreground">
-        Найзууд тань таны тухай үнэндээ юу гэж боддог бол? <br />
-        <span className="text-foreground font-medium">Мэдрэмжээ нээлттэй хуваалцах орон зай.</span>
-      </p>
+    <div className="flex min-h-screen flex-col bg-background">
+      <Header title="Нэвтрэх" />
+      <div className="flex flex-1 flex-col items-center justify-center bg-gradient-to-br from-background via-accent/5 to-background p-4 text-center">
+        <div className="mx-auto w-fit mb-6 text-primary">
+          <Logo className="w-56" />
+        </div>
+        <p className="mt-2 max-w-sm text-muted-foreground">
+          Найзууд тань таны тухай үнэндээ юу гэж боддог бол? <br />
+          <span className="text-foreground font-medium">Мэдрэмжээ нээлттэй хуваалцах орон зай.</span>
+        </p>
 
-      <div className="mt-12 w-full max-w-xs">
-        <Button onClick={handleSignIn} size="lg" className="w-full font-bold">
-          <GoogleIcon />
-          Google-ээр үргэлжлүүлэх
-        </Button>
-      </div>
+        <div className="mt-12 w-full max-w-xs">
+          <Button onClick={handleSignIn} size="lg" className="w-full font-bold">
+            <GoogleIcon />
+            Google-ээр үргэлжлүүлэх
+          </Button>
+        </div>
 
-      <p className="absolute bottom-6 text-xs text-muted-foreground px-8">
-        Үргэлжлүүлснээр та манай <Link href="/privacy" className="underline">Үйлчилгээний нөхцөл</Link> болон <Link href="/privacy" className="underline">Нууцлалын бодлогыг</Link> зөвшөөрч байна.
-      </p>
+        <p className="absolute bottom-6 text-xs text-muted-foreground px-8">
+          Үргэлжлүүлснээр та манай <Link href="/privacy" className="underline">Үйлчилгээний нөхцөл</Link> болон <Link href="/privacy" className="underline">Нууцлалын бодлогыг</Link> зөвшөөрч байна.
+        </p>
+      </div>
     </div>
   );
 }

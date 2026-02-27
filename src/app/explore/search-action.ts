@@ -50,7 +50,7 @@ export async function searchPublicProfilesAction(query: string, type: 'username'
                 isMatch = data.workplace.toLowerCase().includes(cleanQuery);
             }
 
-            if (isMatch) {
+            if (isMatch && data.shortId) {
                 results.push({
                     shortId: data.shortId, // IMPORTANT: We redirect people to `/c/shortId` to keep anonymity alive!
                     username: data.username,

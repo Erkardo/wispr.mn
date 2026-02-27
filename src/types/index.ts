@@ -15,6 +15,16 @@ export type ComplimentOwner = {
   level?: number;
   badges?: string[]; // e.g. ['first_wispr', '100_club']
   totalCompliments?: number;
+
+  // Social Profile Fields (Phase 1)
+  username?: string;
+  displayName?: string;
+  photoURL?: string;
+  school?: string;
+  workplace?: string;
+  isPublic?: boolean;
+  lastRadarLocation?: any; // GeoPoint from firebase
+  radarExpiresAt?: Timestamp;
 };
 
 export type ShortLink = {

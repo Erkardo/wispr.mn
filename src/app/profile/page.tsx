@@ -4,7 +4,7 @@ import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from '@/fireb
 import { Header } from '@/components/Header';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Gift, HelpCircle, Shield, MessageCircle, Gem, LogOut, Loader2, Users, ShoppingCart, FileText, Palette, Trophy } from 'lucide-react';
+import { Gift, HelpCircle, Shield, MessageCircle, Gem, LogOut, Loader2, Users, ShoppingCart, FileText, Palette, Trophy, User } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -30,6 +30,7 @@ import { Separator } from '@/components/ui/separator';
 import { ThemeSelector } from '@/components/profile/ThemeSelector';
 import { LevelProgress } from '@/components/gamification/LevelProgress';
 import { BadgeList } from '@/components/gamification/BadgeList';
+import { ProfileSettings } from '@/components/profile/ProfileSettings';
 
 
 type HintPackage = {
@@ -267,17 +268,32 @@ export default function ProfilePage() {
                     </CardContent>
                 </Card>
 
-                <Tabs defaultValue="themes" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2">
+                <Tabs defaultValue="profile" className="w-full">
+                    <TabsList className="grid w-full grid-cols-3">
+                        <TabsTrigger value="profile" className="gap-2">
+                            <User className="h-4 w-4" />
+                            <span className="hidden sm:inline">Мэдээлэл</span>
+                        </TabsTrigger>
                         <TabsTrigger value="themes" className="gap-2">
                             <Palette className="h-4 w-4" />
-                            <span>Загвар</span>
+                            <span className="hidden sm:inline">Загвар</span>
                         </TabsTrigger>
                         <TabsTrigger value="achievements" className="gap-2">
                             <Trophy className="h-4 w-4" />
-                            <span>Амжилт</span>
+                            <span className="hidden sm:inline">Амжилт</span>
                         </TabsTrigger>
                     </TabsList>
+                    <TabsContent value="profile" className="mt-4 space-y-4">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Хувийн мэдээлэл</CardTitle>
+                                <CardDescription>Нийтэд харагдах өөрийн профайл мэдээллээ тохируулна уу.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <ProfileSettings ownerId={user.uid} ownerData={ownerData} />
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
                     <TabsContent value="themes" className="mt-4 space-y-4">
                         <ThemeSelector currentThemeId={ownerData?.theme} ownerData={ownerData} />
                     </TabsContent>

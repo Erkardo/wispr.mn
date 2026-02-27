@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { AuthWrapper } from '@/components/AuthWrapper';
+import { Analytics } from "@vercel/analytics/react";
 
 export const metadata: Metadata = {
   title: 'Wispr - Сэтгэлийн үгээ шивнээч',
@@ -52,6 +53,7 @@ export default function RootLayout({
           <AuthWrapper>{children}</AuthWrapper>
           <Toaster />
         </FirebaseClientProvider>
+        <Analytics />
       </body>
     </html>
   );

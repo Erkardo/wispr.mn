@@ -145,6 +145,16 @@ export default function HomePage() {
           </div>
         </TabsContent>
       </Tabs>
+      <footer className="w-full py-8 px-4 mt-8 border-t bg-muted/30">
+        <div className="container mx-auto max-w-2xl flex flex-col items-center gap-4">
+          <div className="flex gap-6 text-sm text-muted-foreground">
+            <Link href="/privacy" className="hover:text-primary transition-colors">Нууцлалын бодлого</Link>
+            <Link href="/privacy" className="hover:text-primary transition-colors">Үйлчилгээний нөхцөл</Link>
+            <Link href="/feedback" className="hover:text-primary transition-colors">Санал хүсэлт</Link>
+          </div>
+          <p className="text-xs text-muted-foreground opacity-50">© {new Date().getFullYear()} Wispr.mn</p>
+        </div>
+      </footer>
     </>
   );
 }

@@ -61,7 +61,7 @@ export default async function SubmitComplimentShortIdPage({ params }: Props) {
 
   return (
     <>
-      <Header title="Wispr үлдээх" showBackButton={false} />
+      <Header title="Wispr үлдээх" showBackButton={true} />
       <main>
         <ComplimentSubmitClient shortId={shortId} />
       </main>

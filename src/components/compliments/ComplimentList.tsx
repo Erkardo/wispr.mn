@@ -499,13 +499,13 @@ function ComplimentCard({
             </div>
           )}
 
-          <div className="absolute bottom-4 flex items-center gap-2 text-sm opacity-80 font-medium z-10 select-none text-white/90">
-            <UserX className="h-4 w-4" />
+          <div className="absolute bottom-4 left-6 flex items-center gap-2 text-[10px] opacity-60 font-black z-10 select-none text-white/90 uppercase tracking-widest">
+            <UserX className="h-3 w-3" />
             Нэрээ нууцалсан
           </div>
 
-          {/* Floating Reactions - COMPACT VERSION */}
-          <div className="absolute bottom-14 left-1/2 -translate-x-1/2 flex items-center gap-1.5 p-1.5 rounded-full bg-black/30 backdrop-blur-md border border-white/10 z-20 shadow-xl">
+          {/* Floating Reactions - MOVED TO CORNER TO AVOID OVERLAP */}
+          <div className="absolute bottom-3 right-4 flex items-center gap-1 p-1 rounded-2xl bg-black/40 backdrop-blur-xl border border-white/10 z-20 shadow-2xl scale-90 origin-bottom-right">
             {reactionEmojis.map(emoji => (
               <button
                 key={emoji}

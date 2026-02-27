@@ -44,7 +44,7 @@ export default function CreatePage() {
 
     return (
         <>
-            <Header title="Үүсгэх" showBackButton={false} />
+            <Header title="Үүсгэх" showBackButton={true} />
             <div className="container mx-auto max-w-2xl p-4 py-8">
                 <div className="space-y-6">
                     <div className="animate-in fade-in-50 slide-in-from-bottom-5 duration-500" style={{ animationDelay: '100ms', animationFillMode: 'both' }}>

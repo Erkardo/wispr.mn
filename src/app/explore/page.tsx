@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RadarTab } from './RadarTab';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { Header } from '@/components/Header';
 
 const CATEGORIES = [
     { id: 'name', label: 'Нэр', icon: User, color: 'text-blue-500', bg: 'bg-blue-500/10' },
@@ -55,19 +56,12 @@ export default function ExplorePage() {
 
     return (
         <div className="min-h-screen bg-background pb-20">
+            <Header title="Хайх" />
+
             {/* Immersive Header Backdrop */}
             <div className="absolute top-0 left-0 right-0 h-48 bg-gradient-to-b from-primary/5 via-primary/2 to-transparent pointer-events-none" />
 
-            <div className="container mx-auto max-w-2xl p-4 pt-8 relative space-y-8">
-
-                {/* Discovery Header */}
-                <header className="flex flex-col gap-1 px-1">
-                    <div className="flex items-center gap-2">
-                        <div className="h-1.5 w-6 bg-primary rounded-full" />
-                        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/60">Discover</span>
-                    </div>
-                    <h1 className="text-4xl font-black tracking-tighter">Wispr Hub</h1>
-                </header>
+            <div className="container mx-auto max-w-2xl p-4 pt-4 relative space-y-8">
 
                 <Tabs defaultValue="search" className="w-full">
                     <div className="flex items-center justify-between mb-6 px-1">

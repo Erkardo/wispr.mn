@@ -184,7 +184,7 @@ export default function ProfilePage() {
     if (userLoading || ownerLoading) {
         return (
             <>
-                <Header title="Профайл" showBackButton={false} />
+                <Header title="Профайл" showBackButton={true} />
                 <div className="container mx-auto max-w-2xl p-4 py-8 space-y-6">
                     <div className="space-y-4">
                         <Skeleton className="h-24 w-full rounded-lg" />
@@ -199,7 +199,7 @@ export default function ProfilePage() {
     if (!user || user.isAnonymous) {
         return (
             <>
-                <Header title="Профайл" showBackButton={false} />
+                <Header title="Профайл" showBackButton={true} />
                 <div className="container mx-auto max-w-2xl p-4 py-8 space-y-8">
                     <Card className="text-center border-primary/20 bg-primary/5">
                         <CardHeader>
@@ -253,7 +253,7 @@ export default function ProfilePage() {
 
     return (
         <>
-            <Header title="Профайл" showBackButton={false} />
+            <Header title="Профайл" showBackButton={true} />
             <div className="container mx-auto max-w-2xl p-4 py-8 space-y-6">
                 <Card>
                     <CardContent className="flex items-center gap-4 p-6">

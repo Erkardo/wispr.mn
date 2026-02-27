@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Loader2, Camera, ChevronRight, ChevronLeft, Copy, Check, Instagram, Link as LinkIcon } from 'lucide-react';
+import { Loader2, ChevronRight, ChevronLeft, Copy, Check, Instagram, Link as LinkIcon, Facebook, Info, Smartphone, Upload, Square, Smile } from 'lucide-react';
 import * as htmlToImage from 'html-to-image';
 import { useToast } from '@/hooks/use-toast';
 import { StoryPreview } from './StoryPreview';
@@ -53,12 +53,10 @@ export function StoryGenerator({ ownerData }: { ownerData: WithId<ComplimentOwne
     if (!isCopied) await copyLink();
 
     try {
-      // Generate the image blob from the HIDDEN clean version
+      // Create high-res image from mobile-sized container (360x640 * 3 = 1080x1920)
       const blob = await htmlToImage.toBlob(elementToCapture, {
         cacheBust: true,
-        pixelRatio: 1, // Standard, since we enforced 1080x1920 size
-        width: 1080,
-        height: 1920,
+        pixelRatio: 3,
         skipFonts: false,
         style: { display: 'flex' } // Force display flex for proper capture even if hidden
       });
@@ -111,50 +109,61 @@ export function StoryGenerator({ ownerData }: { ownerData: WithId<ComplimentOwne
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
 
       {/* HEADER & CONTROLS */}
       <div className="px-2 flex items-center justify-between">
-        <h2 className="text-lg font-bold">🚀 Story үүсгэх</h2>
-        <span className="text-xs text-muted-foreground bg-secondary px-2 py-1 rounded-full">
+        <h2 className="text-xl font-bold tracking-tight">Story үүсгэх ✨</h2>
+        <span className="text-xs font-semibold px-3 py-1 bg-primary/10 text-primary rounded-full">
           {activeDesignIndex + 1} / {STORY_DESIGNS.length}
         </span>
       </div>
 
       {/* PREVIEW AREA (Visible, Instructional Mode) */}
-      <div className="relative group max-w-sm mx-auto">
+      <div className="relative group max-w-sm mx-auto p-1">
+        {/* Decorative Glow */}
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-blue-500/20 to-purple-500/20 blur-xl opacity-50 rounded-3xl -z-10"></div>
+
         {/* Left Arrow */}
         <Button
           variant="ghost"
           size="icon"
-          className="absolute left-[-16px] top-1/2 -translate-y-1/2 z-20 bg-white/80 backdrop-blur shadow-sm hover:bg-white rounded-full h-8 w-8 md:h-10 md:w-10 md:left-[-20px]"
+          className="absolute left-[-10px] top-1/2 -translate-y-1/2 z-20 bg-background/80 backdrop-blur-md shadow-lg hover:bg-background border border-border/50 rounded-full h-10 w-10 md:left-[-20px] transition-all hover:scale-110 text-foreground"
           onClick={handlePrevDesign}
         >
-          <ChevronLeft className="h-4 w-4 md:h-6 md:w-6" />
+          <ChevronLeft className="h-5 w-5" />
         </Button>
 
         {/* User Visible Preview */}
-        <StoryPreview
-          ref={previewRef}
-          mode="preview"
-          design={activeDesign}
-        />
+        <div className="rounded-[2rem] overflow-hidden border-[6px] border-background/50 shadow-2xl relative bg-black">
+          {/* Phone Notch/Island Simulation */}
+          <div className="absolute top-0 inset-x-0 h-6 flex justify-center z-30 pointer-events-none">
+            <div className="w-1/3 h-5 bg-black rounded-b-2xl opacity-50 backdrop-blur-md"></div>
+          </div>
+
+          <StoryPreview
+            ref={previewRef}
+            mode="preview"
+            design={activeDesign}
+          />
+        </div>
 
         {/* Right Arrow */}
         <Button
           variant="ghost"
           size="icon"
-          className="absolute right-[-16px] top-1/2 -translate-y-1/2 z-20 bg-white/80 backdrop-blur shadow-sm hover:bg-white rounded-full h-8 w-8 md:h-10 md:w-10 md:right-[-20px]"
+          className="absolute right-[-10px] top-1/2 -translate-y-1/2 z-20 bg-background/80 backdrop-blur-md shadow-lg hover:bg-background border border-border/50 rounded-full h-10 w-10 md:right-[-20px] transition-all hover:scale-110 text-foreground"
           onClick={handleNextDesign}
         >
-          <ChevronRight className="h-4 w-4 md:h-6 md:w-6" />
+          <ChevronRight className="h-5 w-5" />
         </Button>
       </div>
 
       {/* HIDDEN CAPTURE AREA (Off-screen, Clean Mode) */}
-      {/* We use absolute positioning off-screen instead of display:none so it can render for capture */}
-      <div className="fixed top-0 left-[-9999px] w-[1080px] h-[1920px] pointer-events-none opacity-0">
-        {/* Fixed width/height for consistent high-res output */}
+      {/* We use standard mobile proportions (360x640).
+          html-to-image with pixelRatio: 3 will output exactly 1080x1920.
+          This ensures all relative sizes (rem, proportions) scale perfectly from generic UI size to HD. */}
+      <div className="fixed top-0 left-[-9999px] w-[360px] h-[640px] pointer-events-none opacity-0">
         <StoryPreview
           ref={hiddenRef}
           mode="capture"
@@ -163,59 +172,83 @@ export function StoryGenerator({ ownerData }: { ownerData: WithId<ComplimentOwne
       </div>
 
       {/* ACTIONS */}
-      <div className="space-y-4 px-2">
-        <Button onClick={handleShare} disabled={isGenerating || !ownerData} className="w-full font-bold h-12 text-base shadow-lg animate-pulse hover:animate-none" size="lg">
+      <div className="space-y-4 px-2 max-w-sm mx-auto">
+        <Button onClick={handleShare} disabled={isGenerating || !ownerData} className="w-full font-bold h-14 text-base shadow-xl hover:shadow-primary/25 transition-all overflow-hidden relative group" size="lg">
+          {/* Button Shine Effect */}
+          <div className="absolute inset-0 -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"></div>
+
           {isGenerating ? (
             <Loader2 className="mr-2 h-5 w-5 animate-spin" />
           ) : (
-            <Instagram className="mr-2 h-5 w-5" />
+            <div className="flex items-center gap-1.5 mr-3">
+              <Instagram className="h-5 w-5" />
+              <span className="opacity-50 text-xs">/</span>
+              <Facebook className="h-5 w-5" />
+            </div>
           )}
-          Story үүсгэх & Хуваалцах
+          <span>Story шэйрлэх</span>
         </Button>
 
         {/* Manual Copy Fallback */}
-        <Button variant="outline" onClick={copyLink} className="w-full text-muted-foreground text-xs h-8">
-          {isCopied ? <Check className="h-3 w-3 mr-1" /> : <Copy className="h-3 w-3 mr-1" />}
-          {isCopied ? 'Линк хуулагдсан' : 'Линкийг гараар хуулах'}
+        <Button variant="ghost" onClick={copyLink} className="w-full text-muted-foreground text-sm hover:text-foreground">
+          {isCopied ? <Check className="h-4 w-4 mr-2 text-green-500" /> : <Copy className="h-4 w-4 mr-2" />}
+          {isCopied ? 'Хуулагдсан' : 'Линкийг хуулах'}
         </Button>
       </div>
 
 
-      {/* INSTRUCTIONS */}
-      <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-5 space-y-4">
-        <h3 className="font-bold text-blue-900 flex items-center gap-2">
-          <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-600 text-xs">?</span>
-          Яаж Story хийх вэ?
-        </h3>
+      {/* PREMIUM INSTRUCTIONS UI */}
+      <div className="max-w-sm mx-auto">
+        <div className="bg-card/50 backdrop-blur-xl border border-border/50 rounded-3xl p-6 shadow-xl relative overflow-hidden group">
+          {/* Subtle gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-50"></div>
 
-        <div className="grid gap-4">
-          <div className="flex gap-3 items-start">
-            <div className="bg-white p-2 rounded-lg shadow-sm border border-blue-50 text-pink-500">
-              <Camera className="h-5 w-5" />
+          <div className="relative z-10 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 shadow-inner">
+                <Info className="w-5 h-5 text-primary" />
+              </div>
+              <h3 className="font-bold text-lg tracking-tight">Яаж оруулах вэ?</h3>
             </div>
-            <div>
-              <p className="font-semibold text-sm text-gray-900">1. Зураг үүсгэх</p>
-              <p className="text-xs text-gray-500 leading-relaxed">"Story үүсгэх" товчийг дарахад Wispr автоматаар таны линкийг хуулж, зургийг таны утсанд хадгалах эсвэл Instagram руу шэйрлэнэ.</p>
-            </div>
-          </div>
 
-          <div className="flex gap-3 items-start">
-            <div className="bg-white p-2 rounded-lg shadow-sm border border-blue-50 text-blue-500">
-              <LinkIcon className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="font-semibold text-sm text-gray-900">2. Линк наах</p>
-              <p className="text-xs text-gray-500 leading-relaxed">Story дээрээ <b>Stickers</b> цэснээс <b>LINK</b> стикерийг сонгоод Paste хийгээрэй.</p>
-            </div>
-          </div>
+            <div className="space-y-4 px-1">
+              {/* Step 1 */}
+              <div className="flex gap-4 items-start relative pb-4">
+                <div className="absolute top-8 left-4 bottom-0 w-px bg-gradient-to-b from-primary/30 to-border/30"></div>
+                <div className="bg-background relative z-10 w-8 h-8 rounded-full border-2 border-primary/30 shadow-sm flex items-center justify-center shrink-0 mt-0.5 group-hover:border-primary transition-colors">
+                  <Smartphone className="w-4 h-4 text-primary" />
+                </div>
+                <div>
+                  <p className="font-bold text-[14px] leading-none mb-1.5">1. Зураг оруулах</p>
+                  <p className="text-[13px] text-muted-foreground/90 leading-relaxed">Story шэйрлэх товчийг дарангуут <b>линк хуулагдаж</b>, Facebook/Instagram-ийн Story цонх нээгдэнэ.</p>
+                </div>
+              </div>
 
-          <div className="flex gap-3 items-start">
-            <div className="bg-white p-2 rounded-lg shadow-sm border border-blue-50 text-indigo-500">
-              <div className="h-5 w-5 flex items-center justify-center font-bold text-xs border-2 border-current rounded">Aa</div>
-            </div>
-            <div>
-              <p className="font-semibold text-sm text-gray-900">3. Байршуулах</p>
-              <p className="text-xs text-gray-500 leading-relaxed">"Линкээ энд наана" гэсэн сумтай хэсэг дээр стикерээ тааруулж тавиарай.</p>
+              {/* Step 2 */}
+              <div className="flex gap-4 items-start relative pb-4">
+                <div className="absolute top-8 left-4 bottom-0 w-px bg-gradient-to-b from-border/30 to-border/10"></div>
+                <div className="bg-background relative z-10 w-8 h-8 rounded-full border-2 border-border/50 shadow-sm flex items-center justify-center shrink-0 mt-0.5">
+                  <div className="relative">
+                    <Square className="w-4 h-4 text-foreground/70" />
+                    <Smile className="w-2.5 h-2.5 absolute bottom-0 right-0 text-foreground/70 bg-background rounded-full" />
+                  </div>
+                </div>
+                <div>
+                  <p className="font-bold text-[14px] leading-none mb-1.5">2. Стикер (Stickers) цэс</p>
+                  <p className="text-[13px] text-muted-foreground/90 leading-relaxed">Story дэлгэцийн дээд хэсэгт байрлах <b>Стикер</b> (инээмсэглэсэн дөрвөлжин) дүрсийг дарна.</p>
+                </div>
+              </div>
+
+              {/* Step 3 */}
+              <div className="flex gap-4 items-start relative">
+                <div className="bg-background relative z-10 w-8 h-8 rounded-full border-2 border-border/50 shadow-sm flex items-center justify-center shrink-0 mt-0.5">
+                  <LinkIcon className="w-4 h-4 text-foreground/70" />
+                </div>
+                <div>
+                  <p className="font-bold text-[14px] leading-none mb-1.5">3. Линкээ наах</p>
+                  <p className="text-[13px] text-muted-foreground/90 leading-relaxed">Цэснээс ээр <b>LINK</b> (Холбоос) стикерийг сонгоод, бидний хуулж өгсөн линкийг <span className="px-1 py-0.5 bg-muted rounded font-mono text-foreground/80">Paste</span> хийгээрэй! 🎉</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -223,3 +256,4 @@ export function StoryGenerator({ ownerData }: { ownerData: WithId<ComplimentOwne
     </div>
   );
 }
+

@@ -42,7 +42,6 @@ export async function getNearbyRadarUsersAction(userId: string, lat: number, lng
 
         for (const b of bounds) {
             const q = db.collection('complimentOwners')
-                .where('isPublic', '==', true)
                 .where('geohash', '>=', b[0])
                 .where('geohash', '<=', b[1]);
 
@@ -55,6 +54,9 @@ export async function getNearbyRadarUsersAction(userId: string, lat: number, lng
         for (const snap of snapshots) {
             for (const doc of snap.docs) {
                 const data = doc.data();
+
+                // Check if public
+                if (data.isPublic !== true) continue;
 
                 // Don't show yourself
                 if (doc.id === userId) continue;

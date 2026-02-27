@@ -3,7 +3,7 @@
 import type { Compliment, ComplimentOwner } from '@/types';
 import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { MessageCircle, Gift, Loader2, Share2, UserX, KeyRound, ShoppingCart } from 'lucide-react';
+import { MessageCircle, Gift, Loader2, Share2, UserX, KeyRound, ShoppingCart, MessageSquareIcon, Send } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect, useRef, forwardRef, useCallback } from 'react';
@@ -15,6 +15,8 @@ import { format, isToday, isYesterday } from 'date-fns';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { generateHintAction, addReactionToComplimentAction } from '@/app/compliments/actions';
+import { replyToComplimentAction } from '@/app/compliments/reply-action';
+import { Textarea } from '@/components/ui/textarea';
 
 import {
   Dialog,
@@ -128,6 +130,11 @@ function ComplimentCard({
 
   const [isCreatingInvoice, setIsCreatingInvoice] = useState(false);
   const [qpayData, setQpayData] = useState<{ qrImage: string, deeplinks: any[], invoiceId: string } | null>(null);
+
+  const [isReplying, setIsReplying] = useState(false);
+  const [replyText, setReplyText] = useState('');
+  const [isSubmittingReply, setIsSubmittingReply] = useState(false);
+  const [localReplyStatus, setLocalReplyStatus] = useState<string | null>(compliment.replyText || null);
 
 
   const getFontSizeClass = (text: string) => {
@@ -335,6 +342,26 @@ function ComplimentCard({
     }
   };
 
+  const handleReplySubmit = async () => {
+    if (!replyText.trim() || isSubmittingReply) return;
+    setIsSubmittingReply(true);
+
+    try {
+      const result = await replyToComplimentAction(compliment.ownerId, compliment.id, replyText);
+      if (result.success) {
+        setLocalReplyStatus(replyText);
+        setIsReplying(false);
+        toast({ title: 'Хариу илгээгдлээ!', description: 'Энэ мессежийг бичсэн хүнд таны хариу очсон.' });
+      } else {
+        toast({ title: 'Алдаа', description: result.message, variant: 'destructive' });
+      }
+    } catch (err) {
+      toast({ title: 'Алдаа', description: 'Хариу үлдээхэд алдаа гарлаа.', variant: 'destructive' });
+    } finally {
+      setIsSubmittingReply(false);
+    }
+  };
+
   const generateAndShareImage = useCallback(async () => {
     if (!shareImageRef.current) {
       toast({
@@ -497,15 +524,78 @@ function ComplimentCard({
             ))}
           </div>
 
-          <Button
-            className="font-bold bg-white text-primary rounded-full px-4 transition-all duration-300 transform active:translate-y-px active:scale-100 hover:scale-[1.03] shadow-lg border-b-4 border-primary/20"
-            onClick={() => setIsHintDialogOpen(true)}
-          >
-            <KeyRound className="mr-2 h-4 w-4" />
-            <span>Hint харах {revealedHints.length > 0 ? `(${revealedHints.length})` : ''}</span>
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              className="font-bold bg-white/10 hover:bg-white/20 text-white rounded-full px-4 border-none shadow-lg backdrop-blur-sm transition-all"
+              onClick={() => setIsReplying(!isReplying)}
+              disabled={!!localReplyStatus}
+            >
+              <MessageSquareIcon className="mr-2 h-4 w-4" />
+              <span>{localReplyStatus ? "Хариулсан" : "Хариулах"}</span>
+            </Button>
+
+            <Button
+              className="font-bold bg-white text-primary rounded-full px-4 transition-all duration-300 shadow-lg border-b-4 border-primary/20"
+              onClick={() => setIsHintDialogOpen(true)}
+            >
+              <KeyRound className="mr-2 h-4 w-4" />
+              <span className="hidden sm:inline">Hint харах {revealedHints.length > 0 ? `(${revealedHints.length})` : ''}</span>
+              <span className="sm:hidden">Hint {revealedHints.length > 0 ? `(${revealedHints.length})` : ''}</span>
+            </Button>
+          </div>
         </CardFooter>
       </Card>
+
+      {/* Reply Input Area */}
+      {isReplying && !localReplyStatus && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          className="mt-3 bg-secondary/80 backdrop-blur rounded-2xl p-4 border shadow-sm"
+        >
+          <h4 className="text-sm font-semibold mb-2 ml-1 text-foreground flex items-center gap-2">
+            <MessageSquareIcon className="w-4 h-4 text-primary" />
+            Бичсэн хүн рүү хариу өгөх
+          </h4>
+          <Textarea
+            placeholder="Таны хариу... (зөвхөн энэ wispr-ийг бичсэн хүн л харна)"
+            className="resize-none h-20 bg-background/50 mb-3"
+            value={replyText}
+            onChange={(e) => setReplyText(e.target.value)}
+            autoFocus
+          />
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setIsReplying(false)}>Буцах</Button>
+            <Button onClick={handleReplySubmit} disabled={isSubmittingReply || !replyText.trim()}>
+              {isSubmittingReply ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
+              Илгээх
+            </Button>
+          </div>
+          {!compliment.senderId && (
+            <p className="text-xs text-muted-foreground/60 mt-3 ml-1 text-center">
+              Жич: Хэрвээ илгээгч бүртгэлгүйгээр бичсэн байвал энэ хариуг унших боломжгүй байж магадгүй.
+            </p>
+          )}
+        </motion.div>
+      )}
+
+      {/* Visual Indicator of a Reply existing */}
+      {localReplyStatus && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-3 bg-primary/10 border border-primary/20 rounded-2xl p-4 shadow-sm relative overflow-hidden"
+        >
+          <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-primary/20 to-transparent rounded-bl-full" />
+          <span className="text-xs font-bold text-primary mb-1 uppercase tracking-wider flex items-center gap-1.5">
+            <MessageSquareIcon className="w-3.5 h-3.5" />
+            Таны хариу
+          </span>
+          <p className="text-sm text-foreground/90 leading-relaxed font-medium mt-1">"{localReplyStatus}"</p>
+        </motion.div>
+      )}
+
     </motion.div>
   );
 

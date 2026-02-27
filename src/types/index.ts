@@ -48,6 +48,12 @@ export type Compliment = {
   hintContext?: HintContext;
   audioUrl?: string;
   duration?: number;
+
+  // Phase 4: Reply fields
+  senderId?: string;
+  replyText?: string;
+  replyRead?: boolean;
+  repliedAt?: Timestamp;
 };
 
 export type ReactionEmoji = '❤️' | '👍' | '😢' | '🔥';

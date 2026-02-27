@@ -3,6 +3,7 @@
 import { useMemo, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { ComplimentList } from '@/components/compliments/ComplimentList';
+import { SentList } from '@/components/compliments/SentList';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCollection, useFirestore, useUser, useMemoFirebase, useDoc } from '@/firebase';
 import { collection, query, doc } from 'firebase/firestore';
@@ -126,6 +127,7 @@ export default function HomePage() {
         <div className="flex justify-center px-4">
           <TabsList>
             <TabsTrigger value="compliments">Wispr-үүд</TabsTrigger>
+            <TabsTrigger value="sent">Миний бичсэн</TabsTrigger>
             <TabsTrigger value="confessions">Сэтгэлийн үгс</TabsTrigger>
             <TabsTrigger value="polls">Санал асуулга</TabsTrigger>
           </TabsList>
@@ -133,6 +135,11 @@ export default function HomePage() {
         <TabsContent value="compliments">
           <div className="container mx-auto max-w-2xl p-4 py-8">
             {pageContent}
+          </div>
+        </TabsContent>
+        <TabsContent value="sent">
+          <div className="container mx-auto max-w-2xl p-4 py-2">
+            <SentList />
           </div>
         </TabsContent>
         <TabsContent value="polls">

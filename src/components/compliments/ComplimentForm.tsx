@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { useUser, useAuth, useFirestore, errorEmitter, FirestorePermissionError } from '@/firebase';
-import { addDoc, collection, serverTimestamp, doc, updateDoc, increment } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp, doc, updateDoc, increment, setDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { submitComplimentAction } from '@/app/compliments/actions';
 import type { HintContext } from '@/types';
@@ -121,19 +121,34 @@ export function ComplimentForm({ ownerId }: { ownerId: string }) {
           isRead: false,
           reactions: { '💛': 0, '😄': 0, '✨': 0 },
           audioUrl: audioUrl || null,
-          duration: audioDuration || 0
+          duration: audioDuration || 0,
+          senderId: user && !user.isAnonymous ? user.uid : null,
         };
 
         // Non-blocking write to Firestore
-        addDoc(complimentsRef, complimentData).then(async () => {
-          // Increment owner XP
+        addDoc(complimentsRef, complimentData).then(async (docRef) => {
+          // Increment owner XP and save to sender's sent box
           try {
-            const ownerRef = doc(firestore, 'complimentOwners', ownerId);
-            await updateDoc(ownerRef, {
-              xp: increment(10), // +10 XP per wispr
-            });
+            const ownerDocRef = doc(firestore, 'complimentOwners', ownerId);
+            const batchPromises = [
+              updateDoc(ownerDocRef, {
+                xp: increment(10), // +10 XP per wispr
+              })
+            ];
+
+            // Save reference to sender's Sent Box if they are logged in
+            if (user && !user.isAnonymous) {
+              const sentRef = doc(firestore, 'complimentOwners', user.uid, 'sentWisprs', docRef.id);
+              batchPromises.push(setDoc(sentRef, {
+                receiverId: ownerId,
+                complimentId: docRef.id,
+                sentAt: serverTimestamp()
+              }));
+            }
+
+            await Promise.all(batchPromises);
           } catch (e) {
-            console.error("Failed to update XP", e);
+            console.error("Failed to update extra DB data", e);
           }
         }).catch(error => {
           const permissionError = new FirestorePermissionError({

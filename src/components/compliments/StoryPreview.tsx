@@ -27,27 +27,27 @@ export const StoryPreview = forwardRef<HTMLDivElement, StoryPreviewProps>(({ mod
             <div className="absolute bottom-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl translate-x-1/2 translate-y-1/2 pointer-events-none"></div>
 
             {/* Simulated Instagram Top Bar (Static for Capture, Animated overlay in Preview) */}
-            <div className="absolute top-4 left-0 right-0 px-4 flex justify-between items-center z-20 text-white opacity-90 w-full">
-                <X className="w-6 h-6 drop-shadow-md" />
-                <div className="flex gap-4">
-                    <div className="relative">
-                        <Type className="w-5 h-5 drop-shadow-md" />
-                    </div>
-                    <div className="relative">
-                        <Smile className="w-5 h-5 drop-shadow-md" />
+            {mode === 'preview' && (
+                <div className="absolute top-4 left-0 right-0 px-4 flex justify-between items-center z-20 text-white opacity-90 w-full">
+                    <X className="w-6 h-6 drop-shadow-md" />
+                    <div className="flex gap-4">
+                        <div className="relative">
+                            <Type className="w-5 h-5 drop-shadow-md" />
+                        </div>
+                        <div className="relative">
+                            <Smile className="w-5 h-5 drop-shadow-md" />
 
-                        {/* INSTRUCTION STEP 1: Cursor pulsing on Sticker Icon */}
-                        {mode === 'preview' && (
+                            {/* INSTRUCTION STEP 1: Cursor pulsing on Sticker Icon */}
                             <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 animate-in fade-in zoom-in duration-500 delay-300 fill-mode-forwards" style={{ animationDelay: '0.3s', animationFillMode: 'forwards' }}>
-                                <div className="w-2.5 h-2.5 bg-white/50 rounded-full animate-ping absolute inset-0"></div>
+                                <div className="w-2.5 h-2.5 bg-white/50 rounded-full animate-ping absolute inset-0" style={{ animationDuration: '2s' }}></div>
                                 <div className="w-2.5 h-2.5 bg-white rounded-full relative shadow-[0_0_10px_rgba(255,255,255,0.8)]"></div>
                             </div>
-                        )}
+                        </div>
+                        <Sparkles className="w-5 h-5 drop-shadow-md" />
+                        <MoreHorizontal className="w-5 h-5 drop-shadow-md" />
                     </div>
-                    <Sparkles className="w-5 h-5 drop-shadow-md" />
-                    <MoreHorizontal className="w-5 h-5 drop-shadow-md" />
                 </div>
-            </div>
+            )}
 
 
             {/* INSTRUCTIONAL OVERLAY (Only in preview mode) */}
@@ -57,7 +57,7 @@ export const StoryPreview = forwardRef<HTMLDivElement, StoryPreviewProps>(({ mod
                     {/* Step 2: Link Sticker Selection Simulation */}
                     <div className="absolute top-24 left-1/2 -translate-x-1/2 flex flex-col items-center animate-in fade-in slide-in-from-bottom-4 duration-500 delay-1000" style={{ animationFillMode: 'forwards', animationDelay: '1.2s' }}>
                         <div className="relative group">
-                            <div className="bg-white text-[#0095F6] p-2 rounded-lg shadow-2xl border-2 border-white scale-110 flex items-center gap-1.5">
+                            <div className="bg-white text-[#0095F6] p-2 rounded-lg shadow-2xl border-2 border-white scale-110 flex items-center gap-1.5 animate-pulse" style={{ animationDuration: '3s' }}>
                                 <LinkIcon className="w-4 h-4" />
                                 <span className="text-[10px] font-bold text-black/80">LINK</span>
                             </div>
@@ -70,7 +70,7 @@ export const StoryPreview = forwardRef<HTMLDivElement, StoryPreviewProps>(({ mod
 
                     {/* Step 3: Paste Tooltip - Positioned exactly over the center sticker */}
                     <div className="absolute z-50 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-2000" style={{ animationFillMode: 'forwards', animationDelay: '2.5s', top: 'calc(50% - 40px)' }}>
-                        <div className="relative flex flex-col items-center">
+                        <div className="relative flex flex-col items-center animate-bounce" style={{ animationDuration: '2s' }}>
                             <div className="bg-[#18181b]/95 backdrop-blur-md text-white text-[11px] font-semibold px-3 py-1.5 rounded-[8px] shadow-2xl border border-white/20 mb-1 whitespace-nowrap transform scale-110">
                                 Paste Link here
                             </div>

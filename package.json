@@ -49,6 +49,7 @@
     "firebase-admin": "^13.6.0",
     "framer-motion": "^12.31.0",
     "genkit": "^1.20.0",
+    "geofire-common": "^6.0.0",
     "html-to-image": "^1.11.11",
     "http-node": "^1.2.0",
     "isomorphic-git": "^1.36.3",

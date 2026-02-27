@@ -24,6 +24,7 @@ export type ComplimentOwner = {
   workplace?: string;
   isPublic?: boolean;
   lastRadarLocation?: any; // GeoPoint from firebase
+  geohash?: string;
   radarExpiresAt?: Timestamp;
 };
 

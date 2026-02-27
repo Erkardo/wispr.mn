@@ -2,7 +2,6 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { filterConfession } from '@/ai/flows/filter-confessions-for-profanity-and-abuse';
 import { addConfession, reportConfession as reportConfessionDb } from '@/lib/db';
 import type { ReactionEmoji } from '@/types';
 import { getAdminDb } from '@/lib/admin-db';
@@ -14,14 +13,9 @@ export async function submitConfessionAction(text: string): Promise<{ success: b
   }
 
   try {
-    const { isSafe, filteredText } = await filterConfession({ text });
-
-    // Per user request, even if not safe, save the filtered version
-    if (!filteredText) {
-      return { success: false, message: 'Үгээ шалгаад дахин оролдоно уу.' };
-    }
-
-    await addConfession(filteredText, !isSafe);
+    // AI checking removed to save tokens. Accept all raw text.
+    // We pass `isProfane: false` (secondary argument) since we are not checking anymore.
+    await addConfession(text.trim(), false);
     revalidatePath('/confessions');
 
   } catch (error) {

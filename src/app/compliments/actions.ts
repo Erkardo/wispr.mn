@@ -1,6 +1,5 @@
 'use server';
 
-import { filterCompliment } from '@/ai/flows/filter-compliments-for-positive-language';
 import { generateComplimentHint } from '@/ai/flows/generate-compliment-hint';
 import { createComplimentStory } from '@/ai/flows/create-compliment-story';
 import type { Compliment } from '@/types';
@@ -17,22 +16,10 @@ export async function submitComplimentAction(text: string, audioUrl?: string, du
     }
 
     try {
-        let isSafe = true;
-        let filteredText = text;
-
-        if (text.trim()) {
-            const result = await filterCompliment({ text });
-            isSafe = result.isSafe;
-            filteredText = result.filteredText;
-        }
-
-        if (!isSafe) {
-            return { success: false, message: 'Зохисгүй агуулга илэрлээ.' };
-        }
-
-        return { success: true, message: 'Амжилттай шүүгдлээ', filteredText };
+        // AI checking removed to save tokens. Accept all raw text.
+        return { success: true, message: 'Амжилттай шүүгдлээ', filteredText: text.trim() };
     } catch (error) {
-        console.error('Wispr шүүхэд алдаа гарлаа:', error);
+        console.error('Wispr илгээхэд алдаа гарлаа:', error);
         return { success: false, message: 'Алдаа гарлаа.' };
     }
 }

@@ -82,21 +82,40 @@ export const StoryPreview = forwardRef<HTMLDivElement, StoryPreviewProps>(({ mod
             )}
 
             {/* Top Text (Adjusting sizing for 360px container to perfectly scale up 3x) */}
-            <div className="relative z-10 w-full pt-20 px-4 mt-8">
-                <h3 className="font-extrabold text-[36px] tracking-tight drop-shadow-xl leading-none">
-                    Сэтгэлийн үгээ
-                </h3>
-                <h3 className="font-extrabold text-[36px] tracking-tight drop-shadow-xl leading-none mt-0.5">
-                    надад шивнээч
-                </h3>
-                <p className={cn("mt-4 font-semibold text-[15px] opacity-90 drop-shadow-md", design.textColor)}>
-                    Нэрээ мэдэгдэлгүйгээр 💛
-                </p>
+            <div className="relative z-10 w-full pt-16 px-4 mt-12 flex flex-col items-center">
+                <div className="transform -rotate-2 relative">
+                    <h3 className="font-black italic text-[40px] tracking-tighter drop-shadow-2xl leading-[1.05]">
+                        <span className="text-transparent bg-clip-text bg-gradient-to-br from-white to-white/90">Сэтгэлийн үгээ</span>
+                    </h3>
+                    <h3 className="font-black italic text-[42px] tracking-tighter drop-shadow-2xl leading-[1.05] mt-1 relative inline-block">
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 to-yellow-400">надад шивнээч</span>
+                        {/* Little sparkle/star decoration */}
+                        <div className="absolute -top-3 -right-7 animate-pulse" style={{ animationDuration: '3s' }}>
+                            <Sparkles className="w-6 h-6 text-yellow-300 drop-shadow-lg" />
+                        </div>
+                    </h3>
+                </div>
+                <div className="mt-6">
+                    <p className={cn("font-bold text-[14px] opacity-100 drop-shadow-lg tracking-wide rounded-full bg-black/15 border border-white/10 px-4 py-1.5 backdrop-blur-md", design.textColor)}>
+                        Нэрээ мэдэгдэлгүйгээр 🤫
+                    </p>
+                </div>
             </div>
-
 
             {/* Center Link Sticker Placeholder (Where user places the Instagram LINK sticker) */}
             <div className="relative z-10 flex-1 flex flex-col items-center justify-center w-full">
+
+                {/* Curved Arrow pointing to the sticker */}
+                <div className="flex flex-col items-center translate-x-12 translate-y-2 z-20 drop-shadow-xl">
+                    <span className="font-bold text-white text-[16px] -rotate-12 drop-shadow-lg mb-0.5" style={{ fontFamily: "'Caveat', 'Comic Sans MS', cursive" }}>
+                        Энд дарна уу!
+                    </span>
+                    <svg width="45" height="55" viewBox="0 0 45 55" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-white drop-shadow-xl animate-pulse" style={{ animationDuration: '2s' }}>
+                        <path d="M5 5 C 25 10, 40 25, 35 50" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" fill="none" />
+                        <path d="M20 40 L 35 50 L 42 35" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                    </svg>
+                </div>
+
                 {/* Visual target area to help user place the sticker */}
                 <div className={cn(
                     "flex items-center gap-1.5 px-3 py-2.5 rounded-[12px] shadow-2xl transform scale-125",

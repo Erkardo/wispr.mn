@@ -503,47 +503,49 @@ function ComplimentCard({
             <UserX className="h-4 w-4" />
             Нэрээ нууцалсан
           </div>
-        </CardContent>
-        <CardFooter className="bg-black/10 dark:bg-black/20 flex items-center justify-between gap-3 p-3 backdrop-blur-sm">
-          <div className="flex gap-1">
+
+          {/* Floating Reactions - COMPACT VERSION */}
+          <div className="absolute bottom-14 left-1/2 -translate-x-1/2 flex items-center gap-1.5 p-1.5 rounded-full bg-black/30 backdrop-blur-md border border-white/10 z-20 shadow-xl">
             {reactionEmojis.map(emoji => (
-              <Button
+              <button
                 key={emoji}
-                variant="ghost"
-                size="sm"
-                onClick={() => handleReaction(emoji)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleReaction(emoji);
+                }}
                 className={cn(
-                  "flex items-center gap-1.5 px-2.5 text-sm rounded-full bg-white/10 dark:bg-white/10 hover:bg-white/20 dark:hover:bg-white/20 hover:scale-110 transition-all transform-gpu text-white",
-                  isReacting === emoji && 'animate-pulse scale-125'
+                  "flex items-center gap-1 px-2 py-1 rounded-full hover:bg-white/20 transition-all text-xs font-bold text-white",
+                  isReacting === emoji && 'animate-bounce'
                 )}
                 disabled={!!isReacting}
               >
-                <span className="opacity-90">{emoji}</span>
-                <span className="font-mono text-xs min-w-[1ch] opacity-70">{localReactions[emoji] || 0}</span>
-              </Button>
+                <span>{emoji}</span>
+                <span className="opacity-80">{localReactions[emoji] || 0}</span>
+              </button>
             ))}
           </div>
+        </CardContent>
+        <CardFooter className="bg-background/80 dark:bg-black/40 flex items-center gap-2 p-3 backdrop-blur-xl border-t border-primary/5">
+          <Button
+            variant="ghost"
+            className={cn(
+              "flex-1 font-bold rounded-2xl h-11 border transition-all",
+              isReplying ? "bg-primary text-primary-foreground border-primary" : "bg-primary/5 text-primary border-primary/10 hover:bg-primary/10"
+            )}
+            onClick={() => setIsReplying(!isReplying)}
+            disabled={!!localReplyStatus}
+          >
+            <MessageSquareIcon className="mr-2 h-4 w-4" />
+            <span>{localReplyStatus ? "Хариулсан" : "Хариулах"}</span>
+          </Button>
 
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              className="font-bold bg-white/10 hover:bg-white/20 text-white rounded-full px-4 border-none shadow-lg backdrop-blur-sm transition-all"
-              onClick={() => setIsReplying(!isReplying)}
-              disabled={!!localReplyStatus}
-            >
-              <MessageSquareIcon className="mr-2 h-4 w-4" />
-              <span>{localReplyStatus ? "Хариулсан" : "Хариулах"}</span>
-            </Button>
-
-            <Button
-              className="font-bold bg-white text-primary rounded-full px-4 transition-all duration-300 shadow-lg border-b-4 border-primary/20"
-              onClick={() => setIsHintDialogOpen(true)}
-            >
-              <KeyRound className="mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">Hint харах {revealedHints.length > 0 ? `(${revealedHints.length})` : ''}</span>
-              <span className="sm:hidden">Hint {revealedHints.length > 0 ? `(${revealedHints.length})` : ''}</span>
-            </Button>
-          </div>
+          <Button
+            className="flex-1 font-black bg-primary text-primary-foreground rounded-2xl h-11 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all border-b-4 border-primary-foreground/20 active:border-b-0 active:translate-y-1"
+            onClick={() => setIsHintDialogOpen(true)}
+          >
+            <KeyRound className="mr-2 h-4 w-4" />
+            <span>Hint харах</span>
+          </Button>
         </CardFooter>
       </Card>
 

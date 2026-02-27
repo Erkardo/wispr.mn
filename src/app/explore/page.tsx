@@ -132,36 +132,44 @@ export default function ExplorePage() {
                         )}
 
                         {!isPending && results.length > 0 && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 gap-4">
                                 {results.map((profile) => (
                                     <Link key={profile.shortId} href={`/c/${profile.shortId}`}>
-                                        <Card className="hover:border-primary/50 transition-colors cursor-pointer group hover:bg-primary/5">
-                                            <CardContent className="p-4 flex items-center gap-4">
-                                                <Avatar className="h-14 w-14 ring-2 ring-primary/10 group-hover:ring-primary/30 transition-all">
-                                                    <AvatarImage src={profile.photoURL || ''} alt={profile.displayName || profile.username} />
-                                                    <AvatarFallback className="bg-primary/10 text-primary font-bold">
-                                                        {(profile.displayName || profile.username || 'U').charAt(0).toUpperCase()}
-                                                    </AvatarFallback>
-                                                </Avatar>
+                                        <Card className="overflow-hidden border-primary/5 hover:border-primary/20 transition-all cursor-pointer group hover:shadow-xl hover:shadow-primary/5 bg-card/40 backdrop-blur-sm">
+                                            <CardContent className="p-5 flex items-center gap-5">
+                                                <div className="relative">
+                                                    <Avatar className="h-16 w-16 ring-4 ring-background shadow-lg transition-transform group-hover:scale-105 duration-300">
+                                                        <AvatarImage src={profile.photoURL || ''} alt={profile.displayName || profile.username} />
+                                                        <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-black text-xl">
+                                                            {(profile.displayName || profile.username || 'U').charAt(0).toUpperCase()}
+                                                        </AvatarFallback>
+                                                    </Avatar>
+                                                    <div className="absolute -bottom-1 -right-1 bg-green-500 w-4 h-4 rounded-full border-2 border-background shadow-sm" />
+                                                </div>
+
                                                 <div className="flex-1 min-w-0">
-                                                    <h3 className="font-semibold text-foreground truncate block">
-                                                        {profile.displayName || profile.username}
-                                                    </h3>
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <h3 className="font-bold text-lg text-foreground truncate block group-hover:text-primary transition-colors">
+                                                            {profile.displayName || profile.username}
+                                                        </h3>
+                                                        <Radar className="w-3.5 h-3.5 text-muted-foreground opacity-30 group-hover:opacity-100 group-hover:text-primary transition-all" />
+                                                    </div>
+
                                                     {profile.username && (
-                                                        <p className="text-sm text-primary/80 font-medium font-mono truncate">@{profile.username}</p>
+                                                        <p className="text-xs text-primary/70 font-bold font-mono tracking-tight mb-2">@{profile.username}</p>
                                                     )}
 
-                                                    <div className="flex flex-col gap-1 mt-1 text-xs text-muted-foreground">
+                                                    <div className="flex flex-wrap gap-2 mt-1">
                                                         {profile.school && (
-                                                            <div className="flex items-center gap-1.5 truncate">
-                                                                <GraduationCap className="w-3.5 h-3.5" />
-                                                                <span className="truncate">{profile.school}</span>
+                                                            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-primary/5 border border-primary/10 text-[10px] font-bold text-muted-foreground uppercase tracking-tight">
+                                                                <GraduationCap className="w-3 h-3" />
+                                                                <span className="truncate max-w-[120px]">{profile.school}</span>
                                                             </div>
                                                         )}
                                                         {profile.workplace && (
-                                                            <div className="flex items-center gap-1.5 truncate">
-                                                                <Briefcase className="w-3.5 h-3.5" />
-                                                                <span className="truncate">{profile.workplace}</span>
+                                                            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-secondary/30 border border-secondary/50 text-[10px] font-bold text-muted-foreground uppercase tracking-tight">
+                                                                <Briefcase className="w-3 h-3" />
+                                                                <span className="truncate max-w-[120px]">{profile.workplace}</span>
                                                             </div>
                                                         )}
                                                     </div>

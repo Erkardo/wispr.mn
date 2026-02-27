@@ -62,15 +62,18 @@ export function RadarTab() {
 
     return (
         <div className="space-y-6 pt-4 animate-in fade-in">
-            <Card className="border-primary/20 shadow-lg bg-gradient-to-br from-primary/10 via-background to-background">
-                <CardContent className="p-6 text-center space-y-4">
-                    <div className="mx-auto bg-primary/20 p-4 rounded-full w-fit animate-pulse">
+            <Card className="overflow-hidden border-none shadow-2xl bg-gradient-to-br from-primary/20 via-background to-secondary/10 rounded-3xl relative">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -mr-16 -mt-16" />
+                <div className="absolute bottom-0 left-0 w-32 h-32 bg-secondary/10 rounded-full blur-3xl -ml-16 -mb-16" />
+
+                <CardContent className="p-8 text-center space-y-6 relative z-10">
+                    <div className="mx-auto bg-primary/10 p-5 rounded-full w-fit ring-8 ring-primary/5 animate-pulse">
                         <RadarIcon className="h-10 w-10 text-primary" />
                     </div>
-                    <div>
-                        <h2 className="text-xl font-bold">Ойр хавийн хүмүүс (Radar)</h2>
-                        <p className="text-sm text-muted-foreground mt-2 max-w-sm mx-auto">
-                            Location-оо асаагаад таны эргэн тойронд 1 км дотор радар асаасан хүмүүсийг шууд харж, нууцаар Wispr бичээрэй. Радар 2 цаг ажиллах болно.
+                    <div className="space-y-2">
+                        <h2 className="text-2xl font-black tracking-tight">Ойр хавийн хүмүүс</h2>
+                        <p className="text-sm text-muted-foreground max-w-sm mx-auto leading-relaxed">
+                            Location-оо асаагаад таны эргэн тойронд 1 км дотор байгаа хүмүүсийг харж, нууцаар Wispr бичээрэй.
                         </p>
                     </div>
 
@@ -78,11 +81,12 @@ export function RadarTab() {
                         size="lg"
                         onClick={checkIn}
                         disabled={isPending}
-                        className="w-full max-w-sm rounded-full font-bold shadow-lg"
+                        className="w-full max-w-sm rounded-2xl font-black shadow-xl shadow-primary/20 h-14 text-lg border-b-4 border-primary-foreground/20 active:border-b-0 active:translate-y-1 transition-all"
                     >
                         {isPending ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Navigation className="w-5 h-5 mr-2" />}
-                        {isRadarActive ? "Дахин шалгах" : "Радар асааж шалгах"}
+                        {isRadarActive ? "Дахин шалгах" : "Радар асаах"}
                     </Button>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold opacity-60">Радар 2 цаг ажиллах болно</p>
                 </CardContent>
             </Card>
 
@@ -95,32 +99,43 @@ export function RadarTab() {
                     </h3>
 
                     {nearbyUsers.length === 0 ? (
-                        <div className="text-center p-8 bg-muted/20 rounded-3xl border border-dashed">
-                            <RadarIcon className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-                            <h3 className="font-semibold text-muted-foreground">Одоохондоо хэн ч олдсонгүй</h3>
-                            <p className="text-sm text-muted-foreground mt-1">
-                                Танай эргэн тойронд радар асаасан хүн алга байна.
-                            </p>
+                        <div className="text-center p-12 bg-muted/20 rounded-[2rem] border-2 border-dashed border-muted-foreground/20 space-y-4">
+                            <div className="bg-background w-16 h-16 rounded-full flex items-center justify-center mx-auto shadow-sm">
+                                <RadarIcon className="w-8 h-8 text-muted-foreground/40" />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-lg text-muted-foreground">Одоогоор хэн ч алга</h3>
+                                <p className="text-sm text-muted-foreground mt-1 max-w-[200px] mx-auto">
+                                    Таны эргэн тойронд радар асаасан хүн олдсонгүй.
+                                </p>
+                            </div>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4">
                             {nearbyUsers.map((profile) => (
                                 <Link key={profile.shortId} href={`/c/${profile.shortId}`}>
-                                    <Card className="hover:border-primary/50 transition-colors cursor-pointer group hover:bg-primary/5">
-                                        <CardContent className="p-4 flex items-center gap-4">
-                                            <Avatar className="h-14 w-14 ring-2 ring-primary/20">
-                                                <AvatarImage src={profile.photoURL || ''} alt={profile.displayName || profile.username} />
-                                                <AvatarFallback className="bg-primary/10 text-primary font-bold">
-                                                    {(profile.displayName || profile.username || 'U').charAt(0).toUpperCase()}
-                                                </AvatarFallback>
-                                            </Avatar>
+                                    <Card className="overflow-hidden border-primary/5 hover:border-primary/20 transition-all cursor-pointer group hover:shadow-xl hover:shadow-primary/5 bg-card/40 backdrop-blur-sm">
+                                        <CardContent className="p-5 flex items-center gap-5">
+                                            <div className="relative">
+                                                <Avatar className="h-16 w-16 ring-4 ring-background shadow-lg transition-transform group-hover:scale-105 duration-300">
+                                                    <AvatarImage src={profile.photoURL || ''} alt={profile.displayName || profile.username} />
+                                                    <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-black text-xl">
+                                                        {(profile.displayName || profile.username || 'U').charAt(0).toUpperCase()}
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                                <div className="absolute -bottom-1 -right-1 bg-green-500 w-4 h-4 rounded-full border-2 border-background shadow-sm" />
+                                            </div>
+
                                             <div className="flex-1 min-w-0">
-                                                <h3 className="font-semibold text-foreground truncate block">
+                                                <h3 className="font-bold text-lg text-foreground truncate block group-hover:text-primary transition-colors">
                                                     {profile.displayName || profile.username}
                                                 </h3>
                                                 {profile.username && (
-                                                    <p className="text-sm text-primary/80 font-medium font-mono truncate">@{profile.username}</p>
+                                                    <p className="text-xs text-primary/70 font-bold font-mono tracking-tight mb-2">@{profile.username}</p>
                                                 )}
+                                                <div className="flex items-center gap-1 text-[10px] font-bold text-muted-foreground uppercase tracking-widest bg-muted/50 w-fit px-2 py-0.5 rounded-full">
+                                                    <MapPin className="w-2.5 h-2.5" /> 1км дотор
+                                                </div>
                                             </div>
                                         </CardContent>
                                     </Card>

@@ -90,9 +90,7 @@ export default function HomePage() {
   }, [searchParams, complimentsLoading, sortedCompliments]);
 
   const handleTabChange = (value: string) => {
-    if (value === 'confessions') {
-      router.push('/confessions');
-    }
+    // Tab changes handled by state automatically
   };
 
   const pageContent = useMemo(() => {
@@ -128,7 +126,6 @@ export default function HomePage() {
           <TabsList>
             <TabsTrigger value="compliments">Wispr-үүд</TabsTrigger>
             <TabsTrigger value="sent">Миний бичсэн</TabsTrigger>
-            <TabsTrigger value="confessions">Сэтгэлийн үгс</TabsTrigger>
             <TabsTrigger value="polls">Санал асуулга</TabsTrigger>
           </TabsList>
         </div>

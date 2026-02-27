@@ -13,6 +13,15 @@ import { motion } from 'framer-motion';
 
 type SentWisprData = Compliment & { receiverId: string };
 
+const cardStyles = [
+    { bg: 'linear-gradient(to bottom right, #f9a8d4, #f472b6)', emoji: '💖' },
+    { bg: 'linear-gradient(to bottom right, #a78bfa, #8b5cf6)', emoji: '💜' },
+    { bg: 'linear-gradient(to bottom right, #fde047, #facc15)', emoji: '🌟' },
+    { bg: 'linear-gradient(to bottom right, #6ee7b7, #34d399)', emoji: '🌿' },
+    { bg: 'linear-gradient(to bottom right, #fdba74, #fb923c)', emoji: '🔥' },
+    { bg: 'linear-gradient(to bottom right, #7dd3fc, #38bdf8)', emoji: '💧' },
+];
+
 export function SentList() {
     const { user, loading: userLoading } = useUser();
     const firestore = useFirestore();
@@ -98,52 +107,64 @@ export function SentList() {
     };
 
     return (
-        <div className="space-y-4 pt-4">
-            {sentWisprs.map((comp, index) => (
-                <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    key={comp.id}
-                >
-                    <Card className="overflow-hidden border-primary/10 hover:border-primary/30 transition-colors shadow-sm bg-card hover:shadow-md">
-                        <CardContent className="p-4 sm:p-5">
-                            <div className="flex justify-between items-start mb-2">
-                                <div className="flex items-center">
-                                    {getDateBadge(comp.createdAt)}
-                                    <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                                        <Send className="w-3 h-3" />
-                                        Таны бичсэн
+        <div className="space-y-6 pt-4 pb-20">
+            {sentWisprs.map((comp, index) => {
+                const hash = (comp.id || '').split('').reduce((acc, char) => char.charCodeAt(0) + ((acc << 5) - acc), 0);
+                const style = cardStyles[Math.abs(hash) % cardStyles.length];
+
+                return (
+                    <motion.div
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        key={comp.id}
+                    >
+                        <Card className="overflow-hidden border-none shadow-xl rounded-3xl group">
+                            <div className="p-1" style={{ backgroundImage: style.bg }}>
+                                <CardContent className="bg-background dark:bg-zinc-950 rounded-[calc(1.5rem-4px)] p-5 sm:p-6 transition-all group-hover:bg-transparent group-hover:text-white duration-300">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div className="flex items-center">
+                                            {getDateBadge(comp.createdAt)}
+                                            <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground group-hover:text-white/80 transition-colors flex items-center gap-1.5 mt-0.5">
+                                                <Send className="w-3 h-3" />
+                                                Илгээсэн
+                                            </div>
+                                        </div>
+                                        <div className="text-2xl group-hover:hidden">{style.emoji}</div>
                                     </div>
-                                </div>
+
+                                    <div className="relative">
+                                        <p className="text-foreground group-hover:text-white font-bold leading-relaxed italic text-lg md:text-xl pl-4 border-l-4 border-primary/20 group-hover:border-white/40 transition-colors">
+                                            "{comp.text}"
+                                        </p>
+                                    </div>
+
+                                    {comp.replyText ? (
+                                        <div className="mt-6 bg-primary/5 dark:bg-primary/10 group-hover:bg-white/10 border border-primary/10 group-hover:border-white/20 rounded-2xl p-4 shadow-inner transition-all transform group-hover:scale-[1.02]">
+                                            <span className="text-[10px] font-black text-primary group-hover:text-white mb-2 uppercase tracking-widest flex items-center gap-2">
+                                                <MessageSquareIcon className="w-3.5 h-3.5 animate-pulse" />
+                                                Хариу ирсэн
+                                            </span>
+                                            <p className="text-sm text-foreground/90 group-hover:text-white leading-relaxed font-semibold">
+                                                "{comp.replyText}"
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <div className="mt-6 flex items-center gap-2 opacity-40 group-hover:opacity-60 transition-opacity">
+                                            <div className="h-[1px] flex-1 bg-muted-foreground/20" />
+                                            <p className="text-[10px] font-bold uppercase tracking-tighter flex items-center gap-1.5 text-muted-foreground group-hover:text-white">
+                                                <SearchX className="w-3 h-3" />
+                                                Хариу хүлээгдэж байна
+                                            </p>
+                                            <div className="h-[1px] flex-1 bg-muted-foreground/20" />
+                                        </div>
+                                    )}
+                                </CardContent>
                             </div>
-
-                            <p className="text-foreground/90 font-medium leading-relaxed italic text-sm md:text-base border-l-2 border-primary/40 pl-3">
-                                "{comp.text}"
-                            </p>
-
-                            {comp.replyText ? (
-                                <div className="mt-4 bg-primary/10 border border-primary/20 rounded-xl p-3 shadow-inner">
-                                    <span className="text-xs font-bold text-primary mb-1 uppercase tracking-wider flex items-center gap-1.5">
-                                        <MessageSquareIcon className="w-3.5 h-3.5" />
-                                        Ирсэн хариу
-                                    </span>
-                                    <p className="text-sm text-foreground leading-relaxed font-medium mt-1">
-                                        "{comp.replyText}"
-                                    </p>
-                                </div>
-                            ) : (
-                                <div className="mt-4 border-t border-dashed pt-3">
-                                    <p className="text-xs text-muted-foreground flex items-center gap-1.5 opacity-70">
-                                        <SearchX className="w-3.5 h-3.5" />
-                                        Одоогоор хариу ирээгүй байна
-                                    </p>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-                </motion.div>
-            ))}
+                        </Card>
+                    </motion.div>
+                );
+            })}
         </div>
     );
 }

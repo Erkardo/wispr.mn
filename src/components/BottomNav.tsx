@@ -2,11 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, PlusCircle, Bell, User } from 'lucide-react';
+import { Home, PlusCircle, Bell, User, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/', label: 'Wispr-үүд', icon: Home },
+  { href: '/explore', label: 'Хайх', icon: Search },
   { href: '/create', label: 'Үүсгэх', icon: PlusCircle },
   { href: '/activity', label: 'Идэвх', icon: Bell },
   { href: '/profile', label: 'Профайл', icon: User },

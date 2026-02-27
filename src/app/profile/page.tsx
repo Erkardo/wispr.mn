@@ -90,9 +90,10 @@ export default function ProfilePage() {
 
     useEffect(() => {
         const checkAdmin = async () => {
-            if (user?.email && !user.isAnonymous) {
+            if (user && !user.isAnonymous) {
                 try {
-                    const hasAccess = await checkAdminAccess(user.email);
+                    const idToken = await user.getIdToken();
+                    const hasAccess = await checkAdminAccess(idToken);
                     setIsAdmin(hasAccess);
                 } catch (e) {
                     console.error("Failed to check admin status", e);

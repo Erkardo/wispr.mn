@@ -1,7 +1,7 @@
 'use server';
 
-import { db } from '@/lib/db';
-import { collection, addDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { getAdminDb } from '@/lib/admin-db';
+import { FieldValue } from 'firebase-admin/firestore';
 import type { Invoice } from '@/types';
 import { randomUUID } from 'crypto';
 
@@ -110,17 +110,18 @@ export async function createQpayInvoiceAction(
   }
 
   try {
+    const db = getAdminDb();
     const localInvoiceId = randomUUID();
 
     // 1. Create a "PENDING" invoice in our own database first
-    const invoiceRef = await addDoc(collection(db, 'invoices'), {
+    const invoiceRef = await db.collection('invoices').add({
       ownerId: ownerId,
       status: 'PENDING',
       amount: hintPackage.amount,
       numHints: hintPackage.numHints,
-      createdAt: serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
       localInvoiceId: localInvoiceId,
-    } as Omit<Invoice, 'id'>);
+    });
 
     // 2. Define callback URL with the localId to ensure it's returned back to us
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL;
@@ -155,14 +156,14 @@ export async function createQpayInvoiceAction(
       const errorBody = await res.json();
       console.error('QPay invoice creation failed:', errorBody);
       // Optionally mark our local invoice as FAILED
-      await updateDoc(invoiceRef, { status: 'FAILED' });
+      await invoiceRef.update({ status: 'FAILED' });
       return { error: `Нэхэмжлэл үүсгэхэд алдаа гарлаа: ${errorBody.error_description || res.statusText}`, qrImage: '', deeplinks: [], invoiceId: '' };
     }
 
     const data: QPayInvoiceResponse = await res.json();
 
     // 3. Update our local invoice with the QPay-generated ID
-    await updateDoc(invoiceRef, { qpayInvoiceId: String(data.invoice_id) });
+    await invoiceRef.update({ qpayInvoiceId: String(data.invoice_id) });
 
 
     return {
@@ -176,4 +177,5 @@ export async function createQpayInvoiceAction(
     return { error: `Дотоод алдаа гарлаа: ${errorMessage}`, qrImage: '', deeplinks: [], invoiceId: '' };
   }
 }
+
 

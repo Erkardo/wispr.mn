@@ -87,24 +87,29 @@ export default function HomePage() {
   const archivedCompliments = useMemo(() =>
     sortedCompliments.filter(c => c.isArchived === true), [sortedCompliments]);
 
+  const activeTab = searchParams.get('tab') || 'received';
+
   useEffect(() => {
     const complimentId = searchParams.get('complimentId');
-    if (complimentId && !complimentsLoading && sortedCompliments.length > 0) {
-      const element = document.getElementById(`compliment-card-${complimentId}`);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        element.classList.add('highlight-card');
-        setTimeout(() => element.classList.remove('highlight-card'), 2000);
-      }
+    if (complimentId && !complimentsLoading && sortedCompliments.length > 0 && activeTab === 'received') {
+      // Need a tiny delay to ensure the tab content has rendered the element
+      setTimeout(() => {
+        const element = document.getElementById(`compliment-card-${complimentId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          element.classList.add('highlight-card');
+          setTimeout(() => element.classList.remove('highlight-card'), 2000);
+        }
+      }, 100);
     }
-  }, [searchParams, complimentsLoading, sortedCompliments]);
+  }, [searchParams, complimentsLoading, sortedCompliments, activeTab]);
 
   const isLoading = userLoading || ownerLoading;
 
   return (
     <>
       <Header title="Wispr-үүд" />
-      <Tabs defaultValue="received" className="w-full pt-4">
+      <Tabs defaultValue={activeTab} className="w-full pt-4">
         <div className="flex justify-center px-4 mb-4">
           <div className="w-full overflow-x-auto no-scrollbar pb-2 -mb-2">
             <TabsList className="bg-muted/40 p-1.5 rounded-full shadow-inner border border-border/40 backdrop-blur-sm h-auto flex flex-nowrap justify-start sm:justify-center min-w-max mx-auto gap-1">

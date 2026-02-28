@@ -570,7 +570,26 @@ function ComplimentCard({
                 <MoreVertical className="h-4 w-4" />
               </motion.button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48 rounded-2xl shadow-2xl border-border/50 bg-card/95 backdrop-blur-xl">
+            <DropdownMenuContent align="end" className="w-52 rounded-2xl shadow-2xl border-border/50 bg-card/95 backdrop-blur-xl">
+              {/* Like */}
+              <DropdownMenuItem
+                onClick={() => handleReaction('❤️')}
+                disabled={!!isReacting}
+                className="flex items-center gap-3 rounded-xl cursor-pointer py-3 font-semibold"
+              >
+                <motion.span
+                  animate={isReacting === '❤️' ? { scale: [1, 1.6, 1] } : {}}
+                  transition={{ duration: 0.3 }}
+                  className="text-base leading-none"
+                >
+                  ❤️
+                </motion.span>
+                <span>Таалагдлаа</span>
+                {(localReactions['❤️'] ?? 0) > 0 && (
+                  <span className="ml-auto text-xs font-black text-muted-foreground tabular-nums">{localReactions['❤️']}</span>
+                )}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={handleShareClick}
                 disabled={isSharing}
@@ -642,38 +661,19 @@ function ComplimentCard({
 
         {/* Bottom Bar: Metadata + Reactions + Actions — all in one row */}
         <div className="relative z-10 px-5 pb-5 space-y-3">
-          {/* Reactions + sender info row */}
+          {/* Bottom info row — sender badge only */}
           <div className="flex items-center justify-between gap-2">
-            {/* Sender badge */}
             <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.18em] text-white/50 bg-black/10 backdrop-blur-xl px-3 py-1.5 rounded-xl border border-white/10">
               <UserX className="h-3 w-3 shrink-0" />
               <span>Нэрээ нууцласан</span>
             </div>
-
-            {/* Compact reactions */}
-            <div className="flex items-center gap-0.5 p-1 rounded-xl bg-black/15 backdrop-blur-xl border border-white/10">
-              {reactionEmojis.map(emoji => (
-                <motion.button
-                  key={emoji}
-                  whileTap={{ scale: 0.75 }}
-                  whileHover={{ scale: 1.15 }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleReaction(emoji);
-                  }}
-                  className={cn(
-                    "flex items-center gap-1 px-2 py-1 rounded-lg transition-colors text-[10px] font-black text-white",
-                    isReacting === emoji ? 'bg-white/20' : 'hover:bg-white/10'
-                  )}
-                  disabled={!!isReacting}
-                  animate={isReacting === emoji ? { scale: [1, 1.5, 1] } : {}}
-                  transition={{ duration: 0.3 }}
-                >
-                  <span className="text-xs leading-none">{emoji}</span>
-                  <span className="opacity-70 tabular-nums">{localReactions[emoji] || 0}</span>
-                </motion.button>
-              ))}
-            </div>
+            {/* Total likes display */}
+            {(localReactions['❤️'] ?? 0) > 0 && (
+              <div className="flex items-center gap-1 text-[11px] font-black text-white/60 bg-black/15 backdrop-blur-xl px-2.5 py-1.5 rounded-xl border border-white/10">
+                <span>❤️</span>
+                <span className="tabular-nums">{localReactions['❤️']}</span>
+              </div>
+            )}
           </div>
 
           {/* Action buttons */}
@@ -696,14 +696,30 @@ function ComplimentCard({
               <span>{localReplyStatus ? "Хариулсан" : "Хариулах"}</span>
             </motion.button>
 
+            {/* Hint button — styled with glow + hint count badge */}
             <motion.button
               whileTap={{ scale: 0.95 }}
               whileHover={{ scale: 1.02 }}
               onClick={() => setIsHintDialogOpen(true)}
-              className="flex-1 h-12 rounded-2xl flex items-center justify-center gap-2 text-[12px] font-black uppercase tracking-widest bg-white/90 text-gray-900 border-2 border-white/50 shadow-[0_6px_20px_rgba(255,255,255,0.2)] hover:bg-white transition-all"
+              className="relative flex-1 h-12 rounded-2xl flex items-center justify-center gap-2 text-[12px] font-black uppercase tracking-widest overflow-hidden transition-all"
+              style={{
+                background: 'rgba(255,255,255,0.92)',
+                boxShadow: revealedHints.length > 0
+                  ? '0 6px 20px rgba(139,92,246,0.35), 0 0 0 1.5px rgba(139,92,246,0.3), inset 0 1px 0 rgba(255,255,255,0.8)'
+                  : '0 6px_20px rgba(255,255,255,0.2), inset 0 1px 0 rgba(255,255,255,0.8)',
+              }}
             >
-              <KeyRound className="h-4 w-4 shrink-0" />
-              <span>Hint</span>
+              {/* Purple shimmer overlay when hints already revealed */}
+              {revealedHints.length > 0 && (
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-primary/15 to-purple-500/10 pointer-events-none" />
+              )}
+              <KeyRound className={cn("h-4 w-4 shrink-0 relative z-10", revealedHints.length > 0 ? 'text-primary' : 'text-gray-900')} />
+              <span className={cn('relative z-10', revealedHints.length > 0 ? 'text-primary' : 'text-gray-900')}>Hint</span>
+              {revealedHints.length > 0 && (
+                <span className="relative z-10 ml-0.5 bg-primary text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center shadow-md">
+                  {revealedHints.length}
+                </span>
+              )}
             </motion.button>
           </div>
         </div>

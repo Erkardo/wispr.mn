@@ -1,18 +1,186 @@
 'use client';
 
-import { useState, useTransition, useEffect } from 'react';
+import { useState, useTransition, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Loader2, MapPin, Radar as RadarIcon, Navigation } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Card, CardContent } from '@/components/ui/card';
+import { MapPin, Navigation, Briefcase, GraduationCap, ArrowRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { activateRadarAction, getNearbyRadarUsersAction } from './radar-action';
 import { type PublicProfile } from './search-action';
 import { useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
-import Image from 'next/image';
+
+// Random stable positions for blips on the radar
+function getBlipPosition(index: number, total: number) {
+    // Deterministic placement based on index so blips don't jump around
+    const angle = (index / Math.max(total, 1)) * 2 * Math.PI + 0.5;
+    const radius = 25 + (index % 3) * 18; // concentric rings: 25, 43, 61 (% of 50)
+    const x = 50 + radius * Math.cos(angle);
+    const y = 50 + radius * Math.sin(angle);
+    return { x, y };
+}
+
+function RadarScreen({ isActive, isScanning, blipCount }: {
+    isActive: boolean;
+    isScanning: boolean;
+    blipCount: number;
+}) {
+    const [sweepAngle, setSweepAngle] = useState(0);
+    const rafRef = useRef<number>(0);
+    const startRef = useRef<number | null>(null);
+    const DURATION = 2500; // ms per full rotation
+
+    useEffect(() => {
+        if (!isScanning && !isActive) {
+            cancelAnimationFrame(rafRef.current);
+            startRef.current = null;
+            return;
+        }
+
+        const animate = (ts: number) => {
+            if (!startRef.current) startRef.current = ts;
+            const elapsed = (ts - startRef.current) % DURATION;
+            setSweepAngle((elapsed / DURATION) * 360);
+            rafRef.current = requestAnimationFrame(animate);
+        };
+
+        rafRef.current = requestAnimationFrame(animate);
+        return () => cancelAnimationFrame(rafRef.current);
+    }, [isScanning, isActive]);
+
+    const blips = Array.from({ length: blipCount }, (_, i) => getBlipPosition(i, blipCount));
+
+    return (
+        <div className="relative w-72 h-72 mx-auto select-none">
+            {/* Outer glow ring */}
+            <div className="absolute inset-0 rounded-full bg-green-500/10 blur-2xl" />
+
+            {/* Radar screen */}
+            <svg
+                viewBox="0 0 100 100"
+                className="w-full h-full drop-shadow-[0_0_30px_rgba(34,197,94,0.4)]"
+            >
+                {/* Screen background */}
+                <defs>
+                    <radialGradient id="radarBg" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" stopColor="#052e16" />
+                        <stop offset="100%" stopColor="#011008" />
+                    </radialGradient>
+                    {/* Sweep gradient */}
+                    <radialGradient id="sweepGrad" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+                        <stop offset="0%" stopColor="#22c55e" stopOpacity="0.6" />
+                        <stop offset="100%" stopColor="#22c55e" stopOpacity="0" />
+                    </radialGradient>
+                    <clipPath id="radarClip">
+                        <circle cx="50" cy="50" r="49" />
+                    </clipPath>
+                </defs>
+
+                {/* Background fill */}
+                <circle cx="50" cy="50" r="50" fill="url(#radarBg)" />
+
+                {/* Concentric range rings */}
+                {[15, 27, 39, 49].map((r, i) => (
+                    <circle
+                        key={r}
+                        cx="50" cy="50" r={r}
+                        fill="none"
+                        stroke="#22c55e"
+                        strokeWidth={i === 3 ? 0.8 : 0.4}
+                        strokeOpacity={i === 3 ? 0.7 : 0.3}
+                    />
+                ))}
+
+                {/* Crosshair lines */}
+                <line x1="50" y1="1" x2="50" y2="99" stroke="#22c55e" strokeWidth="0.3" strokeOpacity="0.3" />
+                <line x1="1" y1="50" x2="99" y2="50" stroke="#22c55e" strokeWidth="0.3" strokeOpacity="0.3" />
+                <line x1="15" y1="15" x2="85" y2="85" stroke="#22c55e" strokeWidth="0.2" strokeOpacity="0.15" />
+                <line x1="85" y1="15" x2="15" y2="85" stroke="#22c55e" strokeWidth="0.2" strokeOpacity="0.15" />
+
+                {/* Sweep wedge (active) */}
+                {(isActive || isScanning) && (
+                    <g
+                        transform={`rotate(${sweepAngle} 50 50)`}
+                        clipPath="url(#radarClip)"
+                    >
+                        {/* Trailing glow wedge — drawn as a conic-ish gradient approximation */}
+                        {[...Array(20)].map((_, i) => {
+                            const angle = -(i * 3); // trailing behind sweep
+                            const opacity = (1 - i / 20) * 0.35;
+                            const rad = (angle * Math.PI) / 180;
+                            const x2 = 50 + 49 * Math.sin(rad);
+                            const y2 = 50 - 49 * Math.cos(rad);
+                            return (
+                                <line
+                                    key={i}
+                                    x1="50" y1="50"
+                                    x2={x2} y2={y2}
+                                    stroke="#22c55e"
+                                    strokeWidth="1.5"
+                                    strokeOpacity={opacity}
+                                />
+                            );
+                        })}
+                        {/* Main sweep line */}
+                        <line
+                            x1="50" y1="50"
+                            x2="50" y2="1"
+                            stroke="#22c55e"
+                            strokeWidth="1"
+                            strokeOpacity="0.95"
+                        />
+                    </g>
+                )}
+
+                {/* Idle state — subtle pulse lines */}
+                {!isActive && !isScanning && (
+                    <>
+                        <line x1="50" y1="50" x2="50" y2="1" stroke="#22c55e" strokeWidth="0.6" strokeOpacity="0.2" />
+                    </>
+                )}
+
+                {/* User blips */}
+                {isActive && blips.map((pos, i) => (
+                    <g key={i}>
+                        <circle cx={pos.x} cy={pos.y} r="2.5" fill="#22c55e" opacity="0.9" />
+                        <circle cx={pos.x} cy={pos.y} r="2.5" fill="#22c55e" opacity="0.4">
+                            <animate
+                                attributeName="r"
+                                from="2.5" to="6"
+                                dur="1.5s"
+                                begin={`${i * 0.3}s`}
+                                repeatCount="indefinite"
+                            />
+                            <animate
+                                attributeName="opacity"
+                                from="0.4" to="0"
+                                dur="1.5s"
+                                begin={`${i * 0.3}s`}
+                                repeatCount="indefinite"
+                            />
+                        </circle>
+                    </g>
+                ))}
+
+                {/* Center dot */}
+                <circle cx="50" cy="50" r="1.5" fill="#22c55e" opacity="0.9" />
+                <circle cx="50" cy="50" r="3" fill="none" stroke="#22c55e" strokeWidth="0.5" opacity="0.5" />
+
+                {/* Outer border */}
+                <circle cx="50" cy="50" r="49" fill="none" stroke="#22c55e" strokeWidth="1" strokeOpacity="0.8" />
+            </svg>
+
+            {/* Status text overlay */}
+            <div className="absolute bottom-4 left-0 right-0 flex justify-center">
+                <span className={`text-[10px] font-black uppercase tracking-[0.25em] font-mono ${isScanning ? 'text-green-400 animate-pulse' : isActive ? 'text-green-500' : 'text-green-700'}`}>
+                    {isScanning ? 'SCANNING...' : isActive ? 'ACTIVE' : 'OFFLINE'}
+                </span>
+            </div>
+        </div>
+    );
+}
 
 export function RadarTab() {
     const { user } = useUser();
@@ -26,7 +194,6 @@ export function RadarTab() {
             toast({ title: 'Нэвтрэх шаардлагатай', description: 'Та эхлээд бүртгэлээрээ нэвтэрнэ үү.', variant: 'destructive' });
             return;
         }
-
         if (!navigator.geolocation) {
             toast({ title: 'Алдаа', description: 'Таны хөтөч байршил тогтоохыг дэмжихгүй байна.', variant: 'destructive' });
             return;
@@ -36,26 +203,21 @@ export function RadarTab() {
             navigator.geolocation.getCurrentPosition(
                 async (position) => {
                     const { latitude, longitude } = position.coords;
-
-                    // 1. Activate Radar
                     const res = await activateRadarAction(user.uid, latitude, longitude);
                     if (res.success) {
-                        toast({ title: 'Радар аслаа', description: res.message });
+                        toast({ title: '📡 Радар аслаа', description: res.message });
                         setIsRadarActive(true);
-
-                        // 2. Fetch nearby
                         const nearbyRes = await getNearbyRadarUsersAction(user.uid, latitude, longitude);
                         if (nearbyRes.success && nearbyRes.data) {
                             setNearbyUsers(nearbyRes.data);
                         } else {
                             setNearbyUsers([]);
-                            if (nearbyRes.message) toast({ title: 'Алдаа', description: nearbyRes.message, variant: 'destructive' });
                         }
                     } else {
                         toast({ title: 'Алдаа', description: res.message, variant: 'destructive' });
                     }
                 },
-                (err) => {
+                () => {
                     toast({ title: 'Байршил тогтоож чадсангүй', description: 'GPS зөвшөөрлөө шалгаад дахин оролдоно уу.', variant: 'destructive' });
                 },
                 { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
@@ -63,124 +225,166 @@ export function RadarTab() {
         });
     };
 
+    const blipCount = nearbyUsers?.length ?? 0;
+
     return (
         <div className="space-y-6 pt-4 animate-in fade-in">
-            <Card className="overflow-hidden border-none shadow-2xl bg-gradient-to-br from-primary/20 via-background to-secondary/10 rounded-3xl relative">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -mr-16 -mt-16" />
-                <div className="absolute bottom-0 left-0 w-32 h-32 bg-secondary/10 rounded-full blur-3xl -ml-16 -mb-16" />
 
-                <CardContent className="p-8 text-center space-y-6 relative z-10">
-                    <div className="relative w-28 h-28 mx-auto flex items-center justify-center mb-6 mt-4">
-                        {(isRadarActive || isPending) && (
-                            <>
-                                {[0, 1, 2].map((i) => (
-                                    <motion.div
-                                        key={i}
-                                        className="absolute inset-0 rounded-full border border-primary/20 bg-primary/5"
-                                        initial={{ opacity: 0.8, scale: 0.5 }}
-                                        animate={{ opacity: 0, scale: 3 }}
-                                        transition={{
-                                            duration: 3,
-                                            repeat: Infinity,
-                                            delay: i * 1,
-                                            ease: [0.215, 0.61, 0.355, 1], // easeOutCubic
-                                        }}
-                                    />
-                                ))}
-                            </>
-                        )}
-                        <div className="relative bg-background p-5 rounded-full ring-4 ring-primary/20 shadow-xl z-20 hover:scale-110 transition-transform shadow-primary/30 text-primary">
-                            <RadarIcon className={cn("h-10 w-10 transition-all duration-1000", isPending && "animate-spin")} />
+            {/* Radar Screen Card */}
+            <div className="relative rounded-[2rem] overflow-hidden bg-[#030f07] border border-green-900/60 shadow-[0_0_60px_rgba(34,197,94,0.15)]">
+                {/* Scan lines overlay for CRT effect */}
+                <div
+                    className="absolute inset-0 pointer-events-none opacity-[0.03] z-10"
+                    style={{
+                        backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(34,197,94,0.8) 2px, rgba(34,197,94,0.8) 3px)',
+                        backgroundSize: '100% 3px',
+                    }}
+                />
+
+                <div className="relative z-20 p-6 space-y-5">
+                    {/* Header */}
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${isRadarActive || isPending ? 'bg-green-400 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.8)]' : 'bg-green-900'}`} />
+                            <span className="text-green-500 text-[10px] font-black uppercase tracking-[0.3em] font-mono">
+                                WISPR RADAR v1.0
+                            </span>
                         </div>
-                    </div>
-                    <div className="space-y-2">
-                        <h2 className="text-2xl font-black tracking-tight">Ойр хавийн хүмүүс</h2>
-                        <p className="text-sm text-muted-foreground max-w-sm mx-auto leading-relaxed">
-                            Location-оо асаагаад таны эргэн тойронд 1 км дотор байгаа хүмүүсийг харж, нууцаар Wispr бичээрэй.
-                        </p>
+                        {isRadarActive && nearbyUsers !== null && (
+                            <span className="text-green-400 text-[10px] font-black uppercase tracking-widest font-mono">
+                                {blipCount} SIGNAL{blipCount !== 1 ? 'S' : ''}
+                            </span>
+                        )}
                     </div>
 
-                    <Button
-                        size="lg"
+                    {/* Radar display */}
+                    <RadarScreen
+                        isActive={isRadarActive && !isPending}
+                        isScanning={isPending}
+                        blipCount={blipCount}
+                    />
+
+                    {/* Info row */}
+                    <div className="flex items-center justify-between text-green-700 text-[9px] font-mono uppercase tracking-widest">
+                        <span>RANGE: 1.0 KM</span>
+                        <span>MODE: PASSIVE</span>
+                        <span>TTL: 2H</span>
+                    </div>
+
+                    {/* Activate button */}
+                    <button
                         onClick={checkIn}
                         disabled={isPending}
-                        className="w-full max-w-sm rounded-2xl font-black shadow-xl shadow-primary/20 h-14 text-lg border-b-4 border-primary-foreground/20 active:border-b-0 active:translate-y-1 transition-all"
+                        className="w-full h-14 rounded-2xl font-black text-base tracking-wider uppercase transition-all active:scale-95 disabled:opacity-60 border font-mono"
+                        style={{
+                            background: isPending
+                                ? 'rgba(34,197,94,0.1)'
+                                : isRadarActive
+                                    ? 'rgba(34,197,94,0.15)'
+                                    : 'rgba(34,197,94,0.2)',
+                            borderColor: 'rgba(34,197,94,0.4)',
+                            color: '#4ade80',
+                            boxShadow: isRadarActive || isPending
+                                ? '0 0 20px rgba(34,197,94,0.3), inset 0 0 20px rgba(34,197,94,0.05)'
+                                : 'none',
+                        }}
                     >
-                        {isPending ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Navigation className="w-5 h-5 mr-2" />}
-                        {isRadarActive ? "Дахин шалгах" : "Радар асаах"}
-                    </Button>
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold opacity-60">Радар 2 цаг ажиллах болно</p>
-                </CardContent>
-            </Card>
+                        {isPending ? (
+                            <span className="flex items-center justify-center gap-3">
+                                <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-400 animate-ping" />
+                                SCANNING AREA...
+                            </span>
+                        ) : isRadarActive ? (
+                            '↺ RESCAN'
+                        ) : (
+                            <span className="flex items-center justify-center gap-3">
+                                <Navigation className="w-5 h-5" />
+                                ACTIVATE RADAR
+                            </span>
+                        )}
+                    </button>
+
+                    <p className="text-center text-[9px] text-green-900 font-mono uppercase tracking-[0.2em]">
+                        LOCATION REQUIRED · EXPIRES IN 2 HOURS
+                    </p>
+                </div>
+            </div>
 
             {/* Results */}
-            {nearbyUsers !== null && !isPending && (
-                <div className="space-y-4">
-                    <h3 className="font-bold text-lg flex items-center gap-2">
-                        <MapPin className="w-5 h-5 text-primary" />
-                        Ойрхон олдсон хүмүүс ({nearbyUsers.length})
-                    </h3>
+            <AnimatePresence>
+                {nearbyUsers !== null && !isPending && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="space-y-4"
+                    >
+                        <h3 className="font-black text-base flex items-center gap-2">
+                            <MapPin className="w-4 h-4 text-green-500" />
+                            {nearbyUsers.length === 0 ? 'Ойролцоо хэн ч байхгүй' : `Ойролцоо ${nearbyUsers.length} хүн олдлоо`}
+                        </h3>
 
-                    {nearbyUsers.length === 0 ? (
-                        <div className="text-center p-12 bg-secondary/20 rounded-[3rem] space-y-6 relative overflow-hidden border border-border/40">
-                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent opacity-30" />
-                            <motion.div
-                                initial={{ scale: 0.8, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                transition={{ duration: 0.5 }}
-                                className="w-32 h-32 bg-background/50 rounded-full flex items-center justify-center mx-auto shadow-inner relative"
-                            >
-                                <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl animate-pulse"></div>
-                                <Image
-                                    src="/images/radar-icon.png"
-                                    alt="Radar"
-                                    width={128}
-                                    height={128}
-                                    className="relative z-10 object-contain drop-shadow-xl"
-                                />
-                            </motion.div>
-                            <div>
-                                <h3 className="font-black text-2xl tracking-tight">Одоогоор хэн ч алга</h3>
-                                <p className="text-base text-muted-foreground mt-2 max-w-[240px] mx-auto leading-relaxed">
-                                    Таны эргэн тойронд радар асаасан хүн олдсонгүй.
-                                </p>
+                        {nearbyUsers.length === 0 ? (
+                            <div className="text-center p-10 bg-[#030f07] rounded-[2rem] border border-green-900/40 space-y-3">
+                                <p className="text-green-700 font-mono text-sm">NO SIGNALS DETECTED</p>
+                                <p className="text-muted-foreground text-sm">Таны эргэн тойронд радар асаасан хүн олдсонгүй. Найзуудаасаа радар асахыг хүсэж болно.</p>
                             </div>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 gap-4">
-                            {nearbyUsers.map((profile) => (
-                                <Link key={profile.shortId} href={`/c/${profile.shortId}`}>
-                                    <Card className="overflow-hidden border-primary/5 hover:border-primary/20 transition-all cursor-pointer group hover:shadow-xl hover:shadow-primary/5 bg-card/40 backdrop-blur-sm">
-                                        <CardContent className="p-5 flex items-center gap-5">
-                                            <div className="relative">
-                                                <Avatar className="h-16 w-16 ring-4 ring-background shadow-lg transition-transform group-hover:scale-105 duration-300">
-                                                    <AvatarImage src={profile.photoURL || ''} alt={profile.displayName || profile.username} />
-                                                    <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-black text-xl">
-                                                        {(profile.displayName || profile.username || 'U').charAt(0).toUpperCase()}
-                                                    </AvatarFallback>
-                                                </Avatar>
-                                                <div className="absolute -bottom-1 -right-1 bg-green-500 w-4 h-4 rounded-full border-2 border-background shadow-sm" />
-                                            </div>
-
-                                            <div className="flex-1 min-w-0">
-                                                <h3 className="font-bold text-lg text-foreground truncate block group-hover:text-primary transition-colors">
-                                                    {profile.displayName || profile.username}
-                                                </h3>
-                                                {profile.username && (
-                                                    <p className="text-xs text-primary/70 font-bold font-mono tracking-tight mb-2">@{profile.username}</p>
-                                                )}
-                                                <div className="flex items-center gap-1 text-[10px] font-bold text-muted-foreground uppercase tracking-widest bg-muted/50 w-fit px-2 py-0.5 rounded-full">
-                                                    <MapPin className="w-2.5 h-2.5" /> 1км дотор
-                                                </div>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
-                                </Link>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            )}
+                        ) : (
+                            <div className="grid grid-cols-1 gap-3">
+                                {nearbyUsers.map((profile, idx) => (
+                                    <motion.div
+                                        key={profile.shortId}
+                                        initial={{ opacity: 0, x: -10 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ delay: idx * 0.06 }}
+                                    >
+                                        <Link href={`/c/${profile.shortId}`}>
+                                            <Card className="overflow-hidden border-green-900/30 hover:border-green-700/50 transition-all cursor-pointer group hover:shadow-xl bg-card/60 backdrop-blur-md rounded-[1.5rem]">
+                                                <CardContent className="p-4 flex items-center gap-4">
+                                                    <div className="relative">
+                                                        <Avatar className="h-14 w-14 ring-2 ring-background shadow-lg">
+                                                            <AvatarImage src={profile.photoURL || ''} alt={profile.displayName || profile.username} />
+                                                            <AvatarFallback className="bg-green-950 text-green-400 font-black">
+                                                                {(profile.displayName || profile.username || 'U').charAt(0).toUpperCase()}
+                                                            </AvatarFallback>
+                                                        </Avatar>
+                                                        <div className="absolute -bottom-0.5 -right-0.5 bg-green-500 w-3.5 h-3.5 rounded-full border-2 border-background shadow-[0_0_6px_rgba(34,197,94,0.8)]" />
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <h3 className="font-black text-base truncate group-hover:text-green-500 transition-colors">
+                                                            {profile.displayName || profile.username}
+                                                        </h3>
+                                                        {profile.username && (
+                                                            <p className="text-xs text-green-600 font-mono">@{profile.username}</p>
+                                                        )}
+                                                        <div className="flex flex-wrap gap-1.5 mt-1">
+                                                            {profile.school && (
+                                                                <span className="flex items-center gap-1 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-green-950/60 text-green-600 border border-green-900/50">
+                                                                    <GraduationCap className="w-2.5 h-2.5" />{profile.school}
+                                                                </span>
+                                                            )}
+                                                            {profile.workplace && (
+                                                                <span className="flex items-center gap-1 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-green-950/60 text-green-600 border border-green-900/50">
+                                                                    <Briefcase className="w-2.5 h-2.5" />{profile.workplace}
+                                                                </span>
+                                                            )}
+                                                            <span className="flex items-center gap-1 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-green-950/60 text-green-500 border border-green-800/50">
+                                                                <MapPin className="w-2.5 h-2.5" />1км дотор
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="p-2 rounded-xl border border-green-900/40 group-hover:bg-green-500 group-hover:border-green-500 transition-all">
+                                                        <ArrowRight className="w-4 h-4 text-green-700 group-hover:text-white" />
+                                                    </div>
+                                                </CardContent>
+                                            </Card>
+                                        </Link>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        )}
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

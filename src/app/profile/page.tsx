@@ -1,10 +1,11 @@
 'use client';
 
-import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase, useFCM } from '@/firebase';
 import { Header } from '@/components/Header';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Gift, HelpCircle, Shield, MessageCircle, Gem, LogOut, Loader2, Users, ShoppingCart, FileText, Palette, Trophy, User } from 'lucide-react';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { Gift, HelpCircle, Shield, MessageCircle, Gem, LogOut, Loader2, Users, ShoppingCart, FileText, Palette, Trophy, User, Settings, Bell, BellOff, Globe, Lock } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -12,7 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { doc } from 'firebase/firestore';
+import { doc, updateDoc } from 'firebase/firestore';
 import type { ComplimentOwner } from '@/types';
 import { isToday } from 'date-fns';
 import {
@@ -32,21 +33,59 @@ import { LevelProgress } from '@/components/gamification/LevelProgress';
 import { BadgeList } from '@/components/gamification/BadgeList';
 import { ProfileSettings } from '@/components/profile/ProfileSettings';
 import { SwipeBack } from '@/components/SwipeBack';
-import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
-
-type HintPackage = {
-    id: number;
-    name: string;
-    numHints: number;
-    amount: number;
-};
-
+type HintPackage = { id: number; name: string; numHints: number; amount: number; };
 const hintPackages: HintPackage[] = [
     { id: 1, name: "5 Hint", numHints: 5, amount: 6900 },
     { id: 2, name: "10 Hint", numHints: 10, amount: 11900 },
     { id: 3, name: "20 Hint", numHints: 20, amount: 19900 },
 ];
+
+// Compact toggle row
+function ToggleRow({ icon: Icon, label, description, checked, onCheckedChange, disabled }: {
+    icon: React.ElementType; label: string; description?: string;
+    checked: boolean; onCheckedChange: (v: boolean) => void; disabled?: boolean;
+}) {
+    return (
+        <div className="flex items-center justify-between gap-3 py-3 px-4">
+            <div className="flex items-center gap-3 min-w-0">
+                <div className="p-1.5 rounded-xl bg-muted/60 shrink-0">
+                    <Icon className="w-4 h-4 text-muted-foreground" />
+                </div>
+                <div className="min-w-0">
+                    <p className="text-sm font-semibold leading-tight">{label}</p>
+                    {description && <p className="text-[11px] text-muted-foreground leading-snug mt-0.5 truncate">{description}</p>}
+                </div>
+            </div>
+            <Switch checked={checked} onCheckedChange={onCheckedChange} disabled={disabled} className="shrink-0" />
+        </div>
+    );
+}
+
+// Settings menu item
+function MenuItem({ icon: Icon, label, href, onClick, danger }: {
+    icon: React.ElementType; label: string; href?: string; onClick?: () => void; danger?: boolean;
+}) {
+    const cls = cn(
+        "w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-colors text-sm font-semibold",
+        danger
+            ? "text-destructive hover:bg-destructive/10"
+            : "text-foreground hover:bg-muted/60"
+    );
+    if (href) return (
+        <Link href={href} className={cls}>
+            <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
+            {label}
+        </Link>
+    );
+    return (
+        <button onClick={onClick} className={cls}>
+            <Icon className={cn("w-4 h-4 shrink-0", danger ? "text-destructive" : "text-muted-foreground")} />
+            {label}
+        </button>
+    );
+}
 
 export default function ProfilePage() {
     const { user, loading: userLoading } = useUser();
@@ -54,11 +93,14 @@ export default function ProfilePage() {
     const firestore = useFirestore();
     const router = useRouter();
     const { toast } = useToast();
+    const { permission, requestPermission, isSupportedBrowser } = useFCM();
+    const [isRequestingPerm, setIsRequestingPerm] = useState(false);
+    const [isTogglingPublic, setIsTogglingPublic] = useState(false);
 
-    // State for payment flow
     const [isBuyHintDialogOpen, setIsBuyHintDialogOpen] = useState(false);
     const [isCreatingInvoice, setIsCreatingInvoice] = useState<number | false>(false);
-    const [qpayData, setQpayData] = useState<{ qrImage: string, deeplinks: any[], invoiceId: string } | null>(null);
+    const [qpayData, setQpayData] = useState<{ qrImage: string; deeplinks: any[]; invoiceId: string } | null>(null);
+    const [isAdmin, setIsAdmin] = useState(false);
 
     const ownerRef = useMemoFirebase(() => {
         if (!user || !firestore) return null;
@@ -68,150 +110,88 @@ export default function ProfilePage() {
     const { data: ownerData, isLoading: ownerLoading } = useDoc<ComplimentOwner>(ownerRef);
 
     const [totalHints, setTotalHints] = useState(5);
-
     useEffect(() => {
-        if (ownerData === undefined) return; // Still loading or not available
-
-        if (ownerData === null) { // Doc doesn't exist
-            setTotalHints(5);
-            return;
-        }
-
-        let dailyHints = 5;
-        const resetDate = (ownerData.lastHintResetAt && typeof ownerData.lastHintResetAt.toDate === 'function')
-            ? ownerData.lastHintResetAt.toDate()
-            : null;
-        if (resetDate && isToday(resetDate)) {
-            dailyHints = 5 - (ownerData.hintsUsedToday || 0);
-        }
-
-        setTotalHints(dailyHints + (ownerData.bonusHints || 0));
-
+        if (ownerData === undefined) return;
+        if (!ownerData) { setTotalHints(5); return; }
+        let daily = 5;
+        const resetDate = ownerData.lastHintResetAt?.toDate?.() ?? null;
+        if (resetDate && isToday(resetDate)) daily = 5 - (ownerData.hintsUsedToday || 0);
+        setTotalHints(daily + (ownerData.bonusHints || 0));
     }, [ownerData]);
 
-    const [isAdmin, setIsAdmin] = useState(false);
-
     useEffect(() => {
-        const checkAdmin = async () => {
-            if (user && !user.isAnonymous) {
-                try {
-                    const idToken = await user.getIdToken();
-                    const hasAccess = await checkAdminAccess(idToken);
-                    setIsAdmin(hasAccess);
-                } catch (e) {
-                    console.error("Failed to check admin status", e);
-                }
-            }
-        };
-        checkAdmin();
+        if (!user || user.isAnonymous) return;
+        user.getIdToken().then(token => checkAdminAccess(token)).then(setIsAdmin).catch(() => { });
     }, [user]);
 
     const handleCreateInvoice = async (pkg: HintPackage) => {
-        if (!user) {
-            toast({
-                title: "Нэвтэрнэ үү",
-                description: "Hint худалдан авахын тулд та нэвтэрсэн байх шаардлагатай.",
-                variant: "destructive",
-            });
-            setIsCreatingInvoice(false);
-            return;
-        }
+        if (!user) return;
         setIsCreatingInvoice(pkg.id);
-
         try {
             const result = await createQpayInvoiceAction(pkg, user.uid);
             if (result.error) {
-                toast({
-                    title: "Алдаа гарлаа",
-                    description: result.error,
-                    variant: "destructive",
-                });
+                toast({ title: "Алдаа гарлаа", description: result.error, variant: "destructive" });
             } else {
-                setQpayData({
-                    qrImage: result.qrImage,
-                    deeplinks: result.deeplinks,
-                    invoiceId: result.invoiceId
-                });
-                setIsBuyHintDialogOpen(false); // Close the package selection dialog
+                setQpayData({ qrImage: result.qrImage, deeplinks: result.deeplinks, invoiceId: result.invoiceId });
+                setIsBuyHintDialogOpen(false);
             }
-
-        } catch (error) {
-            console.error("Hint худалдан авах хүсэлт явуулахад алдаа гарлаа:", error);
-            toast({
-                title: "Алдаа гарлаа",
-                description: "Нэхэмжлэл үүсгэхэд алдаа гарлаа. Түр хүлээгээд дахин оролдоно уу.",
-                variant: "destructive",
-            });
+        } catch {
+            toast({ title: "Алдаа гарлаа", description: "Нэхэмжлэл үүсгэхэд алдаа гарлаа.", variant: "destructive" });
         } finally {
             setIsCreatingInvoice(false);
         }
     };
 
-
     const handleSignOut = async () => {
-        if (auth) {
-            await auth.signOut();
-            router.push('/login');
+        if (auth) { await auth.signOut(); router.push('/login'); }
+    };
+
+    const handleTogglePublic = async (val: boolean) => {
+        if (!firestore || !user || isTogglingPublic) return;
+        setIsTogglingPublic(true);
+        try {
+            await updateDoc(doc(firestore, 'complimentOwners', user.uid), { isPublic: val });
+            toast({ title: val ? 'Нийтэд нээлттэй болсон' : 'Нийтийн профайл хаагдлаа' });
+        } catch {
+            toast({ title: 'Алдаа гарлаа', variant: 'destructive' });
+        } finally {
+            setIsTogglingPublic(false);
         }
     };
 
-    const handleShare = async () => {
-        if (!ownerData?.shareUrl) return;
-        const shareUrl = ownerData.shareUrl;
-        const shareText = `Надад нэргүйгээр wispr үлдээгээрэй 💛\n\n${shareUrl}`;
-
-        if (navigator.share) {
-            try {
-                await navigator.share({
-                    title: 'Надад нэг wispr үлдээгээрэй!',
-                    text: 'Wispr-аар дамжуулан надад нэргүйгээр wispr-үүд илгээгээрэй. Хэн болохыг тань хэн ч мэдэхгүй.',
-                    url: shareUrl,
-                });
-            } catch (error) {
-                if (error instanceof Error && error.name === 'AbortError') {
-                    // console.log('Share canceled by user');
-                    return;
-                }
-                if (!(error instanceof Error && error.name === 'NotAllowedError')) {
-                    navigator.clipboard.writeText(shareText);
-                    toast({ title: 'Хуулагдлаа!', description: 'Түгээх боломжгүй тул текстийг хууллаа.' });
-                }
-            }
-        } else {
-            navigator.clipboard.writeText(shareText);
-            toast({ title: 'Хуулагдлаа!', description: 'Найзуудтайгаа хуваалцахад бэлэн.' });
+    const handleToggleNotification = async (val: boolean) => {
+        if (val && permission !== 'granted') {
+            setIsRequestingPerm(true);
+            await requestPermission?.();
+            setIsRequestingPerm(false);
         }
     };
 
     if (userLoading || ownerLoading) {
         return (
             <SwipeBack threshold={80}>
-                <Header title="Профайл" showBackButton={true} />
-                <div className="container mx-auto max-w-2xl p-4 py-8 space-y-6">
-                    <div className="space-y-4">
-                        <Skeleton className="h-24 w-full rounded-lg" />
-                        <Skeleton className="h-40 w-full rounded-lg" />
-                        <Skeleton className="h-48 w-full rounded-lg" />
-                    </div>
+                <Header title="Тохиргоо" showBackButton={true} />
+                <div className="container mx-auto max-w-2xl p-4 py-8 space-y-4">
+                    <Skeleton className="h-20 w-full rounded-3xl" />
+                    <Skeleton className="h-40 w-full rounded-3xl" />
+                    <Skeleton className="h-48 w-full rounded-3xl" />
                 </div>
             </SwipeBack>
-        )
+        );
     }
 
     if (!user || user.isAnonymous) {
         return (
             <SwipeBack threshold={80}>
-                <Header title="Профайл" showBackButton={true} />
-                <div className="container mx-auto max-w-2xl p-4 py-8 space-y-8">
-                    <Card className="text-center border-primary/20 bg-primary/5">
+                <Header title="Тохиргоо" showBackButton={true} />
+                <div className="container mx-auto max-w-2xl p-4 py-8 space-y-6">
+                    <Card className="text-center border-primary/20 bg-primary/5 rounded-3xl">
                         <CardHeader>
-                            <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit mb-4 ring-8 ring-primary/5">
+                            <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit mb-4">
                                 <Gem className="h-8 w-8 text-primary" />
                             </div>
-                            <CardTitle>Wispr-үүдээ мөнхөд хадгалаарай</CardTitle>
-                            <CardDescription>
-                                Таны wispr-үүд одоогоор зөвхөн энэ төхөөрөмж дээр хадгалагдаж байна. Wispr-үүдээ алдалгүй хадгалж, бусад төхөөрөмжөөс хандахын тулд бүртгэлээ баталгаажуулна уу.
-                            </CardDescription>
+                            <CardTitle>Нэвтэрч орно уу</CardTitle>
+                            <CardDescription>Тохиргоог харахын тулд бүртгэлээрээ нэвтэрнэ үү.</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <Button asChild className="w-full font-bold" size="lg">
@@ -219,263 +199,197 @@ export default function ProfilePage() {
                             </Button>
                         </CardContent>
                     </Card>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Бусад</CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-2">
-                            <div className="space-y-1">
-                                <Button asChild variant="ghost" className="w-full justify-start gap-3 text-base h-12">
-                                    <Link href="/privacy">
-                                        <FileText className="w-5 h-5 text-muted-foreground" /> Үйлчилгээний нөхцөл
-                                    </Link>
-                                </Button>
-                                <Button asChild variant="ghost" className="w-full justify-start gap-3 text-base h-12">
-                                    <Link href="/privacy">
-                                        <Shield className="w-5 h-5 text-muted-foreground" /> Нууцлалын бодлого
-                                    </Link>
-                                </Button>
-                                <Button asChild variant="ghost" className="w-full justify-start gap-3 text-base h-12">
-                                    <Link href="/feedback">
-                                        <MessageCircle className="w-5 h-5 text-muted-foreground" /> Санал хүсэлт
-                                    </Link>
-                                </Button>
-                                <Button asChild variant="ghost" className="w-full justify-start gap-3 text-base h-12">
-                                    <Link href="/help">
-                                        <HelpCircle className="w-5 h-5 text-muted-foreground" /> Тусламж
-                                    </Link>
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
                 </div>
             </SwipeBack>
-        )
+        );
     }
 
     return (
         <SwipeBack threshold={80}>
-            <Header title="Профайл" showBackButton={true} />
-            <div className="container mx-auto max-w-2xl p-4 py-8 space-y-6">
-                <Card className="rounded-3xl border-muted/30 shadow-sm overflow-hidden text-card-foreground bg-card/40 backdrop-blur-md border border-white/10">
-                    <CardContent className="flex items-center gap-4 p-6">
-                        <Avatar className="h-16 w-16 border-2 border-primary/20">
-                            <AvatarImage src={user.photoURL || ''} alt={user.displayName || ''} />
-                            <AvatarFallback>{user.displayName?.charAt(0).toUpperCase()}</AvatarFallback>
-                        </Avatar>
-                        <div className='min-w-0'>
-                            <h2 className="text-xl font-bold truncate">{user.displayName}</h2>
-                            <p className="text-sm text-muted-foreground truncate">{user.email}</p>
-                        </div>
-                    </CardContent>
-                </Card>
+            <Header title="Тохиргоо" showBackButton={true} />
+            <div className="container mx-auto max-w-2xl px-4 pb-24">
 
-                <Tabs defaultValue="profile" className="w-full mt-2">
-                    <div className="flex justify-center mb-6">
-                        <div className="w-full overflow-x-auto no-scrollbar pb-2 -mb-2">
+                <Tabs defaultValue="settings" className="w-full pt-4">
+                    {/* Tab switcher */}
+                    <div className="flex justify-center mb-5">
+                        <div className="w-full overflow-x-auto no-scrollbar pb-1">
                             <TabsList className="bg-muted/40 p-1.5 rounded-full shadow-inner border border-border/40 backdrop-blur-sm h-auto flex flex-nowrap justify-start sm:justify-center min-w-max mx-auto gap-1">
-                                <TabsTrigger value="profile" className="rounded-full px-5 py-2.5 text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:font-bold transition-all duration-300">
-                                    <User className="h-4 w-4 mr-2" />
-                                    <span>Мэдээлэл</span>
+                                <TabsTrigger value="settings" className="rounded-full px-4 py-2.5 text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:font-bold transition-all duration-300 flex items-center gap-1.5">
+                                    <Settings className="w-3.5 h-3.5" />Тохиргоо
                                 </TabsTrigger>
-                                <TabsTrigger value="themes" className="rounded-full px-5 py-2.5 text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:font-bold transition-all duration-300">
-                                    <Palette className="h-4 w-4 mr-2" />
-                                    <span>Загвар</span>
+                                <TabsTrigger value="profile" className="rounded-full px-4 py-2.5 text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:font-bold transition-all duration-300 flex items-center gap-1.5">
+                                    <User className="w-3.5 h-3.5" />Профайл
                                 </TabsTrigger>
-                                <TabsTrigger value="achievements" className="rounded-full px-5 py-2.5 text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:font-bold transition-all duration-300">
-                                    <Trophy className="h-4 w-4 mr-2" />
-                                    <span>Амжилт</span>
+                                <TabsTrigger value="achievements" className="rounded-full px-4 py-2.5 text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:font-bold transition-all duration-300 flex items-center gap-1.5">
+                                    <Trophy className="w-3.5 h-3.5" />Амжилт
                                 </TabsTrigger>
                             </TabsList>
                         </div>
                     </div>
-                    <TabsContent value="profile" className="space-y-4 m-0 focus-visible:outline-none">
-                        <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.4 }}
-                        >
-                            <Card className="rounded-3xl border border-white/10 shadow-sm overflow-hidden bg-card/40 backdrop-blur-md">
-                                <CardHeader>
-                                    <CardTitle>Хувийн мэдээлэл</CardTitle>
-                                    <CardDescription>Нийтэд харагдах өөрийн профайл мэдээллээ тохируулна уу.</CardDescription>
+
+                    {/* ── ТОХИРГОО TAB ── */}
+                    <TabsContent value="settings" className="m-0 focus-visible:outline-none animate-in fade-in duration-300">
+                        <div className="space-y-4">
+
+                            {/* Compact user card */}
+                            <Card className="rounded-[1.75rem] border border-border/50 bg-card/60 backdrop-blur-md shadow-sm overflow-hidden">
+                                <CardContent className="p-4 flex items-center gap-4">
+                                    <Avatar className="h-14 w-14 ring-2 ring-primary/20 shadow-md shrink-0">
+                                        <AvatarImage src={user.photoURL || ''} alt={user.displayName || ''} />
+                                        <AvatarFallback className="bg-primary/10 text-primary font-black text-lg">
+                                            {user.displayName?.charAt(0).toUpperCase()}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <div className="min-w-0 flex-1">
+                                        <h2 className="font-black text-base leading-tight truncate">{user.displayName}</h2>
+                                        <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                                        {ownerData?.username && (
+                                            <p className="text-xs text-primary/70 font-mono font-bold mt-0.5">@{ownerData.username}</p>
+                                        )}
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* Hint card — compact */}
+                            <Card className="rounded-[1.75rem] overflow-hidden border-none bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600 shadow-lg">
+                                <CardContent className="p-0">
+                                    <div className="flex items-center gap-4 p-4">
+                                        <div className="bg-white/15 backdrop-blur-sm rounded-2xl p-3 shrink-0">
+                                            <Gift className="w-6 h-6 text-white" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-[11px] text-white/60 font-black uppercase tracking-widest">Hint-ийн эрх</p>
+                                            <p className="text-3xl font-black text-white leading-none">{totalHints}</p>
+                                        </div>
+                                        <Dialog open={isBuyHintDialogOpen} onOpenChange={setIsBuyHintDialogOpen}>
+                                            <DialogTrigger asChild>
+                                                <Button size="sm" className="bg-white/20 hover:bg-white/30 text-white border-none rounded-2xl font-bold text-xs shrink-0 h-10 px-4">
+                                                    <ShoppingCart className="w-3.5 h-3.5 mr-1.5" />Авах
+                                                </Button>
+                                            </DialogTrigger>
+                                            <DialogContent className="rounded-[2rem]">
+                                                <DialogHeader>
+                                                    <DialogTitle>Нэмэлт Hint авах</DialogTitle>
+                                                    <DialogDescription>Hint-ийн багц сонгоно уу.</DialogDescription>
+                                                </DialogHeader>
+                                                <div className="grid gap-3 py-2">
+                                                    {hintPackages.map((pkg) => (
+                                                        <Button key={pkg.id} onClick={() => handleCreateInvoice(pkg)} disabled={!!isCreatingInvoice} className="rounded-xl h-12">
+                                                            {isCreatingInvoice === pkg.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Gem className="mr-2 h-4 w-4" />}
+                                                            {pkg.name} — {pkg.amount.toLocaleString()}₮
+                                                        </Button>
+                                                    ))}
+                                                </div>
+                                            </DialogContent>
+                                        </Dialog>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* Compact toggles */}
+                            <Card className="rounded-[1.75rem] border border-border/50 bg-card/60 backdrop-blur-md shadow-sm overflow-hidden">
+                                <ToggleRow
+                                    icon={ownerData?.isPublic ? Globe : Lock}
+                                    label="Нийтийн профайл"
+                                    description={ownerData?.isPublic ? "Хайлтаар олгодно" : "Зөвхөн таны линкээр"}
+                                    checked={ownerData?.isPublic ?? false}
+                                    onCheckedChange={handleTogglePublic}
+                                    disabled={isTogglingPublic}
+                                />
+                                {isSupportedBrowser && (
+                                    <>
+                                        <Separator />
+                                        <ToggleRow
+                                            icon={permission === 'granted' ? Bell : BellOff}
+                                            label="Мэдэгдэл"
+                                            description={permission === 'granted' ? "Идэвхтэй байна" : "Зөвшөөрөл өгөгдөөгүй"}
+                                            checked={permission === 'granted'}
+                                            onCheckedChange={handleToggleNotification}
+                                            disabled={isRequestingPerm || permission === 'granted'}
+                                        />
+                                    </>
+                                )}
+                            </Card>
+
+                            {/* Settings menu */}
+                            <Card className="rounded-[1.75rem] border border-border/50 bg-card/60 backdrop-blur-md shadow-sm overflow-hidden">
+                                <div className="p-2 space-y-0.5">
+                                    {isAdmin && <MenuItem icon={Shield} label="Админ самбар" href="/admin" />}
+                                    <MenuItem icon={MessageCircle} label="Санал хүсэлт" href="/feedback" />
+                                    <MenuItem icon={HelpCircle} label="Тусламж" href="/help" />
+                                    <MenuItem icon={FileText} label="Үйлчилгээний нөхцөл" href="/privacy" />
+                                    <MenuItem icon={Shield} label="Нууцлалын бодлого" href="/privacy" />
+                                    <Separator className="my-1" />
+                                    <MenuItem icon={LogOut} label="Гарах" onClick={handleSignOut} danger />
+                                </div>
+                            </Card>
+                        </div>
+                    </TabsContent>
+
+                    {/* ── ПРОФАЙЛ TAB ── */}
+                    <TabsContent value="profile" className="m-0 focus-visible:outline-none animate-in fade-in duration-300">
+                        <div className="space-y-6">
+                            <Card className="rounded-[1.75rem] border border-border/50 bg-card/60 backdrop-blur-md shadow-sm overflow-hidden">
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="text-base">Хувийн мэдээлэл</CardTitle>
+                                    <CardDescription>Нийтэд харагдах мэдээллээ тохируулна уу.</CardDescription>
                                 </CardHeader>
                                 <CardContent>
                                     <ProfileSettings ownerId={user.uid} ownerData={ownerData} />
                                 </CardContent>
                             </Card>
-                        </motion.div>
-                    </TabsContent>
-                    <TabsContent value="themes" className="space-y-4 m-0 focus-visible:outline-none">
-                        <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.4 }}
-                        >
-                            <ThemeSelector currentThemeId={ownerData?.theme} ownerData={ownerData} />
-                        </motion.div>
-                    </TabsContent>
-                    <TabsContent value="achievements" className="space-y-4 m-0 focus-visible:outline-none">
-                        <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.4 }}
-                        >
-                            <Card className="rounded-3xl border border-white/10 shadow-sm overflow-hidden bg-card/40 backdrop-blur-md">
-                                <CardHeader>
-                                    <CardTitle>Миний амжилтууд</CardTitle>
-                                    <CardDescription>Таны цуглуулсан оноо болон тэмдэгүүд</CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-8">
-                                    <LevelProgress xp={ownerData?.xp || 0} />
 
-                                    <div className="pt-4">
-                                        <h3 className="text-sm font-medium mb-4">Тэмдэгүүд</h3>
-                                        <BadgeList
-                                            ownerId={user.uid}
-                                            earnedBadges={ownerData?.badges || []}
-                                            stats={{
-                                                totalCompliments: ownerData?.totalCompliments || 0,
-                                                xp: ownerData?.xp || 0
-                                            }}
-                                        />
-                                    </div>
+                            <div>
+                                <div className="flex items-center gap-3 mb-4 px-1">
+                                    <Palette className="w-4 h-4 text-muted-foreground" />
+                                    <span className="text-sm font-black uppercase tracking-widest text-muted-foreground">Загвар</span>
+                                    <div className="h-px flex-1 bg-border/50" />
+                                </div>
+                                <ThemeSelector currentThemeId={ownerData?.theme} ownerData={ownerData} />
+                            </div>
+                        </div>
+                    </TabsContent>
+
+                    {/* ── АМЖИЛТ TAB ── */}
+                    <TabsContent value="achievements" className="m-0 focus-visible:outline-none animate-in fade-in duration-300">
+                        <div className="space-y-6">
+                            <Card className="rounded-[1.75rem] border border-border/50 bg-card/60 backdrop-blur-md shadow-sm overflow-hidden">
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="text-base">Түвшин & Оноо</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <LevelProgress xp={ownerData?.xp || 0} />
                                 </CardContent>
                             </Card>
-                        </motion.div>
+
+                            <Card className="rounded-[1.75rem] border border-border/50 bg-card/60 backdrop-blur-md shadow-sm overflow-hidden">
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="text-base">Тэмдэгүүд</CardTitle>
+                                    <CardDescription>Таны цуглуулсан тэмдэгүүд</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <BadgeList
+                                        ownerId={user.uid}
+                                        earnedBadges={ownerData?.badges || []}
+                                        stats={{ totalCompliments: ownerData?.totalCompliments || 0, xp: ownerData?.xp || 0 }}
+                                    />
+                                </CardContent>
+                            </Card>
+                        </div>
                     </TabsContent>
                 </Tabs>
-
-                {/* Hint & Payment Section */}
-                <Card className="relative overflow-hidden bg-gradient-to-br from-violet-600 via-indigo-600 to-blue-600 shadow-xl border-none rounded-[2rem]">
-                    <div className="absolute -bottom-10 -right-10 w-48 h-48 text-white/20 rotate-12">
-                        <Gift className="w-full h-full" />
-                    </div>
-                    <div className="relative">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-primary-foreground">Hint-ийн эрх</CardTitle>
-                        </CardHeader>
-                        <CardContent className="text-center relative z-10">
-                            <div className="text-7xl font-black text-white drop-shadow-md mb-2">{totalHints}</div>
-                            <p className="text-center text-sm font-medium text-white/90">
-                                Нийт үлдсэн hint. Найзаа урьж нэмэлт эрх аваарай.
-                            </p>
-                        </CardContent>
-                        <CardFooter>
-                            <Dialog open={isBuyHintDialogOpen} onOpenChange={setIsBuyHintDialogOpen}>
-                                <DialogTrigger asChild>
-                                    <Button className="w-full bg-white/90 text-primary hover:bg-white font-bold rounded-2xl h-12 transition-all active:scale-95"><ShoppingCart className="mr-2 h-4 w-4" /> Hint худалдаж авах</Button>
-                                </DialogTrigger>
-                                <DialogContent className="rounded-[2rem]">
-                                    <DialogHeader>
-                                        <DialogTitle>Нэмэлт Hint авах</DialogTitle>
-                                        <DialogDescription>
-                                            Хэрэв таны үнэгүй hint дууссан бол, та нэмэлт эрх худалдан авах эсвэл найзуудаа урьж үнэгүй hint авах боломжтой.
-                                        </DialogDescription>
-                                    </DialogHeader>
-                                    <div className="grid gap-6 py-4">
-                                        <div className="rounded-[1.5rem] border p-4 space-y-3">
-                                            <div>
-                                                <h3 className="font-semibold text-foreground">Hint худалдаж авах</h3>
-                                                <p className="text-sm text-muted-foreground">Нэмэлт hint-ийн багц сонгоно уу.</p>
-                                            </div>
-                                            <div className="grid grid-cols-1 gap-2">
-                                                {hintPackages.map((pkg) => (
-                                                    <Button key={pkg.id} onClick={() => handleCreateInvoice(pkg)} disabled={!!isCreatingInvoice} className="rounded-xl h-12">
-                                                        {isCreatingInvoice === pkg.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Gem className="mr-2 h-4 w-4" />}
-                                                        {pkg.name} - {pkg.amount.toLocaleString()}₮
-                                                    </Button>
-                                                ))}
-                                            </div>
-                                        </div>
-                                        <div className="relative">
-                                            <div className="absolute inset-0 flex items-center">
-                                                <span className="w-full border-t" />
-                                            </div>
-                                            <div className="relative flex justify-center text-xs uppercase">
-                                                <span className="bg-background px-2 text-muted-foreground">
-                                                    Эсвэл
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div className="rounded-[1.5rem] border p-4 bg-secondary space-y-4">
-                                            <div>
-                                                <h3 className="font-semibold text-foreground">Найзаа урих</h3>
-                                                <p className="text-sm text-muted-foreground">Урьсан найз бүрийнхээ тоогоор та <span className="font-bold text-primary">1 үнэгүй hint</span>-ийн эрх авах болно.</p>
-                                            </div>
-                                            <Button className="w-full rounded-xl h-12" onClick={() => {
-                                                handleShare();
-                                                setIsBuyHintDialogOpen(false);
-                                            }}>
-                                                <Users className="mr-2 h-4 w-4" />
-                                                Урилгын линк хуваалцах
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </DialogContent>
-                            </Dialog>
-                        </CardFooter>
-                    </div>
-                </Card>
-
-                {qpayData && (
-                    <QPayDialog
-                        isOpen={!!qpayData}
-                        onClose={() => setQpayData(null)}
-                        qrImage={qpayData.qrImage}
-                        deeplinks={qpayData.deeplinks}
-                        invoiceId={qpayData.invoiceId}
-                        onSuccess={() => {
-                            toast({ title: "Баяр хүргэе!", description: "Hint-ийн эрх амжилттай нэмэгдлээ." });
-                        }}
-                    />
-                )}
-
-
-                {/* Settings and Legal Section */}
-                <Card className="rounded-[2.5rem] border border-white/10 shadow-sm overflow-hidden mb-20 bg-card/40 backdrop-blur-md">
-                    <CardHeader>
-                        <CardTitle>Тохиргоо &amp; Бусад</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-2">
-                        <div className="space-y-1">
-                            {isAdmin && (
-                                <Button asChild variant="ghost" className="w-full justify-start gap-3 text-base h-12 rounded-2xl">
-                                    <Link href="/admin">
-                                        <Shield className="w-5 h-5 text-muted-foreground" /> Админ самбар
-                                    </Link>
-                                </Button>
-                            )}
-                            <Button asChild variant="ghost" className="w-full justify-start gap-3 text-base h-12 rounded-2xl">
-                                <Link href="/privacy">
-                                    <FileText className="w-5 h-5 text-muted-foreground" /> Үйлчилгээний нөхцөл
-                                </Link>
-                            </Button>
-                            <Button asChild variant="ghost" className="w-full justify-start gap-3 text-base h-12 rounded-2xl">
-                                <Link href="/privacy">
-                                    <Shield className="w-5 h-5 text-muted-foreground" /> Нууцлалын бодлого
-                                </Link>
-                            </Button>
-                            <Button asChild variant="ghost" className="w-full justify-start gap-3 text-base h-12 rounded-2xl">
-                                <Link href="/feedback">
-                                    <MessageCircle className="w-5 h-5 text-muted-foreground" /> Санал хүсэлт
-                                </Link>
-                            </Button>
-                            <Button asChild variant="ghost" className="w-full justify-start gap-3 text-base h-12 rounded-2xl">
-                                <Link href="/help">
-                                    <HelpCircle className="w-5 h-5 text-muted-foreground" /> Тусламж
-                                </Link>
-                            </Button>
-                        </div>
-                        <Separator className="my-2" />
-                        <div className="pt-1">
-                            <Button variant="ghost" className="w-full justify-start gap-3 text-base h-12 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-2xl" onClick={handleSignOut}>
-                                <LogOut className="w-5 h-5" /> Гарах
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card>
             </div>
+
+            {qpayData && (
+                <QPayDialog
+                    isOpen={!!qpayData}
+                    onClose={() => setQpayData(null)}
+                    qrImage={qpayData.qrImage}
+                    deeplinks={qpayData.deeplinks}
+                    invoiceId={qpayData.invoiceId}
+                    onSuccess={() => toast({ title: "Баяр хүргэе!", description: "Hint амжилттай нэмэгдлээ." })}
+                />
+            )}
         </SwipeBack>
-    )
+    );
 }

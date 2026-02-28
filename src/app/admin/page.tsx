@@ -130,7 +130,7 @@ export default function AdminPage() {
                 </div>
 
                 <Tabs defaultValue="overview" className="space-y-6">
-                    <TabsList className="bg-white p-1 border shadow-sm w-full md:w-auto h-auto min-h-[44px] flex flex-wrap md:flex-nowrap justify-start gap-1">
+                    <TabsList className="h-auto min-h-[44px] flex flex-wrap md:flex-nowrap justify-start gap-1 w-full md:w-fit">
                         <TabsTrigger value="overview" className="flex-1 md:flex-none py-2">Тойм</TabsTrigger>
                         <TabsTrigger value="users" className="flex-1 md:flex-none py-2">Хэрэглэгчид ({usersList.length})</TabsTrigger>
                         <TabsTrigger value="finance" className="flex-1 md:flex-none py-2">Санхүү</TabsTrigger>

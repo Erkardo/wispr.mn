@@ -213,14 +213,14 @@ export default function ProfilePage() {
                     {/* Tab switcher */}
                     <div className="flex justify-center mb-5">
                         <div className="w-full overflow-x-auto no-scrollbar pb-1">
-                            <TabsList className="bg-muted/40 p-1.5 rounded-full shadow-inner border border-border/40 backdrop-blur-sm h-auto flex flex-nowrap justify-start sm:justify-center min-w-max mx-auto gap-1">
-                                <TabsTrigger value="settings" className="rounded-full px-4 py-2.5 text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:font-bold transition-all duration-300 flex items-center gap-1.5">
+                            <TabsList className="h-auto flex flex-nowrap justify-start sm:justify-center min-w-max mx-auto gap-1">
+                                <TabsTrigger value="settings" className="flex items-center gap-1.5">
                                     <Settings className="w-3.5 h-3.5" />Тохиргоо
                                 </TabsTrigger>
-                                <TabsTrigger value="profile" className="rounded-full px-4 py-2.5 text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:font-bold transition-all duration-300 flex items-center gap-1.5">
+                                <TabsTrigger value="profile" className="flex items-center gap-1.5">
                                     <User className="w-3.5 h-3.5" />Профайл
                                 </TabsTrigger>
-                                <TabsTrigger value="achievements" className="rounded-full px-4 py-2.5 text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:font-bold transition-all duration-300 flex items-center gap-1.5">
+                                <TabsTrigger value="achievements" className="flex items-center gap-1.5">
                                     <Trophy className="w-3.5 h-3.5" />Амжилт
                                 </TabsTrigger>
                             </TabsList>

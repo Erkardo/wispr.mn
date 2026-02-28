@@ -55,17 +55,15 @@ export default function ExplorePage() {
 
                     {/* Tab switcher */}
                     <div className="flex justify-center mb-2">
-                        <TabsList className="bg-muted/40 p-1.5 rounded-full shadow-inner border border-border/40 backdrop-blur-sm h-auto gap-1">
+                        <TabsList className="h-auto gap-1">
                             <TabsTrigger
                                 value="search"
-                                className="rounded-full px-6 py-2.5 text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:font-bold transition-all duration-300"
                             >
                                 <Search className="w-4 h-4 mr-2" />
                                 Хайх
                             </TabsTrigger>
                             <TabsTrigger
                                 value="radar"
-                                className="rounded-full px-6 py-2.5 text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:font-bold transition-all duration-300"
                             >
                                 <Radar className="w-4 h-4 mr-2" />
                                 Радар

@@ -112,18 +112,18 @@ export default function HomePage() {
       <Tabs defaultValue={activeTab} className="w-full pt-4">
         <div className="flex justify-center px-4 mb-4">
           <div className="w-full overflow-x-auto no-scrollbar pb-2 -mb-2">
-            <TabsList className="bg-muted/40 p-1.5 rounded-full shadow-inner border border-border/40 backdrop-blur-sm h-auto flex flex-nowrap justify-start sm:justify-center min-w-max mx-auto gap-1">
-              <TabsTrigger value="received" className="rounded-full px-4 py-2.5 text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:font-bold transition-all duration-300 flex items-center gap-1.5">
-                <Inbox className="w-3.5 h-3.5" />Ирсэн
+            <TabsList className="h-auto flex flex-nowrap justify-start sm:justify-center min-w-max mx-auto gap-1">
+              <TabsTrigger value="received">
+                <Inbox className="w-4 h-4" />Ирсэн
               </TabsTrigger>
-              <TabsTrigger value="sent" className="rounded-full px-4 py-2.5 text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:font-bold transition-all duration-300 flex items-center gap-1.5">
-                <Send className="w-3.5 h-3.5" />Илгээсэн
+              <TabsTrigger value="sent">
+                <Send className="w-4 h-4" />Илгээсэн
               </TabsTrigger>
-              <TabsTrigger value="liked" className="rounded-full px-4 py-2.5 text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:font-bold transition-all duration-300 flex items-center gap-1.5">
-                <Heart className="w-3.5 h-3.5" />Таалагдсан
+              <TabsTrigger value="liked">
+                <Heart className="w-4 h-4" />Таалагдсан
               </TabsTrigger>
-              <TabsTrigger value="archived" className="rounded-full px-4 py-2.5 text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:font-bold transition-all duration-300 flex items-center gap-1.5">
-                <Archive className="w-3.5 h-3.5" />Архив
+              <TabsTrigger value="archived">
+                <Archive className="w-4 h-4" />Архив
               </TabsTrigger>
             </TabsList>
           </div>

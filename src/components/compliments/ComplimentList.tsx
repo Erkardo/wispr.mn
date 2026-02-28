@@ -460,6 +460,11 @@ function ComplimentCard({
     if (isReporting || isReported) return;
     if (!confirm('Энэ Wispr-ийг зохисгүй контент гэж мэдээлэх үү?')) return;
 
+    // Haptic for feedback
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate(60);
+    }
+
     setIsReporting(true);
     try {
       const result = await reportComplimentAction(compliment.ownerId, compliment.id);
@@ -480,9 +485,9 @@ function ComplimentCard({
     if (!compliment.createdAt) return null;
     const date = (typeof compliment.createdAt.toDate === 'function') ? compliment.createdAt.toDate() : (compliment.createdAt as unknown as Date);
     if (!compliment.isRead) return <Badge className="border-none bg-white text-primary font-bold shadow-lg animate-pulse">Шинэ</Badge>;
-    if (isToday(date)) return <Badge variant="secondary" className="border-none bg-black/10 text-white/50 backdrop-blur-sm font-medium">Өнөөдөр</Badge>;
-    if (isYesterday(date)) return <Badge variant="secondary" className="border-none bg-black/10 text-white/50 backdrop-blur-sm font-medium">Өчигдөр</Badge>;
-    return <Badge variant="secondary" className="border-none bg-black/10 text-white/50 backdrop-blur-sm font-medium">{format(date, 'MMM d')}</Badge>;
+    if (isToday(date)) return <Badge variant="secondary" className="border-none bg-black/10 text-white/20 backdrop-blur-sm font-medium">Өнөөдөр</Badge>;
+    if (isYesterday(date)) return <Badge variant="secondary" className="border-none bg-black/10 text-white/20 backdrop-blur-sm font-medium">Өчигдөр</Badge>;
+    return <Badge variant="secondary" className="border-none bg-black/10 text-white/20 backdrop-blur-sm font-medium">{format(date, 'MMM d')}</Badge>;
   }
 
 
@@ -501,7 +506,7 @@ function ComplimentCard({
     >
       <Card
         id={`compliment-card-${compliment.id}`}
-        className="w-full relative overflow-hidden text-white rounded-3xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.4)] transition-all duration-500 border border-white/10"
+        className="w-full relative overflow-hidden text-white rounded-3xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.4)] shadow-[inset_0_1px_2px_rgba(255,255,255,0.4)] transition-all duration-500 border border-white/10"
         style={{ backgroundImage: selectedStyle.bg }}
       >
         <CardHeader className="flex flex-row items-center justify-between p-6 pb-2">
@@ -541,7 +546,8 @@ function ComplimentCard({
             </div>
           )}
 
-          <div className="absolute bottom-4 left-6 flex items-center gap-2 text-[9px] z-10 select-none text-white/40 uppercase tracking-[0.2em] font-bold opacity-70">
+
+          <div className="absolute bottom-4 left-6 flex items-center gap-2 text-[9px] z-10 select-none text-white/20 hover:text-white/40 transition-opacity uppercase tracking-[0.2em] font-bold">
             <UserX className="h-3 w-3 opacity-60" />
             Нэрээ нууцалсан
           </div>
@@ -557,7 +563,7 @@ function ComplimentCard({
                 }}
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-white/20 transition-all text-xs font-bold text-white shadow-sm",
-                  isReacting === emoji ? 'animate-in zoom-in spin-in-12 duration-300 scale-125' : 'active:scale-90'
+                  isReacting === emoji ? 'animate-in zoom-in spin-in-12 duration-300 scale-150 brightness-125' : 'active:scale-90 hover:scale-110'
                 )}
                 disabled={!!isReacting}
               >
@@ -843,8 +849,8 @@ export function ComplimentList({
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <Skeleton className="w-full aspect-[16/10] rounded-2xl" />
-        <Skeleton className="w-full aspect-[16/10] rounded-2xl" />
+        <div className="w-full aspect-[16/10] bg-muted/40 animate-pulse rounded-[2rem] border border-white/5 shadow-inner" />
+        <div className="w-full aspect-[16/10] bg-muted/30 animate-pulse rounded-[2rem] border border-white/5" />
       </div>
     );
   }

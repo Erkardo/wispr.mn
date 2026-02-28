@@ -46,13 +46,22 @@ export function ComplimentSentSuccess() {
           {!showCheck ? (
             <motion.div
               key="plane"
-              initial={{ x: -100, y: 100, scale: 0.5, opacity: 0 }}
-              animate={{ x: 0, y: 0, scale: 1.2, opacity: 1 }}
-              exit={{ x: 150, y: -150, scale: 0.5, opacity: 0, transition: { duration: 0.4, ease: "easeIn" } }}
-              transition={{ duration: 0.8 }}
+              initial={{ x: -200, y: 150, scale: 0.2, opacity: 0, rotate: -45 }}
+              animate={{
+                x: [null, 0, 250],
+                y: [null, 0, -200],
+                scale: [null, 1.5, 0.2],
+                opacity: [0, 1, 0],
+                rotate: [null, 0, 45]
+              }}
+              transition={{
+                duration: 1,
+                ease: "easeInOut",
+                times: [0, 0.5, 1]
+              }}
               className="absolute"
             >
-              <Send className="w-16 h-16 text-primary drop-shadow-xl" />
+              <Send className="w-16 h-16 text-primary drop-shadow-[0_10px_20px_rgba(0,0,0,0.2)]" />
             </motion.div>
           ) : (
             <motion.div

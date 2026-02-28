@@ -13,8 +13,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
-import { Gem } from 'lucide-react';
+import { Gem, RefreshCw } from 'lucide-react';
 import { PollManager } from '@/components/polls/PollManager';
+import { PullToRefresh } from '@/components/ui/PullToRefresh';
 
 function AnonymousLoginPrompt() {
   return (
@@ -98,8 +99,9 @@ export default function HomePage() {
     if (isLoading) {
       return (
         <div className="space-y-6">
-          <Skeleton className="h-48 w-full rounded-2xl" />
-          <Skeleton className="h-64 w-full rounded-2xl" />
+          <div className="w-full aspect-[16/10] bg-muted/40 animate-pulse rounded-[2rem] border border-white/5 shadow-inner" />
+          <div className="w-full aspect-[16/10] bg-muted/30 animate-pulse rounded-[2rem] border border-white/5" />
+          <div className="w-full aspect-[16/10] bg-muted/20 animate-pulse rounded-[2rem] border border-white/5" />
         </div>
       );
     }
@@ -109,12 +111,17 @@ export default function HomePage() {
     }
 
     return (
-      <ComplimentList
-        compliments={sortedCompliments}
-        isLoading={complimentsLoading}
-        ownerData={ownerData}
-        ownerLoading={ownerLoading}
-      />
+      <PullToRefresh onRefresh={async () => {
+        // Refresh handled by firebase hooks re-evaluating or window reload for full state reset
+        window.location.reload();
+      }}>
+        <ComplimentList
+          compliments={sortedCompliments}
+          isLoading={complimentsLoading}
+          ownerData={ownerData}
+          ownerLoading={ownerLoading}
+        />
+      </PullToRefresh>
     );
   }, [user, userLoading, ownerData, ownerLoading, sortedCompliments, complimentsLoading]);
 

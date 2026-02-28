@@ -76,14 +76,14 @@ export function RadarTab() {
                                 {[0, 1, 2].map((i) => (
                                     <motion.div
                                         key={i}
-                                        className="absolute inset-0 rounded-full border border-primary/40 bg-primary/10"
-                                        initial={{ opacity: 0.6, scale: 0.8 }}
-                                        animate={{ opacity: 0, scale: 4 }}
+                                        className="absolute inset-0 rounded-full border border-primary/20 bg-primary/5"
+                                        initial={{ opacity: 0.8, scale: 0.5 }}
+                                        animate={{ opacity: 0, scale: 3 }}
                                         transition={{
-                                            duration: 4,
+                                            duration: 3,
                                             repeat: Infinity,
-                                            delay: i * 1.3,
-                                            ease: "linear",
+                                            delay: i * 1,
+                                            ease: [0.215, 0.61, 0.355, 1], // easeOutCubic
                                         }}
                                     />
                                 ))}

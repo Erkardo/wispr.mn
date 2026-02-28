@@ -76,13 +76,11 @@ export function Header({
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, ease: "easeOut" }}
-            className="flex items-center gap-2 pointer-events-auto"
+            className="flex items-center justify-center gap-2 pointer-events-auto"
           >
-            {title === 'Wispr-үүд' && (
-              <Link href="/" passHref className="flex items-center shrink-0">
-                <Logo className="w-24 text-primary" />
-              </Link>
-            )}
+            <Link href="/" passHref className="flex items-center shrink-0">
+              <Logo className={cn("text-primary transition-all", title === 'Wispr-үүд' ? "w-24" : "w-16 md:w-20")} />
+            </Link>
             {title !== 'Wispr-үүд' && (
               <h1 className="text-[17px] font-bold tracking-tight bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
                 {title}

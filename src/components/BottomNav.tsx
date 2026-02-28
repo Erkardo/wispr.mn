@@ -2,16 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, PlusCircle, Bell, User, Search } from 'lucide-react';
+import { Home, PlusCircle, User, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUser, useFirestore, useMemoFirebase, useCollection } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
 
 const navItems = [
   { href: '/', label: 'Wispr-үүд', icon: Home },
   { href: '/explore', label: 'Хайх', icon: Search },
   { href: '/create', label: 'Үүсгэх', icon: PlusCircle },
-  { href: '/activity', label: 'Идэвх', icon: Bell },
   { href: '/profile', label: 'Профайл', icon: User },
 ];
 
@@ -19,21 +17,6 @@ export function BottomNav() {
   const pathname = usePathname();
   const { user } = useUser();
   const firestore = useFirestore();
-
-  const unreadComplimentsQuery = useMemoFirebase(() => {
-    if (!user || user.isAnonymous || !firestore) return null;
-    return query(collection(firestore, 'complimentOwners', user.uid, 'compliments'), where('isRead', '==', false));
-  }, [user, firestore]);
-
-  const unreadRepliesQuery = useMemoFirebase(() => {
-    if (!user || user.isAnonymous || !firestore) return null;
-    return query(collection(firestore, 'complimentOwners', user.uid, 'sentWisprs'), where('hasUnreadReply', '==', true));
-  }, [user, firestore]);
-
-  const { data: unreadComps } = useCollection(unreadComplimentsQuery);
-  const { data: unreadReps } = useCollection(unreadRepliesQuery);
-
-  const hasUnreadActivity = (unreadComps?.length ?? 0) > 0 || (unreadReps?.length ?? 0) > 0;
 
   return (
     <div className="fixed bottom-4 left-0 right-0 z-50 mx-auto max-w-sm px-4">
@@ -55,12 +38,6 @@ export function BottomNav() {
               {/* Icon Container with Badge */}
               <div className="relative">
                 <item.icon className="h-6 w-6 shrink-0" />
-                {item.href === '/activity' && hasUnreadActivity && (
-                  <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 border-2 border-background"></span>
-                  </span>
-                )}
               </div>
 
               <span className={cn(

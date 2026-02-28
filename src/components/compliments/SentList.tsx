@@ -133,24 +133,32 @@ export function SentList() {
                                         <div className="text-2xl group-hover:hidden">{style.emoji}</div>
                                     </div>
 
-                                    <div className="relative">
-                                        <p className="text-foreground group-hover:text-white font-bold leading-relaxed italic text-lg md:text-xl pl-4 border-l-4 border-primary/20 group-hover:border-white/40 transition-colors">
-                                            "{comp.text}"
-                                        </p>
+                                    <div className="relative mb-2">
+                                        <div className="flex flex-col items-start w-[90%] md:w-[85%]">
+                                            <span className="text-[10px] font-black text-primary/70 group-hover:text-white/60 mb-1.5 uppercase tracking-widest pl-4">Таны бичсэн</span>
+                                            <p className="text-foreground group-hover:text-white font-bold leading-relaxed text-lg md:text-xl pl-4 border-l-4 border-primary/30 group-hover:border-white/50 transition-colors">
+                                                "{comp.text}"
+                                            </p>
+                                        </div>
                                     </div>
 
                                     {comp.replyText ? (
-                                        <div className="mt-6 bg-primary/5 dark:bg-primary/10 group-hover:bg-white/10 border border-primary/10 group-hover:border-white/20 rounded-2xl p-4 shadow-inner transition-all transform group-hover:scale-[1.02]">
-                                            <span className="text-[10px] font-black text-primary group-hover:text-white mb-2 uppercase tracking-widest flex items-center gap-2">
-                                                <MessageSquareIcon className="w-3.5 h-3.5 animate-pulse" />
+                                        <div className="mt-6 flex flex-col items-end pl-[10%] md:pl-[15%]">
+                                            <span className="text-[10px] font-black text-primary group-hover:text-white mb-1.5 uppercase tracking-widest flex items-center gap-1.5 pr-4">
                                                 Хариу ирсэн
+                                                <MessageSquareIcon className="w-3.5 h-3.5 animate-pulse" />
                                             </span>
-                                            <p className="text-sm text-foreground/90 group-hover:text-white leading-relaxed font-semibold">
-                                                "{comp.replyText}"
-                                            </p>
+                                            <div className="relative w-full z-0 flex justify-end">
+                                                <div className="absolute top-0 right-8 w-4 h-4 bg-muted/60 group-hover:bg-white/20 transform -translate-y-1/2 rotate-45 border-r border-t border-border/30 group-hover:border-white/30 z-10 transition-colors"></div>
+                                                <div className="bg-muted/60 group-hover:bg-white/10 backdrop-blur-xl border border-border/30 group-hover:border-white/20 rounded-2xl p-4 shadow-sm transition-colors relative z-20 w-full text-right">
+                                                    <p className="text-sm text-foreground/90 group-hover:text-white leading-relaxed font-semibold">
+                                                        "{comp.replyText}"
+                                                    </p>
+                                                </div>
+                                            </div>
                                         </div>
                                     ) : (
-                                        <div className="mt-6 flex items-center gap-2 opacity-40 group-hover:opacity-60 transition-opacity">
+                                        <div className="mt-8 flex items-center gap-2 opacity-40 group-hover:opacity-60 transition-opacity">
                                             <div className="h-[1px] flex-1 bg-muted-foreground/20" />
                                             <p className="text-[10px] font-bold uppercase tracking-tighter flex items-center gap-1.5 text-muted-foreground group-hover:text-white">
                                                 <SearchX className="w-3 h-3" />

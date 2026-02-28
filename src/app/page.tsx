@@ -122,11 +122,11 @@ export default function HomePage() {
     <>
       <Header title="Wispr-үүд" />
       <Tabs defaultValue="compliments" onValueChange={handleTabChange} className="w-full pt-4">
-        <div className="flex justify-center px-4">
-          <TabsList>
-            <TabsTrigger value="compliments">Wispr-үүд</TabsTrigger>
-            <TabsTrigger value="sent">Миний бичсэн</TabsTrigger>
-            <TabsTrigger value="polls">Санал асуулга</TabsTrigger>
+        <div className="flex justify-center px-4 mb-4">
+          <TabsList className="bg-muted/40 p-1.5 rounded-full shadow-inner border border-border/40 backdrop-blur-sm h-auto flex flex-wrap justify-center gap-1">
+            <TabsTrigger value="compliments" className="rounded-full px-6 py-2.5 text-sm data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:font-bold transition-all duration-300">Wispr-үүд</TabsTrigger>
+            <TabsTrigger value="sent" className="rounded-full px-6 py-2.5 text-sm data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:font-bold transition-all duration-300">Миний бичсэн</TabsTrigger>
+            <TabsTrigger value="polls" className="rounded-full px-6 py-2.5 text-sm data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:font-bold transition-all duration-300">Санал асуулга</TabsTrigger>
           </TabsList>
         </div>
         <TabsContent value="compliments">

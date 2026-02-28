@@ -505,7 +505,7 @@ function ComplimentCard({
           </div>
 
           {/* Floating Reactions - MOVED TO CORNER TO AVOID OVERLAP */}
-          <div className="absolute bottom-3 right-4 flex items-center gap-1.5 p-1.5 rounded-2xl bg-black/30 backdrop-blur-2xl border border-white/10 z-20 shadow-2xl scale-95 origin-bottom-right">
+          <div className="absolute bottom-4 right-4 flex items-center gap-1.5 p-1.5 rounded-[1.25rem] bg-black/20 backdrop-blur-md border border-white/5 z-20 shadow-xl scale-95 origin-bottom-right">
             {reactionEmojis.map(emoji => (
               <button
                 key={emoji}
@@ -514,7 +514,7 @@ function ComplimentCard({
                   handleReaction(emoji);
                 }}
                 className={cn(
-                  "flex items-center gap-1.5 px-2.5 py-1 rounded-full hover:bg-white/20 transition-all text-xs font-bold text-white",
+                  "flex items-center gap-1.5 px-2.5 py-1 rounded-full hover:bg-white/20 transition-all text-[11px] font-bold text-white",
                   isReacting === emoji && 'animate-bounce'
                 )}
                 disabled={!!isReacting}
@@ -525,14 +525,14 @@ function ComplimentCard({
             ))}
           </div>
         </CardContent>
-        <CardFooter className="relative z-10 bg-black/5 dark:bg-black/20 flex items-center gap-3 p-5 pt-4 backdrop-blur-md border-t border-white/10">
+        <CardFooter className="relative z-10 bg-black/10 flex items-center gap-3 p-4 pt-3 backdrop-blur-md border-t border-white/10">
           <Button
             variant="ghost"
             className={cn(
-              "flex-1 font-bold rounded-2xl h-12 border-2 transition-all backdrop-blur-sm",
+              "flex-1 font-bold rounded-2xl h-11 border-2 transition-all backdrop-blur-sm text-sm",
               isReplying
-                ? "bg-white text-primary border-white"
-                : "bg-white/10 text-white border-white/20 hover:bg-white/20 hover:border-white/40"
+                ? "bg-white text-primary border-white shadow-lg"
+                : "bg-white/5 text-white border-white/10 hover:bg-white/15 hover:border-white/20"
             )}
             onClick={() => setIsReplying(!isReplying)}
             disabled={!!localReplyStatus}
@@ -542,7 +542,7 @@ function ComplimentCard({
           </Button>
 
           <Button
-            className="flex-1 font-black bg-white text-primary hover:bg-white/90 rounded-2xl h-12 shadow-xl shadow-black/10 transition-all active:scale-95 border-none"
+            className="flex-1 font-black bg-white text-primary hover:bg-white/90 rounded-2xl h-11 shadow-lg shadow-black/10 transition-all active:scale-95 border-none text-sm"
             onClick={() => setIsHintDialogOpen(true)}
           >
             <KeyRound className="mr-2 h-4 w-4 text-primary" />
@@ -554,33 +554,43 @@ function ComplimentCard({
       {/* Reply Input Area */}
       {isReplying && !localReplyStatus && (
         <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          className="mt-3 bg-secondary/80 backdrop-blur rounded-2xl p-4 border shadow-sm"
+          initial={{ opacity: 0, height: 0, y: -10 }}
+          animate={{ opacity: 1, height: 'auto', y: 0 }}
+          className="mt-3 relative z-0"
         >
-          <h4 className="text-sm font-semibold mb-2 ml-1 text-foreground flex items-center gap-2">
-            <MessageSquareIcon className="w-4 h-4 text-primary" />
-            Бичсэн хүн рүү хариу өгөх
-          </h4>
-          <Textarea
-            placeholder="Таны хариу... (зөвхөн энэ wispr-ийг бичсэн хүн л харна)"
-            className="resize-none h-20 bg-background/50 mb-3"
-            value={replyText}
-            onChange={(e) => setReplyText(e.target.value)}
-            autoFocus
-          />
-          <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => setIsReplying(false)}>Буцах</Button>
-            <Button onClick={handleReplySubmit} disabled={isSubmittingReply || !replyText.trim()}>
-              {isSubmittingReply ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
-              Илгээх
-            </Button>
+          <div className="absolute top-0 left-8 w-4 h-4 bg-muted/50 transform -translate-y-1/2 rotate-45 border-l border-t border-border/50"></div>
+          <div className="bg-muted/50 backdrop-blur-xl rounded-2xl p-4 border border-border/50 shadow-sm relative z-10">
+            <h4 className="text-[10px] font-black mb-3 ml-1 text-primary flex items-center gap-1.5 uppercase tracking-widest">
+              <MessageSquareIcon className="w-3.5 h-3.5" />
+              Хариу илгээх
+            </h4>
+            <div className="relative">
+              <Textarea
+                placeholder="Таны хариу (Зөвхөн бичсэн хүнд л харагдана)..."
+                className="resize-none min-h-[90px] bg-background/80 border-none shadow-inner rounded-xl pr-3 pb-12 pt-3 text-sm focus-visible:ring-1 focus-visible:ring-primary/30"
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                autoFocus
+              />
+              <div className="absolute bottom-2 right-2 flex justify-end">
+                <Button
+                  size="sm"
+                  className="rounded-full shadow-md font-bold px-4"
+                  onClick={handleReplySubmit}
+                  disabled={isSubmittingReply || !replyText.trim()}
+                >
+                  {isSubmittingReply ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
+                  Илгээх
+                </Button>
+              </div>
+            </div>
+            {!compliment.senderId && (
+              <p className="text-[10px] text-muted-foreground mt-3 mx-1 flex items-start gap-1">
+                <span className="text-orange-500">⚠️</span>
+                Жич: Илгээгч бүртгэлгүй бол таны хариуг унших боломжгүй байж магадгүй.
+              </p>
+            )}
           </div>
-          {!compliment.senderId && (
-            <p className="text-xs text-muted-foreground/60 mt-3 ml-1 text-center">
-              Жич: Хэрвээ илгээгч бүртгэлгүйгээр бичсэн байвал энэ хариуг унших боломжгүй байж магадгүй.
-            </p>
-          )}
         </motion.div>
       )}
 
@@ -589,14 +599,14 @@ function ComplimentCard({
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mt-3 bg-primary/10 border border-primary/20 rounded-2xl p-4 shadow-sm relative overflow-hidden"
+          className="mt-3 bg-primary/5 border border-primary/10 rounded-2xl p-4 shadow-sm relative overflow-hidden"
         >
-          <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-primary/20 to-transparent rounded-bl-full" />
-          <span className="text-xs font-bold text-primary mb-1 uppercase tracking-wider flex items-center gap-1.5">
-            <MessageSquareIcon className="w-3.5 h-3.5" />
+          <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-primary/10 to-transparent rounded-bl-full" />
+          <span className="text-[10px] font-black text-primary mb-1.5 uppercase tracking-widest flex items-center gap-1.5">
+            <MessageCircle className="w-3.5 h-3.5" />
             Таны хариу
           </span>
-          <p className="text-sm text-foreground/90 leading-relaxed font-medium mt-1">"{localReplyStatus}"</p>
+          <p className="text-sm text-foreground/90 leading-relaxed font-semibold pl-2 border-l-2 border-primary/30">"{localReplyStatus}"</p>
         </motion.div>
       )}
 

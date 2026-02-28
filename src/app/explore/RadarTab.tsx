@@ -10,6 +10,7 @@ import { activateRadarAction, getNearbyRadarUsersAction } from './radar-action';
 import { type PublicProfile } from './search-action';
 import { useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 export function RadarTab() {
     const { user } = useUser();
@@ -67,8 +68,12 @@ export function RadarTab() {
                 <div className="absolute bottom-0 left-0 w-32 h-32 bg-secondary/10 rounded-full blur-3xl -ml-16 -mb-16" />
 
                 <CardContent className="p-8 text-center space-y-6 relative z-10">
-                    <div className="mx-auto bg-primary/10 p-5 rounded-full w-fit ring-8 ring-primary/5 animate-pulse">
-                        <RadarIcon className="h-10 w-10 text-primary" />
+                    <div className="relative w-28 h-28 mx-auto flex items-center justify-center mb-2">
+                        <div className={cn("absolute inset-0 bg-primary/20 rounded-full transition-all duration-1000", isRadarActive || isPending ? "animate-ping opacity-75" : "opacity-0")} style={{ animationDuration: '3s' }}></div>
+                        <div className={cn("absolute inset-4 bg-primary/30 rounded-full transition-all duration-700", isRadarActive || isPending ? "animate-pulse opacity-50" : "opacity-0 ")} style={{ animationDuration: '2s' }}></div>
+                        <div className="relative bg-background p-5 rounded-full ring-4 ring-primary/10 shadow-xl z-10 hover:scale-105 transition-transform">
+                            <RadarIcon className={cn("h-10 w-10 text-primary transition-all duration-1000", isPending && "animate-spin")} />
+                        </div>
                     </div>
                     <div className="space-y-2">
                         <h2 className="text-2xl font-black tracking-tight">Ойр хавийн хүмүүс</h2>

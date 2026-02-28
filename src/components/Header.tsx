@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { ChevronLeft, Bell } from 'lucide-react';
 
@@ -45,6 +45,10 @@ export function Header({
     });
   }, [user, firestore]);
 
+  const pathname = usePathname();
+  const isHomePage = pathname === '/';
+  const isPublicProfile = pathname.startsWith('/c/');
+
   return (
     <header
       className={cn(
@@ -54,7 +58,7 @@ export function Header({
     >
       <div className="container relative flex h-16 max-w-2xl items-center justify-between px-4">
 
-        {/* Left Section: Back Button & Logo */}
+        {/* Left Section: Back Button (and Icon on Child Pages) */}
         <div className="flex z-10 w-1/3 items-center gap-1.5">
           {showBackButton && (
             <Button
@@ -66,12 +70,14 @@ export function Header({
               <ChevronLeft className="h-6 w-6 text-foreground/80" />
             </Button>
           )}
-          <Link href="/" passHref className="flex items-center shrink-0">
-            <Logo className={cn("text-primary transition-all", title === 'Wispr-үүд' ? "w-24" : "w-[72px]")} />
-          </Link>
+          {!isHomePage && (
+            <Link href="/" passHref className="flex items-center shrink-0">
+              <Logo iconOnly className="w-10 text-primary transition-all" />
+            </Link>
+          )}
         </div>
 
-        {/* Center Section: Animated Title */}
+        {/* Center Section: Animated Title or Home Logo */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none px-4 mx-auto w-1/3">
           <motion.div
             initial={{ opacity: 0, y: 5 }}
@@ -79,32 +85,40 @@ export function Header({
             transition={{ duration: 0.4, ease: "easeOut" }}
             className="flex w-full items-center justify-center pointer-events-auto"
           >
-            <h1 className="text-[17px] font-bold tracking-tight bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent truncate text-center">
-              {title}
-            </h1>
+            {isHomePage ? (
+              <Link href="/" passHref className="flex items-center shrink-0">
+                <Logo className="w-[84px] text-primary" />
+              </Link>
+            ) : (
+              <h1 className="text-[17px] font-bold tracking-tight bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent truncate text-center">
+                {title}
+              </h1>
+            )}
           </motion.div>
         </div>
 
-        {/* Right Section: Notification Bell */}
+        {/* Right Section: Notification Bell (Hidden on Public Profiles) */}
         <div className="flex z-10 w-1/3 justify-end">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative h-10 w-10 rounded-full hover:bg-muted/50 active:scale-95 transition-transform"
-            onClick={() => router.push('/activity')}
-          >
-            <Bell className="h-[22px] w-[22px] text-foreground/80" />
-            {unreadCount > 0 && (
-              <motion.span
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                className="absolute top-2 right-2 flex h-[9px] w-[9px] items-center justify-center"
-              >
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-[9px] w-[9px] bg-red-500 border-2 border-background"></span>
-              </motion.span>
-            )}
-          </Button>
+          {!isPublicProfile && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative h-10 w-10 rounded-full hover:bg-muted/50 active:scale-95 transition-transform"
+              onClick={() => router.push('/activity')}
+            >
+              <Bell className="h-[22px] w-[22px] text-foreground/80" />
+              {unreadCount > 0 && (
+                <motion.span
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="absolute top-2 right-2 flex h-[9px] w-[9px] items-center justify-center"
+                >
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-[9px] w-[9px] bg-red-500 border-2 border-background"></span>
+                </motion.span>
+              )}
+            </Button>
+          )}
         </div>
 
       </div>

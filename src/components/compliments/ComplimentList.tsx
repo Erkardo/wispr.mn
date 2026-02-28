@@ -499,13 +499,13 @@ function ComplimentCard({
             </div>
           )}
 
-          <div className="absolute bottom-4 left-6 flex items-center gap-2 text-[10px] opacity-60 font-black z-10 select-none text-white/90 uppercase tracking-widest">
-            <UserX className="h-3 w-3" />
+          <div className="absolute bottom-4 left-6 flex items-center gap-2 text-[10px] z-10 select-none text-white/70 uppercase tracking-[0.2em] font-black">
+            <UserX className="h-3.5 w-3.5 opacity-80" />
             Нэрээ нууцалсан
           </div>
 
           {/* Floating Reactions - MOVED TO CORNER TO AVOID OVERLAP */}
-          <div className="absolute bottom-3 right-4 flex items-center gap-1 p-1 rounded-2xl bg-black/40 backdrop-blur-xl border border-white/10 z-20 shadow-2xl scale-90 origin-bottom-right">
+          <div className="absolute bottom-3 right-4 flex items-center gap-1.5 p-1.5 rounded-2xl bg-black/30 backdrop-blur-2xl border border-white/10 z-20 shadow-2xl scale-95 origin-bottom-right">
             {reactionEmojis.map(emoji => (
               <button
                 key={emoji}
@@ -514,36 +514,38 @@ function ComplimentCard({
                   handleReaction(emoji);
                 }}
                 className={cn(
-                  "flex items-center gap-1 px-2 py-1 rounded-full hover:bg-white/20 transition-all text-xs font-bold text-white",
+                  "flex items-center gap-1.5 px-2.5 py-1 rounded-full hover:bg-white/20 transition-all text-xs font-bold text-white",
                   isReacting === emoji && 'animate-bounce'
                 )}
                 disabled={!!isReacting}
               >
-                <span>{emoji}</span>
-                <span className="opacity-80">{localReactions[emoji] || 0}</span>
+                <span className="text-sm">{emoji}</span>
+                <span className="opacity-90 tabular-nums">{localReactions[emoji] || 0}</span>
               </button>
             ))}
           </div>
         </CardContent>
-        <CardFooter className="bg-background/80 dark:bg-black/40 flex items-center gap-2 p-3 backdrop-blur-xl border-t border-primary/5">
+        <CardFooter className="relative z-10 bg-black/5 dark:bg-black/20 flex items-center gap-3 p-5 pt-4 backdrop-blur-md border-t border-white/10">
           <Button
             variant="ghost"
             className={cn(
-              "flex-1 font-bold rounded-2xl h-11 border transition-all",
-              isReplying ? "bg-primary text-primary-foreground border-primary" : "bg-primary/5 text-primary border-primary/10 hover:bg-primary/10"
+              "flex-1 font-bold rounded-2xl h-12 border-2 transition-all backdrop-blur-sm",
+              isReplying
+                ? "bg-white text-primary border-white"
+                : "bg-white/10 text-white border-white/20 hover:bg-white/20 hover:border-white/40"
             )}
             onClick={() => setIsReplying(!isReplying)}
             disabled={!!localReplyStatus}
           >
-            <MessageSquareIcon className="mr-2 h-4 w-4" />
+            <MessageSquareIcon className={cn("mr-2 h-4 w-4", isReplying ? "text-primary" : "text-white")} />
             <span>{localReplyStatus ? "Хариулсан" : "Хариулах"}</span>
           </Button>
 
           <Button
-            className="flex-1 font-black bg-primary text-primary-foreground rounded-2xl h-11 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all border-b-4 border-primary-foreground/20 active:border-b-0 active:translate-y-1"
+            className="flex-1 font-black bg-white text-primary hover:bg-white/90 rounded-2xl h-12 shadow-xl shadow-black/10 transition-all active:scale-95 border-none"
             onClick={() => setIsHintDialogOpen(true)}
           >
-            <KeyRound className="mr-2 h-4 w-4" />
+            <KeyRound className="mr-2 h-4 w-4 text-primary" />
             <span>Hint харах</span>
           </Button>
         </CardFooter>

@@ -36,9 +36,17 @@ export function initializeFirebase() {
 
 
 export function getSdks(firebaseApp: FirebaseApp) {
+  const auth = getAuth(firebaseApp);
+
+  // Ensure persistence is set to LOCAL (preserves session across refreshes/restarts)
+  if (typeof window !== 'undefined') {
+    const { setPersistence, browserLocalPersistence } = require('firebase/auth');
+    setPersistence(auth, browserLocalPersistence).catch(console.error);
+  }
+
   return {
     firebaseApp,
-    auth: getAuth(firebaseApp),
+    auth: auth,
     firestore: getFirestore(firebaseApp),
     storage: getStorage(firebaseApp)
   };

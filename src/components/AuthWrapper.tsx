@@ -24,15 +24,21 @@ export function AuthWrapper({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (loading || !auth) return;
 
-    if (!user && !isPublicPage) {
-      signInAnonymously(auth).catch(error => {
-        console.error("Anonymous sign-in failed:", error);
-      });
-    }
+    // Use a small timeout to let's Google Auth "settle" and detect existing sessions
+    // before forcing an anonymous one. This reduces redundant guest accounts.
+    const timer = setTimeout(() => {
+      if (!user && !isPublicPage) {
+        signInAnonymously(auth).catch(error => {
+          console.error("Anonymous sign-in failed:", error);
+        });
+      }
+    }, 500);
 
     if (user && !user.isAnonymous && pathname === '/login') {
       router.replace('/');
     }
+
+    return () => clearTimeout(timer);
   }, [user, loading, auth, router, pathname]);
 
   useEffect(() => {

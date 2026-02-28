@@ -10,11 +10,13 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Card, CardContent } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { updateProfileSettingsAction } from '@/app/profile/settings-action';
-import { Loader2, BellRing, BellOff } from 'lucide-react';
+import { Loader2, BellRing, BellOff, ChevronDown, User, AtSign, AlignLeft, School, Briefcase } from 'lucide-react';
 import type { ComplimentOwner } from '@/types';
 import { useFCM } from '@/firebase';
+import { cn } from '@/lib/utils';
 
 const profileSchema = z.object({
     username: z.string().min(3, "Хамгийн багадаа 3 үсэг/тоо байна.").max(20, "Хэтэрхий урт байна.").regex(/^[a-zA-Z0-9_.]+$/, "Зөвхөн англи үсэг, тоо, цэг, доогуур зураас зөвшөөрнө."),
@@ -92,19 +94,19 @@ export function ProfileSettings({ ownerId, ownerData }: ProfileSettingsProps) {
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
 
-                <div className="space-y-6">
-                    <Card className="overflow-hidden border border-white/10 shadow-xl bg-background/40 backdrop-blur-xl rounded-[2.5rem]">
-                        <CardContent className="p-6">
+                <div className="space-y-8">
+                    <Card className="glass-morphism">
+                        <CardContent className="p-8">
                             <FormField
                                 control={form.control}
                                 name="isPublic"
                                 render={({ field }) => (
-                                    <FormItem className="flex flex-row items-center justify-between gap-4">
-                                        <div className="space-y-1">
-                                            <FormLabel className="text-lg font-black tracking-tight">Нийтийн профайл</FormLabel>
-                                            <FormDescription className="text-[10px] leading-relaxed max-w-[200px] opacity-70">
+                                    <FormItem className="flex flex-row items-center justify-between gap-6">
+                                        <div className="space-y-1.5">
+                                            <FormLabel className="text-xl font-black tracking-tight">Нийтийн профайл</FormLabel>
+                                            <FormDescription className="text-xs leading-relaxed max-w-[220px] opacity-60 font-medium">
                                                 Бусад хүмүүс таныг Радараар олж харах боломжтой.
                                             </FormDescription>
                                         </div>
@@ -123,23 +125,31 @@ export function ProfileSettings({ ownerId, ownerData }: ProfileSettingsProps) {
 
                     {/* Mэдэгдэл (Notifications) Toggle Card */}
                     {isSupportedBrowser && (
-                        <Card className="overflow-hidden border border-white/10 shadow-xl bg-background/40 backdrop-blur-xl rounded-[2.5rem]">
-                            <CardContent className="p-6">
-                                <div className="flex flex-row items-center justify-between gap-4">
-                                    <div className="space-y-1">
-                                        <div className="flex items-center gap-2">
-                                            {permission === 'granted' ? <BellRing className="w-5 h-5 text-primary" /> : <BellOff className="w-5 h-5 text-muted-foreground" />}
-                                            <Label className="text-lg font-black tracking-tight border-none">Мэдэгдэл</Label>
+                        <Card className="glass-morphism">
+                            <CardContent className="p-8">
+                                <div className="flex flex-row items-center justify-between gap-6">
+                                    <div className="space-y-1.5">
+                                        <div className="flex items-center gap-3">
+                                            <div className={cn(
+                                                "p-2.5 rounded-2xl transition-colors",
+                                                permission === 'granted' ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"
+                                            )}>
+                                                {permission === 'granted' ? <BellRing className="w-5 h-5" /> : <BellOff className="w-5 h-5" />}
+                                            </div>
+                                            <Label className="text-xl font-black tracking-tight border-none">Мэдэгдэл</Label>
                                         </div>
-                                        <p className="text-[10px] leading-relaxed max-w-[200px] text-muted-foreground opacity-70">
+                                        <p className="text-xs leading-relaxed max-w-[220px] text-muted-foreground/60 font-medium">
                                             Шинэ wispr ирэх үед танд шууд мэдэгдэнэ.
                                         </p>
                                     </div>
                                     <div>
                                         {permission === 'granted' ? (
-                                            <span className="text-sm font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-full">Асаалттай</span>
+                                            <div className="flex items-center gap-2 text-primary font-black text-sm bg-primary/10 px-4 py-2 rounded-full border border-primary/20">
+                                                <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                                                Идэвхтэй
+                                            </div>
                                         ) : (
-                                            <Button type="button" variant="outline" size="sm" onClick={handleEnableNotifications} disabled={isRequestingPerm} className="rounded-full border-primary/20 hover:bg-primary/5">
+                                            <Button type="button" variant="premium" size="sm" onClick={handleEnableNotifications} disabled={isRequestingPerm} className="rounded-full">
                                                 {isRequestingPerm ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : "Асаах"}
                                             </Button>
                                         )}
@@ -149,10 +159,10 @@ export function ProfileSettings({ ownerId, ownerData }: ProfileSettingsProps) {
                         </Card>
                     )}
 
-                    <div className="space-y-5 px-1">
-                        <div className="flex items-center gap-2 mb-2">
-                            <div className="h-1 w-8 bg-primary rounded-full" />
-                            <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">Үндсэн мэдээлэл</h3>
+                    <div className="space-y-6 px-1">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="h-6 w-1.5 bg-primary rounded-full shadow-[0_0_15px_rgba(139,92,246,0.5)]" />
+                            <h3 className="text-sm font-black uppercase tracking-[0.2em] text-muted-foreground/70">Үндсэн мэдээлэл</h3>
                         </div>
 
                         <FormField
@@ -160,19 +170,19 @@ export function ProfileSettings({ ownerId, ownerData }: ProfileSettingsProps) {
                             name="username"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="text-xs font-bold uppercase tracking-wider opacity-70">Username</FormLabel>
+                                    <FormLabel className="text-xs font-black uppercase tracking-widest opacity-50 ml-1">Username</FormLabel>
                                     <FormControl>
                                         <div className="relative group">
-                                            <div className="absolute inset-0 bg-primary/20 rounded-2xl blur-md opacity-0 group-focus-within:opacity-100 transition-opacity" />
-                                            <span className="absolute left-4 top-3 text-primary font-bold">@</span>
+                                            <div className="absolute inset-0 bg-primary/20 rounded-2xl blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-500" />
+                                            <AtSign className="absolute left-5 top-1/2 -translate-y-1/2 text-primary w-5 h-5 z-20" />
                                             <Input
                                                 placeholder="boldoo_123"
-                                                className="h-12 pl-9 rounded-2xl bg-background border-muted/50 focus:border-primary transition-all relative z-10 font-mono font-bold"
+                                                className="h-14 pl-12 relative z-10 font-mono font-bold text-lg bg-secondary/30 backdrop-blur-md"
                                                 {...field}
                                             />
                                         </div>
                                     </FormControl>
-                                    <FormMessage className="text-[10px]" />
+                                    <FormMessage className="text-[10px] font-bold" />
                                 </FormItem>
                             )}
                         />
@@ -182,15 +192,18 @@ export function ProfileSettings({ ownerId, ownerData }: ProfileSettingsProps) {
                             name="displayName"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="text-xs font-bold uppercase tracking-wider opacity-70">Таны нэр</FormLabel>
+                                    <FormLabel className="text-xs font-black uppercase tracking-widest opacity-50 ml-1">Дэлгэцийн нэр</FormLabel>
                                     <FormControl>
-                                        <Input
-                                            placeholder="Овог Нэр"
-                                            className="h-12 rounded-2xl bg-background border-muted/50 focus:border-primary transition-all font-bold"
-                                            {...field}
-                                        />
+                                        <div className="relative group">
+                                            <User className="absolute left-5 top-1/2 -translate-y-1/2 text-muted-foreground/40 w-5 h-5 z-20" />
+                                            <Input
+                                                placeholder="Овог Нэр"
+                                                className="h-14 pl-12 font-black text-lg bg-secondary/30 backdrop-blur-md"
+                                                {...field}
+                                            />
+                                        </div>
                                     </FormControl>
-                                    <FormMessage className="text-[10px]" />
+                                    <FormMessage className="text-[10px] font-bold" />
                                 </FormItem>
                             )}
                         />
@@ -200,54 +213,66 @@ export function ProfileSettings({ ownerId, ownerData }: ProfileSettingsProps) {
                             name="bio"
                             render={({ field }) => (
                                 <FormItem className="mt-4">
-                                    <FormLabel className="text-xs font-bold uppercase tracking-wider opacity-70">Таны тухай (Bio)</FormLabel>
+                                    <FormLabel className="text-xs font-black uppercase tracking-widest opacity-50 ml-1">Таны тухай (Bio)</FormLabel>
                                     <FormControl>
-                                        <textarea
-                                            placeholder="Өөрийнхөө тухай товчхон..."
-                                            className="flex w-full rounded-2xl border border-muted/50 bg-background px-4 py-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50 transition-all resize-none min-h-[80px]"
-                                            {...field}
-                                        />
+                                        <div className="relative">
+                                            <AlignLeft className="absolute left-5 top-5 text-muted-foreground/40 w-5 h-5 z-20" />
+                                            <Textarea
+                                                placeholder="Өөрийнхөө тухай товчхон..."
+                                                className="bg-secondary/30 backdrop-blur-md font-medium text-lg leading-relaxed pl-12"
+                                                {...field}
+                                            />
+                                        </div>
                                     </FormControl>
-                                    <FormDescription className="text-[10px] text-right">
-                                        {field.value?.length || 0}/150
-                                    </FormDescription>
-                                    <FormMessage className="text-[10px]" />
+                                    <div className="flex justify-end pr-2">
+                                        <span className={cn(
+                                            "text-[10px] font-black uppercase tracking-widest",
+                                            (field.value?.length || 0) > 130 ? "text-orange-500" : "text-muted-foreground/40"
+                                        )}>
+                                            {field.value?.length || 0} / 150
+                                        </span>
+                                    </div>
+                                    <FormMessage className="text-[10px] font-bold" />
                                 </FormItem>
                             )}
                         />
 
-                        <div className="flex items-center justify-between mt-8 mb-2 pt-4">
-                            <div className="flex items-center gap-2">
-                                <div className="h-1 w-8 bg-secondary rounded-full" />
-                                <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">Нэмэлт Мэдээлэл</h3>
-                            </div>
+                        <div className="pt-6">
                             <Button
                                 type="button"
                                 variant="ghost"
-                                size="sm"
                                 onClick={() => setShowAdvanced(!showAdvanced)}
-                                className="text-xs font-bold text-primary"
+                                className="w-full flex items-center justify-between h-14 rounded-2xl bg-secondary/20 hover:bg-secondary/40 border border-white/5 px-6 group"
                             >
-                                {showAdvanced ? 'Нуух' : 'Дэлгэрүүлэх'}
+                                <span className="text-sm font-black uppercase tracking-widest text-muted-foreground/70 group-hover:text-primary transition-colors">Нэмэлт Мэдээлэл</span>
+                                <div className={cn(
+                                    "p-1.5 rounded-full transition-transform duration-300",
+                                    showAdvanced ? "rotate-180 bg-primary/20 text-primary" : "bg-muted text-muted-foreground"
+                                )}>
+                                    <ChevronDown className="w-4 h-4" />
+                                </div>
                             </Button>
                         </div>
 
                         {showAdvanced && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-4 duration-500 pt-2">
                                 <FormField
                                     control={form.control}
                                     name="school"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel className="text-xs font-bold uppercase tracking-wider opacity-70">Сургууль</FormLabel>
+                                            <FormLabel className="text-xs font-black uppercase tracking-widest opacity-50 ml-1">Сургууль</FormLabel>
                                             <FormControl>
-                                                <Input
-                                                    placeholder="МУИС, СЭЗИС..."
-                                                    className="h-12 rounded-2xl bg-background border-muted/50 focus:border-primary transition-all"
-                                                    {...field}
-                                                />
+                                                <div className="relative">
+                                                    <School className="absolute left-5 top-1/2 -translate-y-1/2 text-muted-foreground/40 w-5 h-5 z-20" />
+                                                    <Input
+                                                        placeholder="МУИС, СЭЗИС..."
+                                                        className="h-14 pl-12 font-bold bg-secondary/30 backdrop-blur-md"
+                                                        {...field}
+                                                    />
+                                                </div>
                                             </FormControl>
-                                            <FormMessage className="text-[10px]" />
+                                            <FormMessage className="text-[10px] font-bold" />
                                         </FormItem>
                                     )}
                                 />
@@ -257,15 +282,18 @@ export function ProfileSettings({ ownerId, ownerData }: ProfileSettingsProps) {
                                     name="workplace"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel className="text-xs font-bold uppercase tracking-wider opacity-70">Ажлын газар</FormLabel>
+                                            <FormLabel className="text-xs font-black uppercase tracking-widest opacity-50 ml-1">Ажлын газар</FormLabel>
                                             <FormControl>
-                                                <Input
-                                                    placeholder="Голомт, Хаан..."
-                                                    className="h-12 rounded-2xl bg-background border-muted/50 focus:border-primary transition-all"
-                                                    {...field}
-                                                />
+                                                <div className="relative">
+                                                    <Briefcase className="absolute left-5 top-1/2 -translate-y-1/2 text-muted-foreground/40 w-5 h-5 z-20" />
+                                                    <Input
+                                                        placeholder="Голомт, Хаан..."
+                                                        className="h-14 pl-12 font-bold bg-secondary/30 backdrop-blur-md"
+                                                        {...field}
+                                                    />
+                                                </div>
                                             </FormControl>
-                                            <FormMessage className="text-[10px]" />
+                                            <FormMessage className="text-[10px] font-bold" />
                                         </FormItem>
                                     )}
                                 />
@@ -274,16 +302,18 @@ export function ProfileSettings({ ownerId, ownerData }: ProfileSettingsProps) {
                     </div>
                 </div>
 
-                <div className="pt-6">
+                <div className="pt-8">
                     <Button
                         type="submit"
-                        className="w-full h-14 rounded-2xl font-black text-lg shadow-xl shadow-primary/20 border-b-4 border-primary-foreground/20 active:border-b-0 active:translate-y-1 transition-all"
+                        variant="premium"
+                        size="lg"
+                        className="w-full shadow-2xl h-16 rounded-[2rem] text-lg font-black"
                         disabled={isSaving}
                     >
                         {isSaving ? (
-                            <div className="flex items-center gap-2">
-                                <Loader2 className="w-5 h-5 animate-spin" />
-                                <span>Хадгалж байна...</span>
+                            <div className="flex items-center gap-3">
+                                <Loader2 className="w-6 h-6 animate-spin" />
+                                <span>Шинэчилж байна...</span>
                             </div>
                         ) : (
                             "Өөрчлөлтийг хадгалах"

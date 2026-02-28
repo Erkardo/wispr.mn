@@ -498,179 +498,129 @@ function ComplimentCard({
   const mainCard = (
     <motion.div
       layout
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      whileHover={{ y: -4 }}
-      transition={{ duration: 0.3 }}
-      className="w-full"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ scale: 1.01 }}
+      transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
+      className="w-full relative px-4 sm:px-0"
     >
-      <Card
+      <div
         id={`compliment-card-${compliment.id}`}
-        className="w-full relative overflow-hidden text-white rounded-[2.5rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] transition-all duration-500 border border-white/20"
-        style={{ backgroundImage: selectedStyle.bg }}
+        className="w-full relative overflow-hidden text-white rounded-[3.5rem] border border-white/20 backdrop-blur-[40px]"
+        style={{
+          background: selectedStyle.bg,
+          boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.4), 0 40px 80px -20px rgba(0,0,0,0.5)'
+        }}
       >
-        <CardHeader className="flex flex-row items-center justify-between p-6 pb-2">
+        {/* Mesh Gradient Accents */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,_rgba(255,255,255,0.15)_0%,_transparent_40%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_80%,_rgba(255,255,255,0.05)_0%,_transparent_50%)]" />
+
+        {/* Top Floating Actions */}
+        <div className="flex items-center justify-between p-8 pb-0 relative z-10">
           {getDateBadge()}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <Button
               variant="ghost"
               size="icon"
               onClick={handleReport}
               disabled={isReporting || isReported}
               className={cn(
-                "h-8 w-8 rounded-full bg-black/10 hover:bg-black/20 backdrop-blur-sm transition-all",
-                isReported ? "text-red-400 opacity-100" : "text-white/40 hover:text-white/60"
+                "h-11 w-11 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-xl transition-all shadow-xl",
+                isReported ? "text-red-400" : "text-white/60 hover:text-white/90"
               )}
             >
-              {isReporting ? <Loader2 className="h-3 w-3 animate-spin" /> : <ShieldAlert className={cn("h-4 w-4", isReported && "fill-current")} />}
+              {isReporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldAlert className={cn("h-5 w-5", isReported && "fill-current")} />}
             </Button>
-            <Button variant="ghost" size="icon" onClick={handleShareClick} className="h-8 w-8 rounded-full bg-black/10 hover:bg-black/20 text-white/50 backdrop-blur-sm opacity-60 hover:opacity-100 transition-opacity" disabled={isSharing}>
-              {isSharing ? <Loader2 className="h-3 w-3 animate-spin" /> : <Share2 className="h-3 w-3" />}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleShareClick}
+              className="h-11 w-11 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 text-white/60 hover:text-white/90 backdrop-blur-xl transition-all shadow-xl"
+              disabled={isSharing}
+            >
+              {isSharing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-5 w-5" />}
             </Button>
           </div>
-        </CardHeader>
-        <CardContent className="relative flex flex-col items-center justify-center p-6 md:p-10 text-center aspect-[16/10] overflow-hidden shadow-[inset_0_1px_2px_rgba(255,255,255,0.4)]">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(255,255,255,0.3)_0%,_rgba(255,255,255,0)_60%)]"></div>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[14rem] opacity-10 select-none -rotate-12 blur-sm">{selectedStyle?.emoji}</div>
+        </div>
 
-          <p className={cn(
-            "font-black leading-tight my-auto z-10 text-white tracking-tight",
-            getFontSizeClass(compliment.text)
-          )} style={{ textShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
-            {compliment.text}
-          </p>
-
-          {compliment.audioUrl && (
-            <div className="mt-6 z-10 w-full max-w-xs backdrop-blur-md bg-black/20 rounded-xl">
-              <AudioPlayer src={compliment.audioUrl} duration={compliment.duration} className="border-white/20 bg-transparent text-white" />
-            </div>
-          )}
-
-
-          <div className="absolute bottom-6 left-8 flex items-center gap-2 text-[10px] z-10 select-none text-white/60 uppercase tracking-[0.2em] font-black">
-            <UserX className="h-3.5 w-3.5 opacity-80" />
-            Нэрээ нууцалсан
+        <div className="relative flex flex-col p-10 pt-6 pb-14 text-center aspect-[16/11] justify-between">
+          {/* Subtle Background Emoji */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[18rem] opacity-[0.03] select-none -rotate-12 blur-sm pointer-events-none">
+            {selectedStyle?.emoji}
           </div>
 
-          {/* Floating Reactions - Better placement & higher contrast */}
-          <div className="absolute bottom-6 right-6 flex items-center gap-1.5 p-1.5 rounded-full bg-black/30 backdrop-blur-xl border border-white/10 z-20 shadow-2xl">
-            {reactionEmojis.map(emoji => (
-              <button
-                key={emoji}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleReaction(emoji);
-                }}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-white/20 transition-all text-xs font-bold text-white",
-                  isReacting === emoji ? 'animate-in zoom-in spin-in-12 duration-300 scale-150 brightness-125' : 'active:scale-95'
-                )}
-                disabled={!!isReacting}
-              >
-                <span className="text-sm">{emoji}</span>
-                <span className="opacity-90 tabular-nums">{localReactions[emoji] || 0}</span>
-              </button>
-            ))}
-          </div>
-        </CardContent>
-        <CardFooter className="relative z-10 bg-black/40 flex items-center gap-4 p-6 pt-5 backdrop-blur-3xl border-t border-white/10">
-          <Button
-            variant="ghost"
-            className={cn(
-              "flex-1 font-bold rounded-2xl h-14 border-2 transition-all backdrop-blur-sm text-sm",
-              isReplying
-                ? "bg-white text-primary border-white shadow-xl"
-                : "bg-white/10 text-white border-white/20 hover:bg-white/20 hover:border-white/30"
+          <div className="my-auto relative z-10 w-full">
+            <p className={cn(
+              "font-black leading-[1.05] text-white tracking-[-0.04em] px-4",
+              getFontSizeClass(compliment.text)
+            )} style={{ textShadow: '0 12px 40px rgba(0,0,0,0.4)' }}>
+              {compliment.text}
+            </p>
+
+            {compliment.audioUrl && (
+              <div className="mt-10 mx-auto w-full max-w-xs backdrop-blur-3xl bg-black/40 rounded-[2rem] border border-white/10 p-1.5 shadow-2xl">
+                <AudioPlayer src={compliment.audioUrl} duration={compliment.duration} className="bg-transparent text-white" />
+              </div>
             )}
-            onClick={() => setIsReplying(!isReplying)}
-            disabled={!!localReplyStatus}
-          >
-            <MessageSquareIcon className={cn("mr-2 h-5 w-5", isReplying ? "text-primary" : "text-white")} />
-            <span>{localReplyStatus ? "Хариулсан" : "Хариулах"}</span>
-          </Button>
+          </div>
 
-          <Button
-            className="flex-1 font-black bg-white text-primary hover:bg-white/90 rounded-2xl h-14 shadow-2xl shadow-black/20 transition-all active:scale-95 border-none text-sm group"
-            onClick={() => setIsHintDialogOpen(true)}
-          >
-            <KeyRound className="mr-2 h-5 w-5 text-primary group-hover:rotate-12 transition-transform" />
-            <span>Hint харах</span>
-          </Button>
-        </CardFooter>
-      </Card>
+          {/* Integrated Metadata & Action Capsules */}
+          <div className="flex flex-col gap-10 relative z-10 mt-8">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.25em] text-white/70 bg-black/30 px-5 py-2.5 rounded-full border border-white/10 backdrop-blur-2xl shadow-lg">
+                <UserX className="h-4 w-4 text-white/80" />
+                Нэрээ нууцалсан
+              </div>
 
-      {/* Reply Input Area - Floating Bottom Sheet */}
-      {isReplying && !localReplyStatus && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
-            onClick={() => !isSubmittingReply && setIsReplying(false)}
-          />
-          <motion.div
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t shadow-[0_-10px_40px_rgba(0,0,0,0.1)] rounded-t-3xl p-4 pb-8 md:max-w-2xl md:mx-auto md:bottom-4 md:rounded-3xl"
-          >
-            <div className="flex items-center justify-between mb-4 px-2">
-              <h4 className="text-xs font-black text-primary flex items-center gap-1.5 uppercase tracking-widest">
-                <MessageSquareIcon className="w-4 h-4" />
-                Риплай бичих
-              </h4>
-              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-secondary/50 hover:bg-secondary" onClick={() => !isSubmittingReply && setIsReplying(false)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="relative">
-              <Textarea
-                placeholder="Таны хариу (Зөвхөн бичсэн хүнд л харагдана)..."
-                className="resize-none min-h-[100px] bg-secondary/50 border-none shadow-inner rounded-2xl pr-3 pb-12 pt-4 px-4 text-base focus-visible:ring-1 focus-visible:ring-primary/30"
-                value={replyText}
-                onChange={(e) => setReplyText(e.target.value)}
-                autoFocus
-              />
-              <div className="absolute bottom-2 right-2 flex justify-end">
-                <Button
-                  size="sm"
-                  className="rounded-full shadow-lg font-bold px-4 h-9"
-                  onClick={handleReplySubmit}
-                  disabled={isSubmittingReply || !replyText.trim()}
-                >
-                  {isSubmittingReply ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
-                  Илгээх
-                </Button>
+              <div className="flex items-center gap-2 p-1.5 rounded-full bg-black/40 border border-white/10 shadow-2xl backdrop-blur-3xl">
+                {reactionEmojis.map(emoji => (
+                  <button
+                    key={emoji}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleReaction(emoji);
+                    }}
+                    className={cn(
+                      "flex items-center gap-2 px-4 py-2 rounded-full hover:bg-white/20 transition-all text-[12px] font-black text-white",
+                      isReacting === emoji ? 'animate-in zoom-in duration-300 scale-125' : 'active:scale-90'
+                    )}
+                    disabled={!!isReacting}
+                  >
+                    <span className="text-base">{emoji}</span>
+                    <span className="opacity-90 tabular-nums">{localReactions[emoji] || 0}</span>
+                  </button>
+                ))}
               </div>
             </div>
-            {!compliment.senderId && (
-              <p className="text-[10px] text-muted-foreground mt-4 mx-2 flex items-start gap-1.5">
-                <span className="text-orange-500 text-xs">⚠️</span>
-                Жич: Илгээгч нь бүртгэлгүй зочин байвал таны хариуг унших чадахгүй байх магадлалтай.
-              </p>
-            )}
-          </motion.div>
-        </>
-      )}
 
-      {/* Visual Indicator of a Reply existing */}
-      {localReplyStatus && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mt-3 bg-primary/5 border border-primary/10 rounded-2xl p-4 shadow-sm relative overflow-hidden"
-        >
-          <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-primary/10 to-transparent rounded-bl-full" />
-          <span className="text-[10px] font-black text-primary mb-1.5 uppercase tracking-widest flex items-center gap-1.5">
-            <MessageCircle className="w-3.5 h-3.5" />
-            Таны хариу
-          </span>
-          <p className="text-sm text-foreground/90 leading-relaxed font-semibold pl-2 border-l-2 border-primary/30">"{localReplyStatus}"</p>
-        </motion.div>
-      )}
+            <div className="flex gap-4">
+              <Button
+                variant="ghost"
+                className={cn(
+                  "flex-1 h-16 rounded-full border-2 transition-all backdrop-blur-2xl text-[13px] font-black uppercase tracking-widest",
+                  isReplying
+                    ? "bg-white text-primary border-white shadow-2xl scale-[1.02]"
+                    : "bg-white/10 text-white border-white/20 hover:bg-white/20"
+                )}
+                onClick={() => setIsReplying(!isReplying)}
+                disabled={!!localReplyStatus}
+              >
+                <MessageSquareIcon className={cn("mr-2 h-5 w-5", isReplying ? "text-primary" : "text-white")} />
+                <span>{localReplyStatus ? "Хариулсан" : "Хариулах"}</span>
+              </Button>
 
+              <Button
+                className="flex-1 h-16 rounded-full bg-white text-primary hover:bg-white/90 shadow-[0_20px_50px_-10px_rgba(255,255,255,0.3)] transition-all active:scale-95 text-[13px] font-black uppercase tracking-widest group"
+                onClick={() => setIsHintDialogOpen(true)}
+              >
+                <KeyRound className="mr-3 h-5 w-5 group-hover:rotate-12 transition-transform" />
+                <span>Hint харах</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
     </motion.div>
   );
 
@@ -678,59 +628,124 @@ function ComplimentCard({
     return (
       <motion.div
         layout
-        initial={{ opacity: 0, scale: 0.9 }}
+        initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.4, delay: index * 0.1 }}
-        className="w-full"
+        transition={{ duration: 0.5 }}
+        className="w-full relative px-4 sm:px-0"
       >
-        <Card
-          id={`compliment-card-${compliment.id}`}
-          className="hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.2)] transition-all duration-300 overflow-hidden border border-white/10 dark:border-white/5 bg-background/60 backdrop-blur-3xl rounded-3xl"
-        >
-          <CardContent className="p-8 text-center flex flex-col items-center justify-center aspect-[16/10] bg-gradient-to-br from-primary/10 via-background/50 to-background/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.2)] relative">
-            <motion.div
-              animate={{
-                scale: [1, 1.1, 1],
-                rotate: [0, 5, -5, 0]
-              }}
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-              className="relative mb-4"
-            >
-              <Gift className="w-20 h-20 text-primary drop-shadow-[0_4px_10px_hsl(var(--primary)/0.4)]" />
-              <div className="w-5 h-5 absolute top-0 right-0 bg-primary rounded-full animate-ping" />
-            </motion.div>
-            <p className="text-xl font-black text-foreground mt-4 tracking-tight">
-              🎁 Шинэ нэргүй wispr ирлээ!
-            </p>
-            <p className="text-muted-foreground text-sm font-medium mt-1">Таны сэтгэлийг дулаацуулах wispr хүлээж байна.</p>
-            <div className="mt-8 flex gap-4">
-              <Button onClick={handleReveal} disabled={isRevealing} size="lg">
-                {isRevealing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Нээх
-              </Button>
-              <Button variant="ghost" onClick={() => toast({ title: 'Дараа уншихаар хадгаллаа!' })}>Дараа унших</Button>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="w-full p-10 text-center flex flex-col items-center justify-center aspect-[16/11] bg-gradient-to-br from-primary/10 via-background/40 to-background/5 border border-white/10 backdrop-blur-3xl rounded-[3.5rem] shadow-2xl relative overflow-hidden group hover:scale-[1.01] transition-transform">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.1)_0%,_transparent_70%)] animate-pulse" />
+          <motion.div
+            animate={{
+              y: [0, -10, 0],
+              rotate: [0, 5, -5, 0]
+            }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            className="relative mb-6"
+          >
+            <Gift className="w-24 h-24 text-primary drop-shadow-[0_10px_30px_hsl(var(--primary)/0.5)]" />
+            <div className="w-6 h-6 absolute -top-2 -right-2 bg-primary rounded-full animate-ping" />
+          </motion.div>
+          <h3 className="text-2xl font-black text-foreground tracking-tight">🎁 Шинэ нэргүй wispr!</h3>
+          <p className="text-muted-foreground font-medium mt-2 max-w-[200px] leading-snug">Хэн нэгэн танд сэтгэлийн үг илгээжээ.</p>
+          <div className="mt-10 flex gap-4 w-full max-w-xs">
+            <Button onClick={handleReveal} disabled={isRevealing} size="lg" className="flex-1 h-14 rounded-2xl text-lg font-black shadow-xl shadow-primary/20">
+              {isRevealing ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "Нээх"}
+            </Button>
+            <Button variant="ghost" onClick={() => toast({ title: 'Дараа уншихаар хадгаллаа!' })} className="h-14 rounded-2xl font-bold">Дараа</Button>
+          </div>
+        </div>
       </motion.div>
     );
   }
 
-
-
   return (
-    <>
+    <div className="w-full relative px-4 sm:px-0">
       {mainCard}
+
+      {/* Reply Input Area - Floating Bottom Sheet */}
+      <AnimatePresence>
+        {isReplying && !localReplyStatus && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-md"
+              onClick={() => !isSubmittingReply && setIsReplying(false)}
+            />
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="fixed bottom-0 left-0 right-0 z-[70] bg-background border-t shadow-[0_-20px_50px_rgba(0,0,0,0.3)] rounded-t-[3rem] p-6 pb-12 md:max-w-2xl md:mx-auto md:bottom-6 md:rounded-[3rem]"
+            >
+              <div className="flex items-center justify-between mb-6 px-2">
+                <h4 className="text-sm font-black text-primary flex items-center gap-2 uppercase tracking-widest">
+                  <MessageSquareIcon className="w-5 h-5" />
+                  Риплай бичих
+                </h4>
+                <Button variant="ghost" size="icon" className="h-10 w-10 rounded-full bg-secondary/80 hover:bg-secondary" onClick={() => !isSubmittingReply && setIsReplying(false)}>
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+              <div className="relative">
+                <Textarea
+                  placeholder="Таны хариу (Зөвхөн бичсэн хүнд л харагдана)..."
+                  className="resize-none min-h-[140px] bg-secondary/50 border-none shadow-inner rounded-[2rem] pt-6 px-6 text-lg font-medium focus-visible:ring-2 focus-visible:ring-primary/20"
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  autoFocus
+                />
+                <div className="absolute bottom-4 right-4 group">
+                  <Button
+                    size="lg"
+                    className="rounded-full shadow-2xl font-black px-8 h-12 hover:scale-105 transition-transform"
+                    onClick={handleReplySubmit}
+                    disabled={isSubmittingReply || !replyText.trim()}
+                  >
+                    {isSubmittingReply ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Send className="w-5 h-5 mr-2 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />}
+                    Илгээх
+                  </Button>
+                </div>
+              </div>
+              {!compliment.senderId && (
+                <p className="text-xs text-muted-foreground mt-6 mx-4 opacity-70 flex items-start gap-2">
+                  <span className="text-orange-500 font-bold">⚠️</span>
+                  Уучлаарай, илгээгч зочин бол таны хариуг унших боломжгүй байж магадгүй.
+                </p>
+              )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Visual Indicator of a Reply existing */}
+      {localReplyStatus && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-4 bg-primary/5 border border-primary/10 rounded-[2rem] p-6 shadow-sm relative overflow-hidden backdrop-blur-sm"
+        >
+          <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-primary/10 to-transparent rounded-bl-full" />
+          <span className="text-[11px] font-black text-primary mb-2 uppercase tracking-[0.2em] flex items-center gap-2">
+            <MessageCircle className="w-4 h-4" />
+            Таны хариу
+          </span>
+          <p className="text-base text-foreground/90 leading-relaxed font-bold pl-4 border-l-4 border-primary/40">"{localReplyStatus}"</p>
+        </motion.div>
+      )}
+
+      {/* Share Image Ref (Hidden) */}
       {isPreparingShareImage && <ComplimentShareImage ref={shareImageRef} compliment={compliment} style={selectedStyle} />}
+
+      {/* Hint Dialogs */}
       <Dialog open={isHintDialogOpen} onOpenChange={setIsHintDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md rounded-[2.5rem] border-white/10 shadow-2xl">
           <DialogHeader>
-            <DialogTitle>🤔 Хэн байж болох бол?</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-2xl font-black tracking-tight">🤔 Хэн байж болох бол?</DialogTitle>
+            <DialogDescription className="font-medium">
               {revealedHints.length > 0
                 ? 'Та өмнөх Hint-үүдээ харж, эсвэл шинийг авах боломжтой.'
                 : 'Энэ wispr-ийн талаарх анхны Hint-ээ аваарай.'
@@ -738,86 +753,82 @@ function ComplimentCard({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="text-center bg-secondary p-4 rounded-lg my-2 border">
-            <p className="text-sm font-medium text-muted-foreground">Таны үлдсэн нийт Hint</p>
-            <p className="text-4xl font-bold text-primary">{totalHints}</p>
+          <div className="text-center bg-secondary/50 p-6 rounded-[2rem] my-4 border border-white/5 relative overflow-hidden">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.1)_0%,_transparent_100%)]" />
+            <p className="text-xs font-black text-muted-foreground uppercase tracking-widest mb-1 relative z-10">Нийт Hint эрх</p>
+            <p className="text-5xl font-black text-primary relative z-10 drop-shadow-sm">{totalHints}</p>
           </div>
 
-          {isHintRevealing && revealedHints.length === 0 ? (
-            <div className="text-center space-y-2 text-sm text-muted-foreground py-8">
-              <Loader2 className="mx-auto h-6 w-6 animate-spin" />
-              <p>Hint боловсруулж байна...</p>
-            </div>
-          ) : revealedHints.length > 0 ? (
-            <div className="space-y-4">
-              <p className="text-sm font-semibold text-muted-foreground">Энэ wispr-ийн Hint-үүд ({revealedHints.length})</p>
-              <ul className="space-y-3 max-h-48 overflow-y-auto pr-2 rounded-lg border bg-secondary p-3">
-                {revealedHints.map((hint, index) => (
-                  <li key={index} className="flex items-start gap-3 p-3 bg-background rounded-lg">
-                    <div className="text-sm font-bold text-primary">#{index + 1}</div>
-                    <p className="text-sm text-foreground flex-1">{hint}</p>
-                  </li>
-                ))}
+          <div className="space-y-4">
+            {revealedHints.length > 0 && (
+              <div className="space-y-3">
+                <p className="text-xs font-black text-muted-foreground uppercase tracking-widest px-1">Мэдэгдэж буй Hint-үүд ({revealedHints.length})</p>
+                <ul className="space-y-3 max-h-56 overflow-y-auto pr-2 custom-scrollbar">
+                  {revealedHints.map((hint, idx) => (
+                    <motion.li
+                      key={idx}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="flex items-start gap-4 p-4 bg-secondary/30 rounded-2xl border border-white/5"
+                    >
+                      <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-black text-primary shrink-0">{idx + 1}</div>
+                      <p className="text-sm font-bold text-foreground leading-snug">{hint}</p>
+                    </motion.li>
+                  ))}
 
-                {/* Advanced Hint - OS (Locked for now or visible if any hint exists) */}
-                {compliment.senderOS && (
-                  <li className="flex items-start gap-3 p-3 bg-primary/5 border border-primary/10 rounded-lg">
-                    <div className="text-xs font-black text-primary uppercase">Pro</div>
-                    <div className="flex-1">
-                      <p className="text-xs text-muted-foreground uppercase font-black mb-1">Үйлдлийн систем</p>
-                      <p className="text-sm font-bold">{compliment.senderOS}</p>
-                    </div>
-                  </li>
-                )}
+                  {compliment.senderOS && (
+                    <li className="flex items-start gap-4 p-4 bg-primary/5 border border-primary/20 rounded-2xl shadow-inner">
+                      <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-[10px] font-black text-white shrink-0">P</div>
+                      <div className="flex-1">
+                        <p className="text-[10px] text-primary font-black uppercase tracking-widest mb-1">Үйлдлийн систем</p>
+                        <p className="text-sm font-black text-foreground">{compliment.senderOS}</p>
+                      </div>
+                    </li>
+                  )}
+                </ul>
+              </div>
+            )}
 
-                {isHintRevealing && (
-                  <li className="flex items-start gap-3 p-3">
-                    <div className="text-sm font-bold text-primary">#{revealedHints.length + 1}</div>
-                    <div className="flex-1 space-y-2 pt-1">
-                      <Skeleton className="h-4 w-3/4" />
-                      <Skeleton className="h-4 w-1/2" />
-                    </div>
-                  </li>
-                )}
-              </ul>
-            </div>
-          ) : null}
+            {isHintRevealing && (
+              <div className="text-center py-6 space-y-3">
+                <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+                <p className="text-xs font-black uppercase text-muted-foreground animate-pulse">Hint боловсруулж байна...</p>
+              </div>
+            )}
+          </div>
 
-          <DialogFooter className="flex-col gap-2 !space-x-0 pt-4">
+          <DialogFooter className="flex-col gap-3 !space-x-0 pt-6">
             {totalHints > 0 ? (
               <Button
-                className="w-full"
+                className="w-full h-14 rounded-2xl text-lg font-black shadow-xl shadow-primary/20"
                 onClick={handleRevealHint}
                 disabled={isHintRevealing || ownerLoading}
               >
-                {(isHintRevealing || ownerLoading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Шинэ hint авах
+                {(isHintRevealing || ownerLoading) && <Loader2 className="mr-3 h-5 w-5 animate-spin" />}
+                Шинэ Hint авах
               </Button>
             ) : (
-              <>
+              <div className="flex flex-col gap-3 w-full">
                 <Button
-                  className="w-full"
+                  className="w-full h-14 rounded-2xl text-lg font-black shadow-2xl shadow-primary/30"
                   onClick={handleSingleHintPurchase}
                   disabled={isCreatingInvoice}
                 >
-                  {isCreatingInvoice ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <KeyRound className="mr-2 h-4 w-4" />}
+                  {isCreatingInvoice ? <Loader2 className="mr-3 h-5 w-5 animate-spin" /> : <KeyRound className="mr-3 h-5 w-5" />}
                   1 Hint авах (1,900₮)
                 </Button>
-                <Button
-                  className="w-full"
-                  variant="outline"
-                  asChild
-                >
+                <Button variant="outline" asChild className="w-full h-14 rounded-2xl font-bold border-2">
                   <Link href="/profile">
-                    <ShoppingCart className="mr-2 h-4 w-4" />
+                    <ShoppingCart className="mr-3 h-5 w-5" />
                     Багц худалдаж авах
                   </Link>
                 </Button>
-              </>
+              </div>
             )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
       {qpayData && (
         <QPayDialog
           isOpen={!!qpayData}
@@ -830,8 +841,7 @@ function ComplimentCard({
           }}
         />
       )}
-
-    </>
+    </div>
   );
 }
 
@@ -848,66 +858,70 @@ export function ComplimentList({
 }) {
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="w-full aspect-[16/10] bg-muted/40 animate-pulse rounded-[2rem] border border-white/5 shadow-inner" />
-        <div className="w-full aspect-[16/10] bg-muted/30 animate-pulse rounded-[2rem] border border-white/5" />
+      <div className="space-y-8 px-4 sm:px-0">
+        <div className="w-full aspect-[16/11] bg-muted/40 animate-pulse rounded-[3.5rem] border border-white/10 shadow-inner" />
+        <div className="w-full aspect-[16/11] bg-muted/30 animate-pulse rounded-[3.5rem] border border-white/10" />
       </div>
     );
   }
 
   if (compliments.length === 0) {
     return (
-      <div className="text-center py-20 px-6 rounded-[3rem] mt-8 bg-gradient-to-b from-secondary/30 to-background border border-border/40 relative overflow-hidden shadow-2xl shadow-primary/5">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent opacity-30"></div>
+      <div className="px-4 sm:px-0">
+        <div className="text-center py-20 px-8 rounded-[3.5rem] mt-8 bg-gradient-to-b from-secondary/40 to-background border border-border/40 relative overflow-hidden shadow-2xl">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent opacity-40"></div>
 
-        <div className="relative z-10 space-y-8">
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="relative w-48 h-48 mx-auto"
-          >
-            <div className="absolute inset-0 bg-primary/20 rounded-full blur-3xl animate-pulse"></div>
-            <Image
-              src="/images/empty-inbox.png"
-              alt="Empty Inbox"
-              width={192}
-              height={192}
-              className="relative z-10 object-contain drop-shadow-2xl"
-            />
-          </motion.div>
+          <div className="relative z-10 space-y-10">
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="relative w-56 h-56 mx-auto"
+            >
+              <div className="absolute inset-0 bg-primary/20 rounded-full blur-3xl animate-pulse"></div>
+              <Image
+                src="/images/empty-inbox.png"
+                alt="Empty Inbox"
+                width={224}
+                height={224}
+                className="relative z-10 object-contain drop-shadow-2xl brightness-110"
+              />
+            </motion.div>
 
-          <div className="space-y-3">
-            <h3 className="text-3xl font-black text-foreground tracking-tighter">Энд одоогоор чимээгүй байна</h3>
-            <p className="text-base text-muted-foreground max-w-sm mx-auto leading-relaxed font-medium">
-              Линкээ найзуудтайгаа хуваалцаж, тэдний сэтгэлийн үгсийг хүлээгээрэй. Хэн нэгэн таны тухай аль хэдийн бодож байж магадгүй шүү.
-            </p>
+            <div className="space-y-4">
+              <h3 className="text-4xl font-black text-foreground tracking-tighter">Энд одоогоор чимээгүй...</h3>
+              <p className="text-lg text-muted-foreground max-w-sm mx-auto leading-relaxed font-bold">
+                Линкээ найзуудтайгаа хуваалцаж, тэдний сэтгэлийн үгсийг хүлээгээрэй. 🤫
+              </p>
+            </div>
+
+            <Button asChild size="lg" className="rounded-[2rem] shadow-2xl shadow-primary/20 h-20 px-12 font-black text-xl hover:scale-105 active:scale-95 transition-all bg-primary text-primary-foreground group">
+              <Link href="/create" className="flex items-center gap-3">
+                Линкээ хуваалцах
+                <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform" />
+              </Link>
+            </Button>
           </div>
-
-          <Button asChild size="lg" className="rounded-2xl shadow-xl shadow-primary/20 h-16 px-10 font-black text-lg hover:scale-105 active:scale-95 transition-all bg-primary text-primary-foreground group">
-            <Link href="/create" className="flex items-center gap-2">
-              Линкээ хуваалцах
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-10 pb-20">
       {compliments.map((comp, index) => (
-        <div key={comp.id}>
-          <ComplimentCard compliment={comp} ownerData={ownerData} ownerLoading={ownerLoading} index={index} />
-        </div>
+        <ComplimentCard key={comp.id} compliment={comp} ownerData={ownerData} ownerLoading={ownerLoading} index={index} />
       ))}
-      <div className="py-8 text-center">
-        <p className="text-muted-foreground">➕ Илүү олон wispr хүсч байна уу?</p>
-        <Button asChild variant="link" className="text-base">
-          <Link href="/create">Линкээ дахин хуваалцаарай</Link>
-        </Button>
+      <div className="py-12 text-center relative">
+        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 border-t border-white/5 z-0" />
+        <div className="relative z-10 bg-background/50 backdrop-blur-sm inline-block px-8 py-2">
+          <p className="text-muted-foreground font-bold mb-3 tracking-wide">➕ Илүү олон wispr хүсч байна уу?</p>
+          <Button asChild variant="ghost" className="text-lg font-black text-primary hover:bg-primary/10 rounded-full h-12 px-8">
+            <Link href="/create">Линкээ дахин хуваалцаарай</Link>
+          </Button>
+        </div>
       </div>
     </div>
   );
 }
+

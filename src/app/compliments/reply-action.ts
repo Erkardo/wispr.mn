@@ -2,6 +2,7 @@
 
 import { getAdminDb } from '@/lib/admin-db';
 import * as admin from 'firebase-admin';
+import { sendPushNotification } from '@/lib/fcm';
 
 export async function replyToComplimentAction(ownerId: string, complimentId: string, replyText: string): Promise<{ success: boolean; message: string }> {
     if (!ownerId || !complimentId || !replyText.trim()) {
@@ -37,6 +38,13 @@ export async function replyToComplimentAction(ownerId: string, complimentId: str
                 complimentId: complimentId,
                 receiverId: ownerId
             }, { merge: true });
+
+            const MYSTERIOUS_TEXTS = [
+                "Хэн нэгэн таны үгийг уншаад хариу бичжээ 👀",
+                "Таны хуудсанд зочилсон хүн үг үлдээжээ ✨"
+            ];
+            const randomText = MYSTERIOUS_TEXTS[Math.floor(Math.random() * MYSTERIOUS_TEXTS.length)];
+            await sendPushNotification(data.senderId, 'Шинэ хариу 💬', randomText, '/');
         }
 
         return { success: true, message: 'Хариуг амжилттай илгээлээ.' };

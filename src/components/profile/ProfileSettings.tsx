@@ -12,8 +12,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { updateProfileSettingsAction } from '@/app/profile/settings-action';
-import { Loader2 } from 'lucide-react';
+import { Loader2, BellRing, BellOff } from 'lucide-react';
 import type { ComplimentOwner } from '@/types';
+import { useFCM } from '@/firebase';
 
 const profileSchema = z.object({
     username: z.string().min(3, "Хамгийн багадаа 3 үсэг/тоо байна.").max(20, "Хэтэрхий урт байна.").regex(/^[a-zA-Z0-9_.]+$/, "Зөвхөн англи үсэг, тоо, цэг, доогуур зураас зөвшөөрнө."),
@@ -31,6 +32,8 @@ interface ProfileSettingsProps {
 export function ProfileSettings({ ownerId, ownerData }: ProfileSettingsProps) {
     const { toast } = useToast();
     const [isSaving, setIsSaving] = useState(false);
+    const { permission, requestPermission, isSupportedBrowser } = useFCM();
+    const [isRequestingPerm, setIsRequestingPerm] = useState(false);
 
     const form = useForm<z.infer<typeof profileSchema>>({
         resolver: zodResolver(profileSchema),
@@ -72,6 +75,17 @@ export function ProfileSettings({ ownerId, ownerData }: ProfileSettingsProps) {
         }
     }
 
+    const handleEnableNotifications = async () => {
+        setIsRequestingPerm(true);
+        const success = await requestPermission();
+        if (success) {
+            toast({ title: 'Мэдэгдэл идэвхжлээ!', description: 'Шинэ зурвас ирэх үед танд мэдэгдэх болно.' });
+        } else {
+            toast({ title: 'Мэдэгдэл асаах боломжгүй байна', description: 'Хөтөч дээрээ notification permission өгсөн эсэхээ шалгана уу.', variant: 'destructive' });
+        }
+        setIsRequestingPerm(false);
+    };
+
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
@@ -102,6 +116,34 @@ export function ProfileSettings({ ownerId, ownerData }: ProfileSettingsProps) {
                             />
                         </CardContent>
                     </Card>
+
+                    {/* Mэдэгдэл (Notifications) Toggle Card */}
+                    {isSupportedBrowser && (
+                        <Card className="overflow-hidden border-none shadow-xl bg-gradient-to-br from-secondary/50 to-transparent rounded-3xl">
+                            <CardContent className="p-6">
+                                <div className="flex flex-row items-center justify-between gap-4">
+                                    <div className="space-y-1">
+                                        <div className="flex items-center gap-2">
+                                            {permission === 'granted' ? <BellRing className="w-5 h-5 text-primary" /> : <BellOff className="w-5 h-5 text-muted-foreground" />}
+                                            <Label className="text-lg font-black tracking-tight border-none">Апп-н мэдэгдэл</Label>
+                                        </div>
+                                        <p className="text-xs leading-relaxed max-w-[240px] text-muted-foreground">
+                                            Шинэ зурвас болон хариу ирсэн үед унтруулсан үед ч мэдэгдэл авах уу?
+                                        </p>
+                                    </div>
+                                    <div>
+                                        {permission === 'granted' ? (
+                                            <span className="text-sm font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-full">Асаалттай</span>
+                                        ) : (
+                                            <Button type="button" variant="outline" size="sm" onClick={handleEnableNotifications} disabled={isRequestingPerm}>
+                                                {isRequestingPerm ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : "Асаах"}
+                                            </Button>
+                                        )}
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
 
                     <div className="space-y-5 px-1">
                         <div className="flex items-center gap-2 mb-2">

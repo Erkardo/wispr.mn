@@ -8,7 +8,7 @@ import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { useUser, useAuth, useFirestore, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { addDoc, collection, serverTimestamp, doc, updateDoc, increment, setDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
-import { submitComplimentAction } from '@/app/compliments/actions';
+import { submitComplimentAction, notifyNewWisprAction } from '@/app/compliments/actions';
 import type { HintContext } from '@/types';
 import { ComplimentSentSuccess } from './ComplimentSentSuccess';
 import { AISuggestionsDialog } from './AISuggestionsDialog';
@@ -147,6 +147,10 @@ export function ComplimentForm({ ownerId }: { ownerId: string }) {
             }
 
             await Promise.all(batchPromises);
+
+            // Trigger push notification asynchronously (don't block the UI flow)
+            notifyNewWisprAction(ownerId).catch(console.error);
+
           } catch (e) {
             console.error("Failed to update extra DB data", e);
           }

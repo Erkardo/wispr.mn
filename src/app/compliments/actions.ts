@@ -8,6 +8,7 @@ import { db } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
 import { getAdminDb } from '@/lib/admin-db';
 import { FieldValue } from 'firebase-admin/firestore';
+import { sendPushNotification } from '@/lib/fcm';
 
 
 export async function submitComplimentAction(text: string, audioUrl?: string, duration?: number): Promise<{ success: boolean; message: string; filteredText?: string }> {
@@ -92,4 +93,23 @@ export async function addReactionToComplimentAction(complimentId: string, ownerI
     } catch (error) {
         console.error('Wispr-т реакц нэмэхэд алдаа гарлаа (Admin SDK):', error);
     }
+}
+
+export async function notifyNewWisprAction(ownerId: string) {
+    if (!ownerId) return;
+
+    // Pick a random curious message, same as ActivityFeed text
+    const MYSTERIOUS_TEXTS = [
+        "Хэн нэгэн чамд нууц үг үлдээлээ 👀",
+        "Таны хуудсанд зочилсон хүн үг үлдээжээ ✨",
+        "Чамд ирсэн шинэ wispr байна 🤫"
+    ];
+    const randomText = MYSTERIOUS_TEXTS[Math.floor(Math.random() * MYSTERIOUS_TEXTS.length)];
+
+    await sendPushNotification(
+        ownerId,
+        'Шинэ Wispr 🎁',
+        randomText,
+        '/'
+    );
 }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useFirestore, useUser } from '@/firebase';
-import { collection, query, orderBy, limit, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, query, orderBy, limit, getDocs, doc, getDoc, writeBatch } from 'firebase/firestore';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MessageSquareIcon, Send, SearchX } from 'lucide-react';
@@ -61,6 +61,17 @@ export function SentList() {
 
                 const results = (await Promise.all(fetches)).filter(Boolean) as SentWisprData[];
                 if (isMounted) setSentWisprs(results);
+
+                // Clear unread replies flags
+                const unreadDocs = sentSnapshot.docs.filter(d => d.data().hasUnreadReply === true);
+                if (unreadDocs.length > 0) {
+                    const batch = writeBatch(firestore);
+                    unreadDocs.forEach(d => {
+                        batch.update(d.ref, { hasUnreadReply: false });
+                    });
+                    await batch.commit().catch(e => console.error("Error clearing unread flags:", e));
+                }
+
             } catch (error) {
                 console.error("Error fetching sent wisprs:", error);
             } finally {

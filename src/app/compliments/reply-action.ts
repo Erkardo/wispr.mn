@@ -12,12 +12,32 @@ export async function replyToComplimentAction(ownerId: string, complimentId: str
         const db = getAdminDb();
         const complimentRef = db.collection('complimentOwners').doc(ownerId).collection('compliments').doc(complimentId);
 
+        const complimentDoc = await complimentRef.get();
+        if (!complimentDoc.exists) {
+            return { success: false, message: 'Олдсонгүй.' };
+        }
+
+        const data = complimentDoc.data();
+        const repliedAt = admin.firestore.FieldValue.serverTimestamp();
+
         // We only allow one reply. So we can just update the doc directly.
         await complimentRef.update({
             replyText: replyText.trim(),
             replyRead: false,
-            repliedAt: admin.firestore.FieldValue.serverTimestamp()
+            repliedAt: repliedAt
         });
+
+        // If the sender was logged in, notify them that a reply arrived
+        if (data?.senderId) {
+            const sentWisprRef = db.collection('complimentOwners').doc(data.senderId).collection('sentWisprs').doc(complimentId);
+            await sentWisprRef.set({
+                hasUnreadReply: true,
+                repliedAt: repliedAt,
+                // Make sure to preserve complimentId and receiverId if creating for some reason
+                complimentId: complimentId,
+                receiverId: ownerId
+            }, { merge: true });
+        }
 
         return { success: true, message: 'Хариуг амжилттай илгээлээ.' };
     } catch (error) {

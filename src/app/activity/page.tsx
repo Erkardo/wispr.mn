@@ -10,12 +10,25 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { formatTimeAgo } from '@/lib/format-time';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { MessageSquareIcon } from 'lucide-react';
 
+const MYSTERIOUS_TEXTS = [
+  "Хэн нэгэн чамайг их сонирхож байна 👀",
+  "Танд нэгэн нууцлаг зурвас ирлээ 🤫",
+  "Чамайг бодож суугаа нэгэн байна даа...",
+  "Таны хуудсанд зочилсон хүн үг үлдээжээ ✨",
+  "Энэ зурвасыг зөвхөн танд зориуллаа 💌",
+  "Хэн байж болох вэ? Орж уншаарай 🕵️"
+];
 
-// Define a unified activity type
+function getMysteriousText(id: string) {
+  const hash = id.split('').reduce((acc, char) => char.charCodeAt(0) + ((acc << 5) - acc), 0);
+  return MYSTERIOUS_TEXTS[Math.abs(hash) % MYSTERIOUS_TEXTS.length];
+}
+
 type Activity = {
   id: string;
-  type: 'compliment' | 'milestone';
+  type: 'compliment' | 'milestone' | 'reply';
   icon: React.ElementType;
   text: string;
   subtext?: string;
@@ -49,9 +62,18 @@ export default function ActivityPage() {
   }, [compliments]);
 
 
+  const sentWisprsQuery = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return query(
+      collection(firestore, 'complimentOwners', user.uid, 'sentWisprs')
+      // Removed orderBy to avoid index requirement, we'll sort in memory
+    );
+  }, [user, firestore]);
+  const { data: sentWisprs, isLoading: sentWisprsLoading } = useCollection<any>(sentWisprsQuery);
+
   // Combine data into a single sorted activity feed
   const activities = useMemo(() => {
-    if (!compliments) return [];
+    if (!compliments && !sentWisprs) return [];
 
     const complimentActivities: Activity[] = (compliments || []).map((comp): Activity => {
       const compTime = comp.createdAt && typeof comp.createdAt.toDate === 'function' ? comp.createdAt.toDate() : new Date();
@@ -59,13 +81,30 @@ export default function ActivityPage() {
         id: `compliment-${comp.id}`,
         type: 'compliment',
         icon: Gift,
-        text: comp.isRead ? 'Wispr' : 'Шинэ Wispr!',
-        subtext: `"${comp.text.substring(0, 30)}..."`,
+        text: comp.isRead ? 'Хэн нэгэн Wispr илгээсэн' : 'Шинэ Wispr ирлээ!',
+        subtext: comp.isRead ? `"${comp.text.substring(0, 30)}..."` : getMysteriousText(comp.id),
         time: compTime,
         href: `/?complimentId=${comp.id}`,
         isRead: comp.isRead ?? false,
       };
     });
+
+    const replyActivities: Activity[] = (sentWisprs || [])
+      .filter((sent) => sent.hasUnreadReply || sent.replyRead === false || sent.repliedAt)
+      .map((sent): Activity => {
+        const replyTime = sent.repliedAt && typeof sent.repliedAt.toDate === 'function' ? sent.repliedAt.toDate() : new Date();
+        const isRead = !sent.hasUnreadReply;
+        return {
+          id: `reply-${sent.complimentId}`,
+          type: 'reply',
+          icon: MessageSquareIcon,
+          text: isRead ? 'Хариу ирсэн' : 'Таны Wispr-т хариуллаа!',
+          subtext: isRead ? "Хэлсэн хариуг унших" : "Хэн нэгэн таны үгийг уншаад хариу бичжээ 👀",
+          time: replyTime,
+          href: `/?tab=sent`, // User logic handles this deep linking or just defaults
+          isRead: isRead,
+        };
+      });
 
     const milestoneActivities: Activity[] = [];
     const MILESTONES = [
@@ -94,14 +133,14 @@ export default function ActivityPage() {
     });
 
 
-    const allActivities = [...complimentActivities, ...milestoneActivities];
+    const allActivities = [...complimentActivities, ...replyActivities, ...milestoneActivities];
 
     // Sort all activities by time, most recent first
     return allActivities.sort((a, b) => b.time.getTime() - a.time.getTime());
 
-  }, [compliments, sortedComplimentsByDateAsc]);
+  }, [compliments, sortedComplimentsByDateAsc, sentWisprs]);
 
-  const isLoading = userLoading || complimentsLoading;
+  const isLoading = userLoading || complimentsLoading || sentWisprsLoading;
 
   return (
     <>
@@ -141,17 +180,20 @@ export default function ActivityPage() {
                     )}>
                       <activity.icon className={cn(
                         "h-5 w-5",
-                        !activity.isRead && activity.type === 'compliment' ? 'text-primary' : 'text-muted-foreground',
+                        !activity.isRead && (activity.type === 'compliment' || activity.type === 'reply') ? 'text-primary' : 'text-muted-foreground',
                         activity.type === 'milestone' && 'text-amber-500'
                       )} aria-hidden="true" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className={cn(
                         "truncate text-sm",
-                        !activity.isRead && activity.type === 'compliment' ? 'font-bold text-foreground' : 'font-medium text-foreground'
+                        !activity.isRead && (activity.type === 'compliment' || activity.type === 'reply') ? 'font-bold text-foreground' : 'font-medium text-foreground'
                       )}>{activity.text}</p>
                       {activity.subtext && (
-                        <p className="text-sm text-muted-foreground truncate">{activity.subtext}</p>
+                        <p className={cn(
+                          "text-sm truncate",
+                          !activity.isRead ? "text-primary/80 font-medium" : "text-muted-foreground"
+                        )}>{activity.subtext}</p>
                       )}
                     </div>
                     <div className="whitespace-nowrap text-right text-sm text-muted-foreground">

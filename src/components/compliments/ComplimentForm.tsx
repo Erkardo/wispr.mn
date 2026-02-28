@@ -158,7 +158,7 @@ export function ComplimentForm({ ownerId }: { ownerId: string }) {
             await Promise.all(batchPromises);
 
             // Trigger push notification asynchronously (don't block the UI flow)
-            notifyNewWisprAction(ownerId, complimentData.senderOS).catch(console.error);
+            notifyNewWisprAction(ownerId, complimentData.senderOS, docRef.id).catch(console.error);
 
           } catch (e) {
             console.error("Failed to update extra DB data", e);

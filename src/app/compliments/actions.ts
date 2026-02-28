@@ -115,7 +115,7 @@ export async function reportComplimentAction(ownerId: string, complimentId: stri
     }
 }
 
-export async function notifyNewWisprAction(ownerId: string, senderOS?: string) {
+export async function notifyNewWisprAction(ownerId: string, senderOS?: string, complimentId?: string) {
     if (!ownerId) return;
 
     // Curiosity Gap messages
@@ -144,10 +144,12 @@ export async function notifyNewWisprAction(ownerId: string, senderOS?: string) {
         body = MYSTERIOUS_TEXTS[Math.floor(Math.random() * MYSTERIOUS_TEXTS.length)];
     }
 
+    const clickUrl = complimentId ? `/?tab=received&complimentId=${complimentId}` : '/?tab=received';
+
     await sendPushNotification(
         ownerId,
         title,
         body,
-        '/'
+        clickUrl
     );
 }

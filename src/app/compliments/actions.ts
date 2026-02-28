@@ -95,27 +95,59 @@ export async function addReactionToComplimentAction(complimentId: string, ownerI
     }
 }
 
-export async function notifyNewWisprAction(ownerId: string) {
+export async function reportComplimentAction(ownerId: string, complimentId: string) {
+    if (!ownerId || !complimentId) return { success: false, message: 'Шаардлагатай мэдээлэл дутуу байна.' };
+
+    try {
+        const db = getAdminDb();
+        const complimentRef = db.collection('complimentOwners').doc(ownerId).collection('compliments').doc(complimentId);
+
+        await complimentRef.update({
+            reportsCount: FieldValue.increment(1),
+            isFlagged: true,
+            flaggedAt: FieldValue.serverTimestamp()
+        });
+
+        return { success: true, message: 'Report амжилттай илгээгдлээ. Бид шалгах болно.' };
+    } catch (error) {
+        console.error('Report илгээхэд алдаа гарлаа:', error);
+        return { success: false, message: 'Алдаа гарлаа. Дахин оролдоно уу.' };
+    }
+}
+
+export async function notifyNewWisprAction(ownerId: string, senderOS?: string) {
     if (!ownerId) return;
 
-    // Pick a random curious message, same as ActivityFeed text
+    // Curiosity Gap messages
+    let title = 'Шинэ Wispr 🎁';
+    let body = 'Хэн байж болох вэ? Орж уншаарай 🕵️';
+
     const MYSTERIOUS_TEXTS = [
         "Хэн нэгэн чамд нууц үг үлдээлээ 👀",
         "Таны хуудсанд зочилсон хүн үг үлдээжээ ✨",
         "Чамд ирсэн шинэ wispr байна 🤫",
         "Чамайг бодож суугаа нэгэн байна даа...",
-        "Хэн байж болох вэ? Орж уншаарай 🕵️",
         "Хэн нэгний сэтгэлийг хөдөлгөсөн бололтой 💕",
         "Таны тухай нэгэн зүйл бичжээ 📝",
-        "Нууцхан хүндэлдэг нэгэн байна шүү 🌟",
-        "Онцгой зурвас хүлээж байна 🎁"
+        "Нууцхан хүндэлдэг нэгэн байна шүү 🌟"
     ];
-    const randomText = MYSTERIOUS_TEXTS[Math.floor(Math.random() * MYSTERIOUS_TEXTS.length)];
+
+    if (senderOS) {
+        if (senderOS.toLowerCase().includes('ios') || senderOS.toLowerCase().includes('iphone')) {
+            body = 'Нэг iPhone-той хэрэглэгч танд сонирхолтой Wispr үлдээжээ 🤫';
+        } else if (senderOS.toLowerCase().includes('android')) {
+            body = 'Нэг Android-той хэрэглэгч танд нууц Wispr илгээлээ 🤖';
+        } else {
+            body = MYSTERIOUS_TEXTS[Math.floor(Math.random() * MYSTERIOUS_TEXTS.length)];
+        }
+    } else {
+        body = MYSTERIOUS_TEXTS[Math.floor(Math.random() * MYSTERIOUS_TEXTS.length)];
+    }
 
     await sendPushNotification(
         ownerId,
-        'Шинэ Wispr 🎁',
-        randomText,
+        title,
+        body,
         '/'
     );
 }

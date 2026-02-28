@@ -101,6 +101,16 @@ export function ComplimentForm({ ownerId }: { ownerId: string }) {
     }
   };
 
+  const getSenderOS = () => {
+    if (typeof window === 'undefined') return 'Unknown';
+    const ua = navigator.userAgent;
+    if (/iPad|iPhone|iPod/.test(ua)) return 'iOS';
+    if (/Android/.test(ua)) return 'Android';
+    if (/Mac/.test(ua)) return 'Mac';
+    if (/Win/.test(ua)) return 'Windows';
+    return 'Web';
+  };
+
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     setIsSubmitting(true);
     try {
@@ -120,9 +130,8 @@ export function ComplimentForm({ ownerId }: { ownerId: string }) {
           createdAt: serverTimestamp(),
           isRead: false,
           reactions: { '💛': 0, '😄': 0, '✨': 0 },
-          audioUrl: audioUrl || null,
-          duration: audioDuration || 0,
           senderId: user && !user.isAnonymous ? user.uid : null,
+          senderOS: getSenderOS(),
         };
 
         // Non-blocking write to Firestore
@@ -149,7 +158,7 @@ export function ComplimentForm({ ownerId }: { ownerId: string }) {
             await Promise.all(batchPromises);
 
             // Trigger push notification asynchronously (don't block the UI flow)
-            notifyNewWisprAction(ownerId).catch(console.error);
+            notifyNewWisprAction(ownerId, complimentData.senderOS).catch(console.error);
 
           } catch (e) {
             console.error("Failed to update extra DB data", e);

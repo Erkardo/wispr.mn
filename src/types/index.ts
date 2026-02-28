@@ -27,6 +27,7 @@ export type ComplimentOwner = {
   lastRadarLocation?: any; // GeoPoint from firebase
   geohash?: string;
   radarExpiresAt?: Timestamp;
+  coins?: number; // Phase 10: Virtual currency
 };
 
 export type ShortLink = {
@@ -55,6 +56,12 @@ export type Compliment = {
   replyText?: string;
   replyRead?: boolean;
   repliedAt?: Timestamp;
+
+  // Phase 10: Advanced Metadata & Safety
+  senderOS?: string;
+  senderDistrict?: string;
+  reportsCount?: number;
+  isFlagged?: boolean;
 };
 
 export type ReactionEmoji = '❤️' | '👍' | '😢' | '🔥';

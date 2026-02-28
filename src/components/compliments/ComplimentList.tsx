@@ -3,7 +3,7 @@
 import type { Compliment, ComplimentOwner } from '@/types';
 import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { MessageCircle, Gift, Loader2, Share2, UserX, KeyRound, ShoppingCart, MessageSquareIcon, Send, X, ArrowRight } from 'lucide-react';
+import { MessageCircle, Gift, Loader2, Share2, UserX, KeyRound, ShoppingCart, MessageSquareIcon, Send, X, ArrowRight, ShieldAlert } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '../ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -14,8 +14,8 @@ import { useFirestore, type WithId, errorEmitter, FirestorePermissionError, useU
 import { cn } from '@/lib/utils';
 import { format, isToday, isYesterday } from 'date-fns';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { generateHintAction, addReactionToComplimentAction } from '@/app/compliments/actions';
+import { motion, AnimatePresence } from 'framer-motion';
+import { generateHintAction, addReactionToComplimentAction, reportComplimentAction } from '@/app/compliments/actions';
 import { replyToComplimentAction } from '@/app/compliments/reply-action';
 import { Textarea } from '@/components/ui/textarea';
 
@@ -136,6 +136,8 @@ function ComplimentCard({
   const [replyText, setReplyText] = useState('');
   const [isSubmittingReply, setIsSubmittingReply] = useState(false);
   const [localReplyStatus, setLocalReplyStatus] = useState<string | null>(compliment.replyText || null);
+  const [isReporting, setIsReporting] = useState(false);
+  const [isReported, setIsReported] = useState(false);
 
 
   const getFontSizeClass = (text: string) => {
@@ -454,6 +456,26 @@ function ComplimentCard({
     setIsPreparingShareImage(true);
   };
 
+  const handleReport = async () => {
+    if (isReporting || isReported) return;
+    if (!confirm('Энэ Wispr-ийг зохисгүй контент гэж мэдээлэх үү?')) return;
+
+    setIsReporting(true);
+    try {
+      const result = await reportComplimentAction(compliment.ownerId, compliment.id);
+      if (result.success) {
+        setIsReported(true);
+        toast({ title: 'Мэдээлэл хүлээн авлаа', description: 'Бид удахгүй шалгаж шийдвэрлэх болно.' });
+      } else {
+        toast({ title: 'Алдаа', description: result.message, variant: 'destructive' });
+      }
+    } catch (err) {
+      toast({ title: 'Алдаа', description: 'Report илгээхэд алдаа гарлаа.', variant: 'destructive' });
+    } finally {
+      setIsReporting(false);
+    }
+  };
+
   const getDateBadge = () => {
     if (!compliment.createdAt) return null;
     const date = (typeof compliment.createdAt.toDate === 'function') ? compliment.createdAt.toDate() : (compliment.createdAt as unknown as Date);
@@ -484,9 +506,23 @@ function ComplimentCard({
       >
         <CardHeader className="flex flex-row items-center justify-between p-6 pb-2">
           {getDateBadge()}
-          <Button variant="ghost" size="icon" onClick={handleShareClick} className="h-8 w-8 rounded-full bg-black/10 hover:bg-black/20 text-white/50 backdrop-blur-sm opacity-60 hover:opacity-100 transition-opacity" disabled={isSharing}>
-            {isSharing ? <Loader2 className="h-3 w-3 animate-spin" /> : <Share2 className="h-3 w-3" />}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleReport}
+              disabled={isReporting || isReported}
+              className={cn(
+                "h-8 w-8 rounded-full bg-black/10 hover:bg-black/20 backdrop-blur-sm transition-all",
+                isReported ? "text-red-400 opacity-100" : "text-white/40 hover:text-white/60"
+              )}
+            >
+              {isReporting ? <Loader2 className="h-3 w-3 animate-spin" /> : <ShieldAlert className={cn("h-4 w-4", isReported && "fill-current")} />}
+            </Button>
+            <Button variant="ghost" size="icon" onClick={handleShareClick} className="h-8 w-8 rounded-full bg-black/10 hover:bg-black/20 text-white/50 backdrop-blur-sm opacity-60 hover:opacity-100 transition-opacity" disabled={isSharing}>
+              {isSharing ? <Loader2 className="h-3 w-3 animate-spin" /> : <Share2 className="h-3 w-3" />}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="relative flex flex-col items-center justify-center p-6 md:p-10 text-center aspect-[16/10] overflow-hidden shadow-[inset_0_1px_2px_rgba(255,255,255,0.4)]">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(255,255,255,0.3)_0%,_rgba(255,255,255,0)_60%)]"></div>
@@ -716,6 +752,18 @@ function ComplimentCard({
                     <p className="text-sm text-foreground flex-1">{hint}</p>
                   </li>
                 ))}
+
+                {/* Advanced Hint - OS (Locked for now or visible if any hint exists) */}
+                {compliment.senderOS && (
+                  <li className="flex items-start gap-3 p-3 bg-primary/5 border border-primary/10 rounded-lg">
+                    <div className="text-xs font-black text-primary uppercase">Pro</div>
+                    <div className="flex-1">
+                      <p className="text-xs text-muted-foreground uppercase font-black mb-1">Үйлдлийн систем</p>
+                      <p className="text-sm font-bold">{compliment.senderOS}</p>
+                    </div>
+                  </li>
+                )}
+
                 {isHintRevealing && (
                   <li className="flex items-start gap-3 p-3">
                     <div className="text-sm font-bold text-primary">#{revealedHints.length + 1}</div>

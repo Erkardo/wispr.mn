@@ -1,5 +1,5 @@
 'use client';
-    
+
 import { useState, useEffect } from 'react';
 import {
   DocumentReference,
@@ -44,7 +44,7 @@ export function useDoc<T = any>(
   type StateDataType = WithId<T> | null;
 
   const [data, setData] = useState<StateDataType>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(!!memoizedDocRef);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
 
   useEffect(() => {
@@ -54,12 +54,8 @@ export function useDoc<T = any>(
       setError(null);
       return;
     }
-    
-    // This condition handles the case where the ref becomes valid after an initial null state.
-    // We set loading to true to reflect the new loading process.
-    if (!isLoading) {
-      setIsLoading(true);
-    }
+
+    setIsLoading(true);
 
     setError(null);
 

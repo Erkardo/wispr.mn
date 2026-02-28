@@ -13,7 +13,7 @@ export function useFCM() {
     const [isSupportedBrowser, setIsSupportedBrowser] = useState(false);
 
     useEffect(() => {
-        if (typeof window !== 'undefined') {
+        if (typeof window !== 'undefined' && 'Notification' in window) {
             setPermission(Notification.permission);
             isSupported().then((supported) => {
                 setIsSupportedBrowser(supported);

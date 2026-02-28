@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
@@ -10,7 +10,6 @@ export const metadata: Metadata = {
   title: 'Wispr - Сэтгэлийн үгээ шивнээч',
   description: 'Нэргүйгээр сэтгэлийн үгээ хуваалцаж, бусдаас ирсэн wispr-үүдийг уншаарай. Хамгийн аюулгүй, нээлттэй орон зай.',
   manifest: '/manifest.json',
-  themeColor: '#8b5cf6',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -29,6 +28,10 @@ export const metadata: Metadata = {
     title: 'Wispr - Сэтгэлийн үгээ шивнээч',
     description: 'Нэргүйгээр сэтгэлийн үгээ хуваалцаж, бусдаас ирсэн wispr-үүдийг уншаарай.',
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#8b5cf6',
 };
 
 

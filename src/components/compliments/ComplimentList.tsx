@@ -485,9 +485,9 @@ function ComplimentCard({
     if (!compliment.createdAt) return null;
     const date = (typeof compliment.createdAt.toDate === 'function') ? compliment.createdAt.toDate() : (compliment.createdAt as unknown as Date);
     if (!compliment.isRead) return <Badge className="border-none bg-white text-primary font-bold shadow-lg animate-pulse">Шинэ</Badge>;
-    if (isToday(date)) return <Badge variant="secondary" className="border-none bg-black/10 text-white/20 backdrop-blur-sm font-medium">Өнөөдөр</Badge>;
-    if (isYesterday(date)) return <Badge variant="secondary" className="border-none bg-black/10 text-white/20 backdrop-blur-sm font-medium">Өчигдөр</Badge>;
-    return <Badge variant="secondary" className="border-none bg-black/10 text-white/20 backdrop-blur-sm font-medium">{format(date, 'MMM d')}</Badge>;
+    if (isToday(date)) return <Badge variant="secondary" className="border-none bg-black/20 text-white/70 backdrop-blur-sm font-medium">Өнөөдөр</Badge>;
+    if (isYesterday(date)) return <Badge variant="secondary" className="border-none bg-black/20 text-white/70 backdrop-blur-sm font-medium">Өчигдөр</Badge>;
+    return <Badge variant="secondary" className="border-none bg-black/20 text-white/70 backdrop-blur-sm font-medium">{format(date, 'MMM d')}</Badge>;
   }
 
 
@@ -506,7 +506,7 @@ function ComplimentCard({
     >
       <Card
         id={`compliment-card-${compliment.id}`}
-        className="w-full relative overflow-hidden text-white rounded-3xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.4)] shadow-[inset_0_1px_2px_rgba(255,255,255,0.4)] transition-all duration-500 border border-white/10"
+        className="w-full relative overflow-hidden text-white rounded-[2.5rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] transition-all duration-500 border border-white/20"
         style={{ backgroundImage: selectedStyle.bg }}
       >
         <CardHeader className="flex flex-row items-center justify-between p-6 pb-2">
@@ -547,13 +547,13 @@ function ComplimentCard({
           )}
 
 
-          <div className="absolute bottom-4 left-6 flex items-center gap-2 text-[9px] z-10 select-none text-white/20 hover:text-white/40 transition-opacity uppercase tracking-[0.2em] font-bold">
-            <UserX className="h-3 w-3 opacity-60" />
+          <div className="absolute bottom-6 left-8 flex items-center gap-2 text-[10px] z-10 select-none text-white/60 uppercase tracking-[0.2em] font-black">
+            <UserX className="h-3.5 w-3.5 opacity-80" />
             Нэрээ нууцалсан
           </div>
 
-          {/* Floating Reactions - MOVED TO CORNER TO AVOID OVERLAP */}
-          <div className="absolute bottom-4 right-4 flex items-center gap-1.5 p-1.5 rounded-[1.25rem] bg-black/20 backdrop-blur-md border border-white/5 z-20 shadow-xl scale-95 origin-bottom-right">
+          {/* Floating Reactions - Better placement & higher contrast */}
+          <div className="absolute bottom-6 right-6 flex items-center gap-1.5 p-1.5 rounded-full bg-black/30 backdrop-blur-xl border border-white/10 z-20 shadow-2xl">
             {reactionEmojis.map(emoji => (
               <button
                 key={emoji}
@@ -562,8 +562,8 @@ function ComplimentCard({
                   handleReaction(emoji);
                 }}
                 className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-white/20 transition-all text-xs font-bold text-white shadow-sm",
-                  isReacting === emoji ? 'animate-in zoom-in spin-in-12 duration-300 scale-150 brightness-125' : 'active:scale-90 hover:scale-110'
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-white/20 transition-all text-xs font-bold text-white",
+                  isReacting === emoji ? 'animate-in zoom-in spin-in-12 duration-300 scale-150 brightness-125' : 'active:scale-95'
                 )}
                 disabled={!!isReacting}
               >
@@ -573,27 +573,27 @@ function ComplimentCard({
             ))}
           </div>
         </CardContent>
-        <CardFooter className="relative z-10 bg-black/20 flex items-center gap-3 p-4 pt-3 backdrop-blur-2xl border-t border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]">
+        <CardFooter className="relative z-10 bg-black/40 flex items-center gap-4 p-6 pt-5 backdrop-blur-3xl border-t border-white/10">
           <Button
             variant="ghost"
             className={cn(
-              "flex-1 font-bold rounded-2xl h-12 border-2 transition-all backdrop-blur-sm text-sm",
+              "flex-1 font-bold rounded-2xl h-14 border-2 transition-all backdrop-blur-sm text-sm",
               isReplying
-                ? "bg-white text-primary border-white shadow-lg"
-                : "bg-white/5 text-white border-white/10 hover:bg-white/15 hover:border-white/20"
+                ? "bg-white text-primary border-white shadow-xl"
+                : "bg-white/10 text-white border-white/20 hover:bg-white/20 hover:border-white/30"
             )}
             onClick={() => setIsReplying(!isReplying)}
             disabled={!!localReplyStatus}
           >
-            <MessageSquareIcon className={cn("mr-2 h-4 w-4", isReplying ? "text-primary" : "text-white")} />
+            <MessageSquareIcon className={cn("mr-2 h-5 w-5", isReplying ? "text-primary" : "text-white")} />
             <span>{localReplyStatus ? "Хариулсан" : "Хариулах"}</span>
           </Button>
 
           <Button
-            className="flex-1 font-black bg-white text-primary hover:bg-white/90 rounded-2xl h-12 shadow-lg shadow-black/10 transition-all active:scale-95 border-none text-sm"
+            className="flex-1 font-black bg-white text-primary hover:bg-white/90 rounded-2xl h-14 shadow-2xl shadow-black/20 transition-all active:scale-95 border-none text-sm group"
             onClick={() => setIsHintDialogOpen(true)}
           >
-            <KeyRound className="mr-2 h-4 w-4 text-primary" />
+            <KeyRound className="mr-2 h-5 w-5 text-primary group-hover:rotate-12 transition-transform" />
             <span>Hint харах</span>
           </Button>
         </CardFooter>

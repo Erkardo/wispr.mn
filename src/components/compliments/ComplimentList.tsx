@@ -178,13 +178,20 @@ function ComplimentCard({
 
   useEffect(() => {
     const styles = [
-      { bg: 'linear-gradient(to bottom right, #f9a8d4, #f472b6)', emoji: '💖' },
-      { bg: 'linear-gradient(to bottom right, #a78bfa, #8b5cf6)', emoji: '💜' },
-      { bg: 'linear-gradient(to bottom right, #fde047, #facc15)', emoji: '🌟' },
-      { bg: 'linear-gradient(to bottom right, #6ee7b7, #34d399)', emoji: '🌿' },
-      { bg: 'linear-gradient(to bottom right, #fdba74, #fb923c)', emoji: '🔥' },
-      { bg: 'linear-gradient(to bottom right, #7dd3fc, #38bdf8)', emoji: '💧' },
-      { bg: 'linear-gradient(to bottom right, #fca5a5, #f87171)', emoji: '❤️' },
+      // Deep Rose Aurora
+      { bg: 'radial-gradient(ellipse at top left, #ff006e 0%, #8338ec 50%, #3a0ca3 100%)', emoji: '💜' },
+      // Cosmic Violet
+      { bg: 'radial-gradient(ellipse at top right, #7209b7 0%, #560bad 40%, #480ca8 100%)', emoji: '✨' },
+      // Solar Flare
+      { bg: 'radial-gradient(ellipse at center top, #f77f00 0%, #d62828 60%, #800f2f 100%)', emoji: '🔥' },
+      // Ocean Deep
+      { bg: 'radial-gradient(ellipse at bottom left, #0077b6 0%, #023e8a 50%, #03045e 100%)', emoji: '🌊' },
+      // Emerald Forest
+      { bg: 'radial-gradient(ellipse at top left, #1b4332 0%, #2d6a4f 50%, #40916c 100%)', emoji: '🌿' },
+      // Sakura Midnight
+      { bg: 'radial-gradient(ellipse at center, #c9184a 0%, #800f2f 50%, #370617 100%)', emoji: '🌸' },
+      // Golden Hour
+      { bg: 'radial-gradient(ellipse at top right, #f4a261 0%, #e76f51 50%, #9d0208 100%)', emoji: '🌟' },
     ];
     const hash = (compliment.id || '').split('').reduce((acc, char) => char.charCodeAt(0) + ((acc << 5) - acc), 0);
     setSelectedStyle(styles[Math.abs(hash) % styles.length]);
@@ -498,127 +505,154 @@ function ComplimentCard({
   const mainCard = (
     <motion.div
       layout
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: 1.01 }}
-      transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
+      initial={{ opacity: 0, y: 30, scale: 0.97 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      whileHover={{ y: -4, scale: 1.005 }}
+      transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
       className="w-full relative px-4 sm:px-0"
     >
       <div
         id={`compliment-card-${compliment.id}`}
-        className="w-full relative overflow-hidden text-white rounded-[3.5rem] border border-white/20 backdrop-blur-[40px]"
+        className="w-full relative overflow-hidden text-white rounded-[3rem]"
         style={{
           background: selectedStyle.bg,
-          boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.4), 0 40px 80px -20px rgba(0,0,0,0.5)'
+          boxShadow: '0 2px 0 0 rgba(255,255,255,0.15) inset, 0 -2px 0 0 rgba(0,0,0,0.2) inset, 0 50px 100px -20px rgba(0,0,0,0.6), 0 20px 40px -10px rgba(0,0,0,0.3)'
         }}
       >
-        {/* Mesh Gradient Accents */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,_rgba(255,255,255,0.15)_0%,_transparent_40%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_80%,_rgba(255,255,255,0.05)_0%,_transparent_50%)]" />
+        {/* Layered Light Effects */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_0%,_rgba(255,255,255,0.2)_0%,_transparent_60%)] pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_75%_85%,_rgba(0,0,0,0.25)_0%,_transparent_50%)] pointer-events-none" />
+        <div className="absolute inset-0 border border-white/10 rounded-[3rem] pointer-events-none" />
 
-        {/* Top Floating Actions */}
-        <div className="flex items-center justify-between p-8 pb-0 relative z-10">
-          {getDateBadge()}
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
+        {/* Noise texture for depth */}
+        <div className="absolute inset-0 opacity-[0.04] mix-blend-overlay pointer-events-none"
+          style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E\")" }}
+        />
+
+        {/* Top Action Bar */}
+        <div className="flex items-center justify-between px-7 pt-7 pb-0 relative z-10">
+          <div className="flex items-center gap-2">
+            {getDateBadge()}
+          </div>
+          <div className="flex items-center gap-2">
+            <motion.button
+              whileTap={{ scale: 0.88 }}
               onClick={handleReport}
               disabled={isReporting || isReported}
               className={cn(
-                "h-11 w-11 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-xl transition-all shadow-xl",
-                isReported ? "text-red-400" : "text-white/60 hover:text-white/90"
+                "h-10 w-10 rounded-2xl flex items-center justify-center bg-black/20 hover:bg-black/30 backdrop-blur-xl border border-white/10 transition-all",
+                isReported ? "text-red-400" : "text-white/50 hover:text-white/80"
               )}
             >
-              {isReporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldAlert className={cn("h-5 w-5", isReported && "fill-current")} />}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
+              {isReporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldAlert className={cn("h-4 w-4", isReported && "fill-current")} />}
+            </motion.button>
+            <motion.button
+              whileTap={{ scale: 0.88 }}
               onClick={handleShareClick}
-              className="h-11 w-11 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 text-white/60 hover:text-white/90 backdrop-blur-xl transition-all shadow-xl"
               disabled={isSharing}
+              className="h-10 w-10 rounded-2xl flex items-center justify-center bg-black/20 hover:bg-black/30 backdrop-blur-xl border border-white/10 text-white/50 hover:text-white/80 transition-all"
             >
-              {isSharing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-5 w-5" />}
-            </Button>
+              {isSharing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
+            </motion.button>
           </div>
         </div>
 
-        <div className="relative flex flex-col p-10 pt-6 pb-14 text-center aspect-[16/11] justify-between">
-          {/* Subtle Background Emoji */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[18rem] opacity-[0.03] select-none -rotate-12 blur-sm pointer-events-none">
+        {/* Main Content Area */}
+        <div className="relative flex flex-col px-8 pt-6 pb-8 text-center min-h-[52vw] sm:min-h-[280px] justify-between gap-6">
+          {/* Watermark Emoji */}
+          <div
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[22rem] opacity-[0.06] select-none pointer-events-none leading-none"
+            style={{ transform: 'translate(-50%, -50%) rotate(-15deg)' }}
+          >
             {selectedStyle?.emoji}
           </div>
 
-          <div className="my-auto relative z-10 w-full">
-            <p className={cn(
-              "font-black leading-[1.05] text-white tracking-[-0.04em] px-4",
-              getFontSizeClass(compliment.text)
-            )} style={{ textShadow: '0 12px 40px rgba(0,0,0,0.4)' }}>
+          {/* Message Text */}
+          <div className="flex-1 flex items-center justify-center relative z-10">
+            <p
+              className={cn(
+                "font-black leading-[1.1] text-white w-full",
+                getFontSizeClass(compliment.text)
+              )}
+              style={{
+                textShadow: '0 2px 4px rgba(0,0,0,0.3), 0 8px 32px rgba(0,0,0,0.2)',
+                letterSpacing: '-0.03em'
+              }}
+            >
               {compliment.text}
             </p>
+          </div>
 
-            {compliment.audioUrl && (
-              <div className="mt-10 mx-auto w-full max-w-xs backdrop-blur-3xl bg-black/40 rounded-[2rem] border border-white/10 p-1.5 shadow-2xl">
-                <AudioPlayer src={compliment.audioUrl} duration={compliment.duration} className="bg-transparent text-white" />
-              </div>
+          {compliment.audioUrl && (
+            <div className="relative z-10 mx-auto w-full max-w-[280px] bg-black/30 backdrop-blur-2xl rounded-[2rem] border border-white/10 p-1.5 shadow-2xl">
+              <AudioPlayer src={compliment.audioUrl} duration={compliment.duration} className="bg-transparent text-white" />
+            </div>
+          )}
+
+          {/* Bottom: Metadata + Reactions */}
+          <div className="relative z-10 flex items-end justify-between gap-3">
+            {/* Sender badge */}
+            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-white/60 bg-black/20 backdrop-blur-xl px-4 py-2 rounded-2xl border border-white/5">
+              <UserX className="h-3.5 w-3.5 shrink-0" />
+              <span>Нэргүй</span>
+            </div>
+
+            {/* Reactions */}
+            <div className="flex items-center gap-1 p-1 rounded-2xl bg-black/25 backdrop-blur-xl border border-white/10 shadow-lg">
+              {reactionEmojis.map(emoji => (
+                <motion.button
+                  key={emoji}
+                  whileTap={{ scale: 0.8 }}
+                  whileHover={{ scale: 1.1 }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleReaction(emoji);
+                  }}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-colors text-[11px] font-black text-white",
+                    isReacting === emoji ? 'bg-white/25' : 'hover:bg-white/15'
+                  )}
+                  disabled={!!isReacting}
+                  animate={isReacting === emoji ? { scale: [1, 1.4, 1] } : {}}
+                  transition={{ duration: 0.35 }}
+                >
+                  <span className="text-sm leading-none">{emoji}</span>
+                  <span className="opacity-80 tabular-nums">{localReactions[emoji] || 0}</span>
+                </motion.button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Action Buttons Row - outside the aspect box, seamlessly integrated */}
+        <div className="relative z-10 flex gap-3 px-6 pb-6">
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.02 }}
+            className={cn(
+              "flex-1 h-14 rounded-2xl flex items-center justify-center gap-2.5 text-[13px] font-black uppercase tracking-widest border-2 transition-all backdrop-blur-xl",
+              localReplyStatus
+                ? "bg-white/10 text-white/40 border-white/10 cursor-default"
+                : isReplying
+                  ? "bg-white text-gray-900 border-white shadow-[0_8px_30px_rgba(255,255,255,0.3)]"
+                  : "bg-white/10 text-white border-white/20 hover:bg-white/20 hover:border-white/40"
             )}
-          </div>
+            onClick={() => !localReplyStatus && setIsReplying(!isReplying)}
+            disabled={!!localReplyStatus}
+          >
+            <MessageSquareIcon className={cn("h-5 w-5 shrink-0", isReplying ? "text-gray-900" : "text-white")} />
+            <span>{localReplyStatus ? "Хариулсан" : "Хариулах"}</span>
+          </motion.button>
 
-          {/* Integrated Metadata & Action Capsules */}
-          <div className="flex flex-col gap-10 relative z-10 mt-8">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.25em] text-white/70 bg-black/30 px-5 py-2.5 rounded-full border border-white/10 backdrop-blur-2xl shadow-lg">
-                <UserX className="h-4 w-4 text-white/80" />
-                Нэрээ нууцалсан
-              </div>
-
-              <div className="flex items-center gap-2 p-1.5 rounded-full bg-black/40 border border-white/10 shadow-2xl backdrop-blur-3xl">
-                {reactionEmojis.map(emoji => (
-                  <button
-                    key={emoji}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleReaction(emoji);
-                    }}
-                    className={cn(
-                      "flex items-center gap-2 px-4 py-2 rounded-full hover:bg-white/20 transition-all text-[12px] font-black text-white",
-                      isReacting === emoji ? 'animate-in zoom-in duration-300 scale-125' : 'active:scale-90'
-                    )}
-                    disabled={!!isReacting}
-                  >
-                    <span className="text-base">{emoji}</span>
-                    <span className="opacity-90 tabular-nums">{localReactions[emoji] || 0}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex gap-4">
-              <Button
-                variant="ghost"
-                className={cn(
-                  "flex-1 h-16 rounded-full border-2 transition-all backdrop-blur-2xl text-[13px] font-black uppercase tracking-widest",
-                  isReplying
-                    ? "bg-white text-primary border-white shadow-2xl scale-[1.02]"
-                    : "bg-white/10 text-white border-white/20 hover:bg-white/20"
-                )}
-                onClick={() => setIsReplying(!isReplying)}
-                disabled={!!localReplyStatus}
-              >
-                <MessageSquareIcon className={cn("mr-2 h-5 w-5", isReplying ? "text-primary" : "text-white")} />
-                <span>{localReplyStatus ? "Хариулсан" : "Хариулах"}</span>
-              </Button>
-
-              <Button
-                className="flex-1 h-16 rounded-full bg-white text-primary hover:bg-white/90 shadow-[0_20px_50px_-10px_rgba(255,255,255,0.3)] transition-all active:scale-95 text-[13px] font-black uppercase tracking-widest group"
-                onClick={() => setIsHintDialogOpen(true)}
-              >
-                <KeyRound className="mr-3 h-5 w-5 group-hover:rotate-12 transition-transform" />
-                <span>Hint харах</span>
-              </Button>
-            </div>
-          </div>
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.02 }}
+            onClick={() => setIsHintDialogOpen(true)}
+            className="flex-1 h-14 rounded-2xl flex items-center justify-center gap-2.5 text-[13px] font-black uppercase tracking-widest bg-white text-gray-900 border-2 border-transparent shadow-[0_8px_30px_rgba(255,255,255,0.2)] hover:shadow-[0_12px_40px_rgba(255,255,255,0.35)] transition-all"
+          >
+            <KeyRound className="h-5 w-5 shrink-0" />
+            <span>Hint</span>
+          </motion.button>
         </div>
       </div>
     </motion.div>
@@ -630,29 +664,75 @@ function ComplimentCard({
         layout
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         className="w-full relative px-4 sm:px-0"
       >
-        <div className="w-full p-10 text-center flex flex-col items-center justify-center aspect-[16/11] bg-gradient-to-br from-primary/10 via-background/40 to-background/5 border border-white/10 backdrop-blur-3xl rounded-[3.5rem] shadow-2xl relative overflow-hidden group hover:scale-[1.01] transition-transform">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.1)_0%,_transparent_70%)] animate-pulse" />
-          <motion.div
-            animate={{
-              y: [0, -10, 0],
-              rotate: [0, 5, -5, 0]
-            }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            className="relative mb-6"
-          >
-            <Gift className="w-24 h-24 text-primary drop-shadow-[0_10px_30px_hsl(var(--primary)/0.5)]" />
-            <div className="w-6 h-6 absolute -top-2 -right-2 bg-primary rounded-full animate-ping" />
-          </motion.div>
-          <h3 className="text-2xl font-black text-foreground tracking-tight">🎁 Шинэ нэргүй wispr!</h3>
-          <p className="text-muted-foreground font-medium mt-2 max-w-[200px] leading-snug">Хэн нэгэн танд сэтгэлийн үг илгээжээ.</p>
-          <div className="mt-10 flex gap-4 w-full max-w-xs">
-            <Button onClick={handleReveal} disabled={isRevealing} size="lg" className="flex-1 h-14 rounded-2xl text-lg font-black shadow-xl shadow-primary/20">
-              {isRevealing ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "Нээх"}
-            </Button>
-            <Button variant="ghost" onClick={() => toast({ title: 'Дараа уншихаар хадгаллаа!' })} className="h-14 rounded-2xl font-bold">Дараа</Button>
+        <div
+          className="w-full relative overflow-hidden rounded-[3rem] flex flex-col items-center justify-center min-h-[52vw] sm:min-h-[320px] group cursor-pointer"
+          onClick={!isRevealing ? handleReveal : undefined}
+          style={{
+            background: 'radial-gradient(ellipse at 30% 20%, #2d1b69 0%, #0f0a1e 60%, #070510 100%)',
+            boxShadow: '0 2px 0 0 rgba(255,255,255,0.08) inset, 0 50px 100px -20px rgba(0,0,0,0.8)'
+          }}
+        >
+          {/* Star field */}
+          <div className="absolute inset-0 overflow-hidden">
+            {[...Array(20)].map((_, i) => (
+              <div
+                key={i}
+                className="absolute w-0.5 h-0.5 bg-white rounded-full animate-pulse"
+                style={{
+                  left: `${Math.random() * 100}%`,
+                  top: `${Math.random() * 100}%`,
+                  opacity: Math.random() * 0.7 + 0.1,
+                  animationDelay: `${Math.random() * 3}s`,
+                  animationDuration: `${Math.random() * 2 + 2}s`
+                }}
+              />
+            ))}
+          </div>
+
+          {/* Orbital glow rings */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="w-64 h-64 rounded-full border border-primary/10 animate-spin" style={{ animationDuration: '12s' }} />
+            <div className="absolute w-48 h-48 rounded-full border border-primary/15 animate-spin" style={{ animationDuration: '8s', animationDirection: 'reverse' }} />
+          </div>
+
+          {/* Main gift icon */}
+          <div className="relative z-10 flex flex-col items-center gap-6 p-10">
+            <motion.div
+              animate={{ y: [0, -8, 0], rotate: [0, 3, -3, 0] }}
+              transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+              className="relative"
+            >
+              <div className="absolute inset-0 -m-4 bg-primary/30 rounded-full blur-2xl animate-pulse" />
+              <Gift className="w-20 h-20 text-white drop-shadow-[0_0_20px_rgba(139,92,246,0.8)] relative z-10" />
+              <motion.div
+                animate={{ scale: [1, 1.5, 1], opacity: [0.8, 0, 0.8] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="absolute -top-1 -right-1 w-5 h-5 bg-primary rounded-full"
+              />
+            </motion.div>
+
+            <div className="text-center space-y-2">
+              <h3 className="text-2xl font-black text-white tracking-tight">Шинэ wispr ирлээ!</h3>
+              <p className="text-white/50 font-medium text-sm max-w-[180px] leading-relaxed">Хэн нэгэн танд сэтгэлийн үг илгээсэн байна</p>
+            </div>
+
+            <motion.button
+              whileTap={{ scale: 0.92 }}
+              whileHover={{ scale: 1.05 }}
+              onClick={handleReveal}
+              disabled={isRevealing}
+              className="mt-2 px-10 h-14 rounded-2xl bg-white text-gray-900 font-black text-base uppercase tracking-widest shadow-[0_10px_40px_rgba(255,255,255,0.25)] hover:shadow-[0_15px_50px_rgba(255,255,255,0.35)] transition-all"
+            >
+              {isRevealing ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>Нээж байна...</span>
+                </div>
+              ) : '🎁  Нээх'}
+            </motion.button>
           </div>
         </div>
       </motion.div>

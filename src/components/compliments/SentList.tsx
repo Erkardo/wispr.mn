@@ -41,9 +41,9 @@ export function SentList() {
 
             try {
                 // Fetch references from the user's sentWisprs collection
+                // Note: orderBy requires a Firestore index — sort client-side instead
                 const sentRefQuery = query(
                     collection(firestore, 'complimentOwners', user.uid, 'sentWisprs'),
-                    orderBy('sentAt', 'desc'),
                     limit(50)
                 );
 
@@ -62,6 +62,14 @@ export function SentList() {
                 });
 
                 const results = (await Promise.all(fetches)).filter(Boolean) as SentWisprData[];
+
+                // Client-side sort by newest first
+                results.sort((a, b) => {
+                    const timeA = (a.createdAt && typeof a.createdAt.toDate === 'function') ? a.createdAt.toDate().getTime() : 0;
+                    const timeB = (b.createdAt && typeof b.createdAt.toDate === 'function') ? b.createdAt.toDate().getTime() : 0;
+                    return timeB - timeA;
+                });
+
                 if (isMounted) setSentWisprs(results);
 
                 // Clear unread replies flags

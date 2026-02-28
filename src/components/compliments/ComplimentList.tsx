@@ -178,20 +178,20 @@ function ComplimentCard({
 
   useEffect(() => {
     const styles = [
-      // Deep Rose Aurora
-      { bg: 'radial-gradient(ellipse at top left, #ff006e 0%, #8338ec 50%, #3a0ca3 100%)', emoji: '💜' },
-      // Cosmic Violet
-      { bg: 'radial-gradient(ellipse at top right, #7209b7 0%, #560bad 40%, #480ca8 100%)', emoji: '✨' },
-      // Solar Flare
-      { bg: 'radial-gradient(ellipse at center top, #f77f00 0%, #d62828 60%, #800f2f 100%)', emoji: '🔥' },
-      // Ocean Deep
-      { bg: 'radial-gradient(ellipse at bottom left, #0077b6 0%, #023e8a 50%, #03045e 100%)', emoji: '🌊' },
-      // Emerald Forest
-      { bg: 'radial-gradient(ellipse at top left, #1b4332 0%, #2d6a4f 50%, #40916c 100%)', emoji: '🌿' },
-      // Sakura Midnight
-      { bg: 'radial-gradient(ellipse at center, #c9184a 0%, #800f2f 50%, #370617 100%)', emoji: '🌸' },
-      // Golden Hour
-      { bg: 'radial-gradient(ellipse at top right, #f4a261 0%, #e76f51 50%, #9d0208 100%)', emoji: '🌟' },
+      // Soft Rose Aurora
+      { bg: 'radial-gradient(ellipse at top left, #ff85b3 0%, #a855f7 50%, #7c3aed 100%)', emoji: '💜' },
+      // Lavender Haze
+      { bg: 'radial-gradient(ellipse at top right, #c084fc 0%, #818cf8 50%, #6366f1 100%)', emoji: '✨' },
+      // Warm Sunset
+      { bg: 'radial-gradient(ellipse at center top, #fbbf24 0%, #f97316 50%, #ef4444 100%)', emoji: '🔥' },
+      // Sky Blue
+      { bg: 'radial-gradient(ellipse at bottom left, #38bdf8 0%, #3b82f6 50%, #6366f1 100%)', emoji: '🌊' },
+      // Emerald Mint
+      { bg: 'radial-gradient(ellipse at top left, #34d399 0%, #10b981 50%, #059669 100%)', emoji: '🌿' },
+      // Rose Pink
+      { bg: 'radial-gradient(ellipse at center, #fb7185 0%, #f43f5e 50%, #e11d48 100%)', emoji: '🌸' },
+      // Golden Amber
+      { bg: 'radial-gradient(ellipse at top right, #fde68a 0%, #fbbf24 50%, #f59e0b 100%)', emoji: '🌟' },
     ];
     const hash = (compliment.id || '').split('').reduce((acc, char) => char.charCodeAt(0) + ((acc << 5) - acc), 0);
     setSelectedStyle(styles[Math.abs(hash) % styles.length]);
@@ -558,24 +558,24 @@ function ComplimentCard({
         </div>
 
         {/* Main Content Area */}
-        <div className="relative flex flex-col px-8 pt-6 pb-8 text-center min-h-[52vw] sm:min-h-[280px] justify-between gap-6">
+        <div className="relative flex flex-col px-8 pt-6 pb-6 text-center min-h-[52vw] sm:min-h-[260px] justify-center">
           {/* Watermark Emoji */}
           <div
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[22rem] opacity-[0.06] select-none pointer-events-none leading-none"
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[20rem] opacity-[0.08] select-none pointer-events-none leading-none"
             style={{ transform: 'translate(-50%, -50%) rotate(-15deg)' }}
           >
             {selectedStyle?.emoji}
           </div>
 
-          {/* Message Text */}
-          <div className="flex-1 flex items-center justify-center relative z-10">
+          {/* Message Text — centered, always visible */}
+          <div className="flex items-center justify-center relative z-10 py-4">
             <p
               className={cn(
                 "font-black leading-[1.1] text-white w-full",
                 getFontSizeClass(compliment.text)
               )}
               style={{
-                textShadow: '0 2px 4px rgba(0,0,0,0.3), 0 8px 32px rgba(0,0,0,0.2)',
+                textShadow: '0 2px 4px rgba(0,0,0,0.2), 0 8px 24px rgba(0,0,0,0.15)',
                 letterSpacing: '-0.03em'
               }}
             >
@@ -584,75 +584,78 @@ function ComplimentCard({
           </div>
 
           {compliment.audioUrl && (
-            <div className="relative z-10 mx-auto w-full max-w-[280px] bg-black/30 backdrop-blur-2xl rounded-[2rem] border border-white/10 p-1.5 shadow-2xl">
+            <div className="relative z-10 mx-auto w-full max-w-[280px] bg-black/20 backdrop-blur-2xl rounded-[2rem] border border-white/10 p-1.5 shadow-2xl mt-4">
               <AudioPlayer src={compliment.audioUrl} duration={compliment.duration} className="bg-transparent text-white" />
             </div>
           )}
+        </div>
 
-          {/* Bottom: Metadata + Reactions */}
-          <div className="relative z-10 flex items-end justify-between gap-3">
+        {/* Bottom Bar: Metadata + Reactions + Actions — all in one row */}
+        <div className="relative z-10 px-5 pb-5 space-y-3">
+          {/* Reactions + sender info row */}
+          <div className="flex items-center justify-between gap-2">
             {/* Sender badge */}
-            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-white/60 bg-black/20 backdrop-blur-xl px-4 py-2 rounded-2xl border border-white/5">
-              <UserX className="h-3.5 w-3.5 shrink-0" />
-              <span>Нэргүй</span>
+            <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.18em] text-white/50 bg-black/10 backdrop-blur-xl px-3 py-1.5 rounded-xl border border-white/10">
+              <UserX className="h-3 w-3 shrink-0" />
+              <span>Нэрээ нууцласан</span>
             </div>
 
-            {/* Reactions */}
-            <div className="flex items-center gap-1 p-1 rounded-2xl bg-black/25 backdrop-blur-xl border border-white/10 shadow-lg">
+            {/* Compact reactions */}
+            <div className="flex items-center gap-0.5 p-1 rounded-xl bg-black/15 backdrop-blur-xl border border-white/10">
               {reactionEmojis.map(emoji => (
                 <motion.button
                   key={emoji}
-                  whileTap={{ scale: 0.8 }}
-                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.75 }}
+                  whileHover={{ scale: 1.15 }}
                   onClick={(e) => {
                     e.stopPropagation();
                     handleReaction(emoji);
                   }}
                   className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-colors text-[11px] font-black text-white",
-                    isReacting === emoji ? 'bg-white/25' : 'hover:bg-white/15'
+                    "flex items-center gap-1 px-2 py-1 rounded-lg transition-colors text-[10px] font-black text-white",
+                    isReacting === emoji ? 'bg-white/20' : 'hover:bg-white/10'
                   )}
                   disabled={!!isReacting}
-                  animate={isReacting === emoji ? { scale: [1, 1.4, 1] } : {}}
-                  transition={{ duration: 0.35 }}
+                  animate={isReacting === emoji ? { scale: [1, 1.5, 1] } : {}}
+                  transition={{ duration: 0.3 }}
                 >
-                  <span className="text-sm leading-none">{emoji}</span>
-                  <span className="opacity-80 tabular-nums">{localReactions[emoji] || 0}</span>
+                  <span className="text-xs leading-none">{emoji}</span>
+                  <span className="opacity-70 tabular-nums">{localReactions[emoji] || 0}</span>
                 </motion.button>
               ))}
             </div>
           </div>
-        </div>
 
-        {/* Action Buttons Row - outside the aspect box, seamlessly integrated */}
-        <div className="relative z-10 flex gap-3 px-6 pb-6">
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            whileHover={{ scale: 1.02 }}
-            className={cn(
-              "flex-1 h-14 rounded-2xl flex items-center justify-center gap-2.5 text-[13px] font-black uppercase tracking-widest border-2 transition-all backdrop-blur-xl",
-              localReplyStatus
-                ? "bg-white/10 text-white/40 border-white/10 cursor-default"
-                : isReplying
-                  ? "bg-white text-gray-900 border-white shadow-[0_8px_30px_rgba(255,255,255,0.3)]"
-                  : "bg-white/10 text-white border-white/20 hover:bg-white/20 hover:border-white/40"
-            )}
-            onClick={() => !localReplyStatus && setIsReplying(!isReplying)}
-            disabled={!!localReplyStatus}
-          >
-            <MessageSquareIcon className={cn("h-5 w-5 shrink-0", isReplying ? "text-gray-900" : "text-white")} />
-            <span>{localReplyStatus ? "Хариулсан" : "Хариулах"}</span>
-          </motion.button>
+          {/* Action buttons */}
+          <div className="flex gap-2.5">
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.02 }}
+              className={cn(
+                "flex-1 h-12 rounded-2xl flex items-center justify-center gap-2 text-[12px] font-black uppercase tracking-widest border-2 transition-all backdrop-blur-xl",
+                localReplyStatus
+                  ? "bg-white/10 text-white/40 border-white/10 cursor-default"
+                  : isReplying
+                    ? "bg-white text-gray-900 border-white shadow-[0_6px_20px_rgba(255,255,255,0.3)]"
+                    : "bg-white/10 text-white border-white/25 hover:bg-white/20 hover:border-white/40"
+              )}
+              onClick={() => !localReplyStatus && setIsReplying(!isReplying)}
+              disabled={!!localReplyStatus}
+            >
+              <MessageSquareIcon className={cn("h-4 w-4 shrink-0", isReplying ? "text-gray-900" : "text-white")} />
+              <span>{localReplyStatus ? "Хариулсан" : "Хариулах"}</span>
+            </motion.button>
 
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            whileHover={{ scale: 1.02 }}
-            onClick={() => setIsHintDialogOpen(true)}
-            className="flex-1 h-14 rounded-2xl flex items-center justify-center gap-2.5 text-[13px] font-black uppercase tracking-widest bg-white text-gray-900 border-2 border-transparent shadow-[0_8px_30px_rgba(255,255,255,0.2)] hover:shadow-[0_12px_40px_rgba(255,255,255,0.35)] transition-all"
-          >
-            <KeyRound className="h-5 w-5 shrink-0" />
-            <span>Hint</span>
-          </motion.button>
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.02 }}
+              onClick={() => setIsHintDialogOpen(true)}
+              className="flex-1 h-12 rounded-2xl flex items-center justify-center gap-2 text-[12px] font-black uppercase tracking-widest bg-white/90 text-gray-900 border-2 border-white/50 shadow-[0_6px_20px_rgba(255,255,255,0.2)] hover:bg-white transition-all"
+            >
+              <KeyRound className="h-4 w-4 shrink-0" />
+              <span>Hint</span>
+            </motion.button>
+          </div>
         </div>
       </div>
     </motion.div>

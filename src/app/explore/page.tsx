@@ -3,7 +3,10 @@
 import { useState, useTransition } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Briefcase, GraduationCap, Loader2, Radar, Sparkles, Flame, ArrowRight, X } from 'lucide-react';
+import {
+    Search, Briefcase, GraduationCap, Loader2, Radar,
+    Sparkles, ArrowRight, X, Zap, Users, MapPin
+} from 'lucide-react';
 import { searchPublicProfilesAction, type PublicProfile } from './search-action';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -13,7 +16,6 @@ import { RadarTab } from './RadarTab';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Header } from '@/components/Header';
-import Image from 'next/image';
 
 export default function ExplorePage() {
     const [query, setQuery] = useState('');
@@ -21,6 +23,7 @@ export default function ExplorePage() {
     const [isPending, startTransition] = useTransition();
     const [hasSearched, setHasSearched] = useState(false);
     const [isFocused, setIsFocused] = useState(false);
+    const [activeTab, setActiveTab] = useState('search');
 
     const handleSearch = (e?: React.FormEvent) => {
         if (e) e.preventDefault();
@@ -47,40 +50,48 @@ export default function ExplorePage() {
         <div className="min-h-screen bg-background pb-20">
             <Header title="Хайх" />
 
-            {/* Subtle header backdrop */}
-            <div className="absolute top-0 left-0 right-0 h-48 bg-gradient-to-b from-primary/5 via-primary/2 to-transparent pointer-events-none" />
+            <div className="container mx-auto max-w-2xl p-4 pt-4 relative space-y-6">
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
 
-            <div className="container mx-auto max-w-2xl p-4 pt-4 relative space-y-8">
-
-                <Tabs defaultValue="search" className="w-full">
-                    <div className="flex justify-center px-4 mb-6">
-                        <div className="w-full max-w-sm overflow-x-auto no-scrollbar pb-2 -mb-2">
-                            <TabsList className="bg-muted/40 p-1.5 rounded-full shadow-inner border border-border/40 backdrop-blur-sm h-auto flex flex-nowrap justify-start sm:justify-center min-w-max mx-auto gap-1">
-                                <TabsTrigger value="search" className="rounded-full px-5 py-2.5 text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:font-bold transition-all duration-300">
-                                    <Search className="w-4 h-4 mr-2" />
-                                    Хайх
-                                </TabsTrigger>
-                                <TabsTrigger value="radar" className="rounded-full px-5 py-2.5 text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:font-bold transition-all duration-300">
-                                    <Radar className="w-4 h-4 mr-2" />
-                                    Радар
-                                </TabsTrigger>
-                            </TabsList>
-                        </div>
+                    {/* Tab switcher */}
+                    <div className="flex justify-center mb-2">
+                        <TabsList className="bg-muted/40 p-1.5 rounded-full shadow-inner border border-border/40 backdrop-blur-sm h-auto gap-1">
+                            <TabsTrigger
+                                value="search"
+                                className="rounded-full px-6 py-2.5 text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:font-bold transition-all duration-300"
+                            >
+                                <Search className="w-4 h-4 mr-2" />
+                                Хайх
+                            </TabsTrigger>
+                            <TabsTrigger
+                                value="radar"
+                                className="rounded-full px-6 py-2.5 text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:font-bold transition-all duration-300"
+                            >
+                                <Radar className="w-4 h-4 mr-2" />
+                                Радар
+                            </TabsTrigger>
+                        </TabsList>
                     </div>
 
-                    <TabsContent value="search" className="space-y-6 focus-visible:outline-none m-0 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    {/* ── SEARCH TAB ── */}
+                    <TabsContent value="search" className="space-y-5 focus-visible:outline-none m-0 animate-in fade-in duration-300">
 
                         {/* Search bar */}
                         <div className="sticky top-2 z-30">
                             <Card className={cn(
-                                "border-none shadow-2xl transition-all duration-500 overflow-hidden rounded-[2rem]",
-                                isFocused ? "ring-2 ring-primary/20 shadow-primary/10" : "bg-card/80 backdrop-blur-xl"
+                                "border-none shadow-xl transition-all duration-300 overflow-hidden rounded-[2rem]",
+                                isFocused
+                                    ? "ring-2 ring-primary/30 shadow-primary/10 bg-card"
+                                    : "bg-card/80 backdrop-blur-xl"
                             )}>
                                 <CardContent className="p-2">
                                     <form onSubmit={handleSearch} className="flex gap-2">
                                         <div className="relative flex-1 group">
-                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors">
-                                                {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Search className="w-5 h-5" />}
+                                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors z-10">
+                                                {isPending
+                                                    ? <Loader2 className="w-5 h-5 animate-spin" />
+                                                    : <Search className="w-5 h-5" />
+                                                }
                                             </div>
                                             <Input
                                                 value={query}
@@ -88,185 +99,211 @@ export default function ExplorePage() {
                                                 onFocus={() => setIsFocused(true)}
                                                 onBlur={() => setIsFocused(false)}
                                                 placeholder="Нэр, username, сургууль, ажил..."
-                                                className="h-14 pl-12 pr-12 border-none bg-transparent text-lg font-bold placeholder:text-muted-foreground/50 placeholder:font-medium focus-visible:ring-0"
+                                                className="h-14 pl-12 pr-10 border-none bg-transparent text-base font-semibold placeholder:text-muted-foreground/50 focus-visible:ring-0"
                                                 autoComplete="off"
                                             />
                                             {query && (
                                                 <button
                                                     type="button"
                                                     onClick={handleClear}
-                                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground/40 hover:text-foreground transition-colors p-1"
+                                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-foreground transition-colors p-1 rounded-full hover:bg-muted"
                                                 >
-                                                    <X className="w-5 h-5" />
+                                                    <X className="w-4 h-4" />
                                                 </button>
                                             )}
                                         </div>
                                         <Button
                                             type="submit"
-                                            className="h-14 w-14 rounded-[1.5rem] shadow-lg shadow-primary/20 transition-all active:scale-95"
+                                            className="h-14 w-14 rounded-[1.5rem] shadow-lg shadow-primary/20 transition-all active:scale-95 shrink-0"
                                             disabled={isPending || !query.trim()}
                                         >
-                                            {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-6 h-6" />}
+                                            {isPending
+                                                ? <Loader2 className="w-5 h-5 animate-spin" />
+                                                : <ArrowRight className="w-5 h-5" />
+                                            }
                                         </Button>
                                     </form>
                                 </CardContent>
                             </Card>
-
-                            {/* Hint text */}
-                            {!hasSearched && (
-                                <p className="text-center text-xs text-muted-foreground/60 mt-3 font-medium">
-                                    Нэр, @username, сургууль эсвэл ажлын газраар хайна
-                                </p>
-                            )}
                         </div>
 
-                        {/* Results / empty states */}
+                        {/* Empty / result states */}
                         <AnimatePresence mode="sync">
+
+                            {/* ── Empty state ── */}
                             {!hasSearched && (
                                 <motion.div
                                     key="empty"
-                                    initial={{ opacity: 0, y: 20 }}
+                                    initial={{ opacity: 0, y: 16 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, scale: 0.95 }}
-                                    className="pt-2 grid grid-cols-1 gap-4"
+                                    exit={{ opacity: 0 }}
+                                    className="space-y-4"
                                 >
-                                    {/* Radar teaser */}
-                                    <Card className="border-none bg-zinc-900 text-white rounded-[2.5rem] overflow-hidden relative group">
-                                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent opacity-50" />
-                                        <CardContent className="p-8 flex items-center justify-between relative z-10">
-                                            <div className="space-y-2">
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    <Flame className="w-4 h-4 text-orange-500 fill-orange-500" />
-                                                    <span className="text-[10px] font-black uppercase tracking-widest text-orange-500/80">Active Now</span>
-                                                </div>
-                                                <h3 className="text-2xl font-black tracking-tight">Радар асаах</h3>
-                                                <p className="text-sm text-white/60">Эргэн тойронд байгаа хүмүүсийг харах</p>
-                                            </div>
-                                            <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-md group-hover:bg-primary transition-colors duration-500">
-                                                <Radar className="w-8 h-8 text-white animate-spin-slow" />
-                                            </div>
-                                        </CardContent>
-                                    </Card>
+                                    {/* How-to hint */}
+                                    <div className="flex items-center gap-3 px-1">
+                                        <div className="h-px flex-1 bg-border/50" />
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">Хэрхэн хайх вэ</span>
+                                        <div className="h-px flex-1 bg-border/50" />
+                                    </div>
 
-                                    {/* Prompt */}
-                                    <Card className="border-none bg-gradient-to-br from-primary/5 to-secondary/5 rounded-[2.5rem] overflow-hidden group border-muted-foreground/5 relative">
-                                        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -mr-16 -mt-16" />
-                                        <CardContent className="p-8 text-center space-y-4 relative z-10">
-                                            <div className="mx-auto w-16 h-16 bg-background rounded-full flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-500">
-                                                <Sparkles className="w-8 h-8 text-primary animate-pulse" />
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {[
+                                            { icon: Users, label: 'Нэрээр', example: 'Болд', color: 'text-blue-500', bg: 'bg-blue-500/10' },
+                                            { icon: Sparkles, label: 'Username', example: 'boldoo_123', color: 'text-purple-500', bg: 'bg-purple-500/10' },
+                                            { icon: GraduationCap, label: 'Сургуулиар', example: 'МУИС', color: 'text-orange-500', bg: 'bg-orange-500/10' },
+                                            { icon: Briefcase, label: 'Ажлаар', example: 'Хаан банк', color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+                                        ].map(({ icon: Icon, label, example, color, bg }) => (
+                                            <button
+                                                key={label}
+                                                onClick={() => { setQuery(example); }}
+                                                className="flex items-center gap-3 p-4 rounded-2xl border border-border/50 bg-card/60 hover:bg-card hover:border-primary/20 hover:shadow-md transition-all text-left group active:scale-95"
+                                            >
+                                                <div className={cn('p-2 rounded-xl shrink-0', bg)}>
+                                                    <Icon className={cn('w-4 h-4', color)} />
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs font-bold text-foreground">{label}</p>
+                                                    <p className="text-[10px] text-muted-foreground font-mono">{example}</p>
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    {/* Radar promo — clicking switches to radar tab */}
+                                    <button
+                                        onClick={() => setActiveTab('radar')}
+                                        className="w-full text-left active:scale-[0.99] transition-transform"
+                                    >
+                                        <Card className="border-none bg-zinc-900 text-white rounded-[2rem] overflow-hidden relative group cursor-pointer hover:shadow-2xl transition-shadow">
+                                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-green-500/20 via-transparent to-transparent" />
+                                            {/* Animated radar rings */}
+                                            <div className="absolute right-6 top-1/2 -translate-y-1/2">
+                                                {[0, 1, 2].map(i => (
+                                                    <div
+                                                        key={i}
+                                                        className="absolute inset-0 w-16 h-16 -translate-x-1/2 -translate-y-1/2 rounded-full border border-green-500/30"
+                                                        style={{
+                                                            animation: `ping 2s cubic-bezier(0,0,0.2,1) ${i * 0.6}s infinite`,
+                                                            transform: `translate(-50%,-50%) scale(${1 + i * 0.5})`,
+                                                        }}
+                                                    />
+                                                ))}
+                                                <div className="w-16 h-16 rounded-full bg-green-500/10 border border-green-500/40 flex items-center justify-center backdrop-blur-sm group-hover:bg-green-500/20 transition-colors">
+                                                    <Radar className="w-7 h-7 text-green-400 group-hover:animate-spin transition-all" />
+                                                </div>
                                             </div>
-                                            <div className="space-y-1">
-                                                <h3 className="text-lg font-black">Хэнийг ч олж болно</h3>
-                                                <p className="text-sm text-muted-foreground leading-relaxed">
-                                                    Найзаа нэрээр нь, сургуулиар нь эсвэл ажлаар нь хайж олоод нууцаар мэндчилээрэй.
+                                            <CardContent className="p-6 pr-28 relative z-10">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse shadow-[0_0_6px_rgba(74,222,128,0.8)]" />
+                                                    <span className="text-[9px] font-black uppercase tracking-[0.25em] text-green-400">Live Radar</span>
+                                                </div>
+                                                <h3 className="text-xl font-black tracking-tight leading-tight">Ойр хавийн<br />хүмүүсийг хар</h3>
+                                                <p className="text-sm text-white/50 mt-1 flex items-center gap-1">
+                                                    Радар асаах <ArrowRight className="w-3 h-3" />
                                                 </p>
-                                            </div>
-                                        </CardContent>
-                                    </Card>
+                                            </CardContent>
+                                        </Card>
+                                    </button>
                                 </motion.div>
                             )}
 
+                            {/* ── Search results ── */}
                             {hasSearched && (
                                 <motion.div
                                     key="results"
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
-                                    className="space-y-4 pb-12"
+                                    className="space-y-4 pb-8"
                                 >
                                     {isPending ? (
-                                        <div className="grid grid-cols-1 gap-4">
+                                        <div className="space-y-3">
                                             {[1, 2, 3].map(i => (
-                                                <div key={i} className="h-24 w-full bg-muted/30 rounded-[2rem] animate-pulse" />
+                                                <div key={i} className="h-20 w-full bg-muted/30 rounded-[1.5rem] animate-pulse" />
                                             ))}
                                         </div>
                                     ) : results.length === 0 ? (
-                                        <Card className="border-none shadow-2xl shadow-primary/5 bg-secondary/20 rounded-[3rem] overflow-hidden relative">
-                                            <CardContent className="p-12 text-center space-y-6 relative z-10">
-                                                <div className="w-32 h-32 mx-auto relative">
-                                                    <div className="absolute inset-0 bg-primary/20 rounded-full blur-3xl animate-pulse"></div>
-                                                    <Image
-                                                        src="/images/empty-search.png"
-                                                        alt="No Results"
-                                                        width={128}
-                                                        height={128}
-                                                        className="relative z-10 object-contain drop-shadow-2xl"
-                                                    />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <h4 className="font-black text-2xl tracking-tight">Олдсонгүй</h4>
-                                                    <p className="text-base text-muted-foreground max-w-xs mx-auto">
-                                                        &ldquo;{query}&rdquo;-тэй тохирох нийтэд нээлттэй хэрэглэгч олдсонгүй.
-                                                    </p>
-                                                </div>
-                                            </CardContent>
-                                        </Card>
+                                        <div className="text-center py-16 px-6 space-y-4">
+                                            <div className="text-5xl">🔍</div>
+                                            <div>
+                                                <h4 className="font-black text-xl">Олдсонгүй</h4>
+                                                <p className="text-muted-foreground text-sm mt-1 max-w-xs mx-auto">
+                                                    &ldquo;{query}&rdquo;-тэй тохирох нийтэд нээлттэй хэрэглэгч олдсонгүй.
+                                                </p>
+                                            </div>
+                                            <Button variant="ghost" size="sm" onClick={handleClear} className="rounded-full">
+                                                Дахин хайх
+                                            </Button>
+                                        </div>
                                     ) : (
-                                        <div className="grid grid-cols-1 gap-4">
-                                            <p className="text-xs text-muted-foreground/60 font-medium px-1">
-                                                {results.length} үр дүн олдлоо
-                                            </p>
-                                            {results.map((profile, idx) => (
-                                                <motion.div
-                                                    key={profile.shortId}
-                                                    initial={{ opacity: 0, scale: 0.95 }}
-                                                    animate={{ opacity: 1, scale: 1 }}
-                                                    transition={{ delay: idx * 0.04 }}
-                                                >
-                                                    <Link href={`/c/${profile.shortId}`}>
-                                                        <Card className="overflow-hidden border-none shadow-xl hover:shadow-2xl hover:shadow-primary/5 transition-all duration-300 cursor-pointer group bg-card/60 backdrop-blur-md rounded-[2rem]">
-                                                            <CardContent className="p-5 flex items-center gap-5">
-                                                                <div className="relative">
-                                                                    <Avatar className="h-16 w-16 ring-4 ring-background shadow-2xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-3">
-                                                                        <AvatarImage src={profile.photoURL || ''} alt={profile.displayName || profile.username} />
-                                                                        <AvatarFallback className="bg-gradient-to-br from-primary/30 to-primary/5 text-primary font-black text-xl">
-                                                                            {(profile.displayName || profile.username || 'U').charAt(0).toUpperCase()}
-                                                                        </AvatarFallback>
-                                                                    </Avatar>
-                                                                    <div className="absolute -bottom-1 -right-1 bg-green-500 w-4 h-4 rounded-full border-4 border-background shadow-sm" />
-                                                                </div>
+                                        <>
+                                            <div className="flex items-center justify-between px-1">
+                                                <span className="text-xs font-bold text-muted-foreground">
+                                                    {results.length} үр дүн
+                                                </span>
+                                                <button onClick={handleClear} className="text-xs text-primary hover:underline font-bold">
+                                                    Цэвэрлэх
+                                                </button>
+                                            </div>
+                                            <div className="space-y-3">
+                                                {results.map((profile, idx) => (
+                                                    <motion.div
+                                                        key={profile.shortId}
+                                                        initial={{ opacity: 0, y: 8 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        transition={{ delay: idx * 0.04 }}
+                                                    >
+                                                        <Link href={`/c/${profile.shortId}`}>
+                                                            <Card className="overflow-hidden border-none shadow-md hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 cursor-pointer group bg-card/70 backdrop-blur-md rounded-[1.5rem]">
+                                                                <CardContent className="p-4 flex items-center gap-4">
+                                                                    <div className="relative shrink-0">
+                                                                        <Avatar className="h-14 w-14 ring-2 ring-background shadow-lg transition-all duration-300 group-hover:scale-105">
+                                                                            <AvatarImage src={profile.photoURL || ''} alt={profile.displayName || profile.username} />
+                                                                            <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/5 text-primary font-black text-lg">
+                                                                                {(profile.displayName || profile.username || 'U').charAt(0).toUpperCase()}
+                                                                            </AvatarFallback>
+                                                                        </Avatar>
+                                                                        <div className="absolute -bottom-0.5 -right-0.5 bg-green-500 w-3.5 h-3.5 rounded-full border-2 border-background" />
+                                                                    </div>
 
-                                                                <div className="flex-1 min-w-0">
-                                                                    <div className="flex items-center justify-between gap-2 mb-1">
-                                                                        <h3 className="font-black text-lg text-foreground truncate group-hover:text-primary transition-colors duration-300">
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <h3 className="font-black text-base text-foreground truncate group-hover:text-primary transition-colors">
                                                                             {profile.displayName || profile.username}
                                                                         </h3>
-                                                                        <div className="p-2 rounded-xl bg-primary/5 group-hover:bg-primary group-hover:text-white transition-all duration-300 shrink-0">
-                                                                            <ArrowRight className="w-4 h-4" />
+                                                                        {profile.username && (
+                                                                            <p className="text-xs text-primary/70 font-mono font-bold mb-1.5">@{profile.username}</p>
+                                                                        )}
+                                                                        <div className="flex flex-wrap gap-1.5">
+                                                                            {profile.school && (
+                                                                                <span className="flex items-center gap-1 text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-600 border border-orange-500/20">
+                                                                                    <GraduationCap className="w-2.5 h-2.5" />{profile.school}
+                                                                                </span>
+                                                                            )}
+                                                                            {profile.workplace && (
+                                                                                <span className="flex items-center gap-1 text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                                                                                    <Briefcase className="w-2.5 h-2.5" />{profile.workplace}
+                                                                                </span>
+                                                                            )}
                                                                         </div>
                                                                     </div>
 
-                                                                    {profile.username && (
-                                                                        <p className="text-xs text-primary/80 font-black font-mono tracking-tighter mb-2">@{profile.username}</p>
-                                                                    )}
-
-                                                                    <div className="flex flex-wrap gap-1.5">
-                                                                        {profile.school && (
-                                                                            <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/5 border border-primary/10 text-[9px] font-black text-primary uppercase">
-                                                                                <GraduationCap className="w-3 h-3" />
-                                                                                <span className="truncate max-w-[90px]">{profile.school}</span>
-                                                                            </div>
-                                                                        )}
-                                                                        {profile.workplace && (
-                                                                            <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/5 border border-emerald-500/10 text-[9px] font-black text-emerald-600 uppercase">
-                                                                                <Briefcase className="w-3 h-3" />
-                                                                                <span className="truncate max-w-[90px]">{profile.workplace}</span>
-                                                                            </div>
-                                                                        )}
+                                                                    <div className="p-2 rounded-xl bg-primary/5 group-hover:bg-primary group-hover:text-white transition-all duration-300 shrink-0">
+                                                                        <ArrowRight className="w-4 h-4" />
                                                                     </div>
-                                                                </div>
-                                                            </CardContent>
-                                                        </Card>
-                                                    </Link>
-                                                </motion.div>
-                                            ))}
-                                        </div>
+                                                                </CardContent>
+                                                            </Card>
+                                                        </Link>
+                                                    </motion.div>
+                                                ))}
+                                            </div>
+                                        </>
                                     )}
                                 </motion.div>
                             )}
                         </AnimatePresence>
                     </TabsContent>
 
-                    <TabsContent value="radar" className="m-0 focus-visible:outline-none animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    {/* ── RADAR TAB ── */}
+                    <TabsContent value="radar" className="m-0 focus-visible:outline-none animate-in fade-in duration-300">
                         <RadarTab />
                     </TabsContent>
                 </Tabs>

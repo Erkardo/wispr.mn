@@ -9,67 +9,70 @@ export type PublicProfile = {
     photoURL?: string;
     school?: string;
     workplace?: string;
+    score?: number;
 };
 
-export async function searchPublicProfilesAction(query: string, type: 'username' | 'name' | 'school' | 'workplace'): Promise<{ success: boolean; data?: PublicProfile[]; message?: string }> {
+export async function searchPublicProfilesAction(query: string): Promise<{ success: boolean; data?: PublicProfile[]; message?: string }> {
     try {
         const db = getAdminDb();
         const cleanQuery = query.trim().toLowerCase();
 
         if (!cleanQuery) return { success: true, data: [] };
 
-        // Firebase doesn't have a native full-text search or "LIKE %text%" operator.
-        // For basic "starts with" queries, we can use inequality operators.
-        // For a true search in production, Algolia or Typesense is needed.
-        // But for our Phase 2, we will use a naive prefix search + filter.
-
-        // We only search for users who have opted in `isPublic: true`
-        let profilesRef = db.collection('complimentOwners').where('isPublic', '==', true);
-
-        // Fetch max 100 rows, then filter in memory for fuzzy match (simple workaround for small-mid DB)
-        // If the DB scales, we MUST switch to a dedicated index or Algolia.
-        const snapshot = await profilesRef.limit(200).get();
+        // Fetch all public profiles (in-memory filter — works well for small-mid DBs)
+        const snapshot = await db.collection('complimentOwners')
+            .where('isPublic', '==', true)
+            .limit(300)
+            .get();
 
         const results: PublicProfile[] = [];
 
         snapshot.forEach(doc => {
             const data = doc.data();
+            if (!data.shortId) return;
 
-            // Safety check
-            if (!data.username && !data.displayName) return;
+            const fields = {
+                displayName: (data.displayName || '').toLowerCase(),
+                username: (data.username || '').toLowerCase(),
+                school: (data.school || '').toLowerCase(),
+                workplace: (data.workplace || '').toLowerCase(),
+            };
 
-            let isMatch = false;
+            // Score: exact start match > contains match > no match
+            let score = 0;
+            if (fields.displayName.startsWith(cleanQuery)) score += 8;
+            if (fields.displayName.includes(cleanQuery)) score += 4;
+            if (fields.username.startsWith(cleanQuery)) score += 6;
+            if (fields.username.includes(cleanQuery)) score += 3;
+            if (fields.school.includes(cleanQuery)) score += 2;
+            if (fields.workplace.includes(cleanQuery)) score += 2;
 
-            if (type === 'username' && data.username) {
-                isMatch = data.username.toLowerCase().includes(cleanQuery);
-            } else if (type === 'name' && data.displayName) {
-                isMatch = data.displayName.toLowerCase().includes(cleanQuery);
-            } else if (type === 'school' && data.school) {
-                isMatch = data.school.toLowerCase().includes(cleanQuery);
-            } else if (type === 'workplace' && data.workplace) {
-                isMatch = data.workplace.toLowerCase().includes(cleanQuery);
+            // Also check each word in display name for partial matches
+            const nameParts = fields.displayName.split(/\s+/);
+            for (const part of nameParts) {
+                if (part.startsWith(cleanQuery)) score += 2;
             }
 
-            if (isMatch && data.shortId) {
+            if (score > 0) {
                 results.push({
-                    shortId: data.shortId, // IMPORTANT: We redirect people to `/c/shortId` to keep anonymity alive!
+                    shortId: data.shortId,
                     username: data.username,
                     displayName: data.displayName,
                     photoURL: data.photoURL,
                     school: data.school,
                     workplace: data.workplace,
+                    score,
                 });
             }
         });
 
-        // Sort results by name simply
-        results.sort((a, b) => (a.displayName || a.username || '').localeCompare(b.displayName || b.username || ''));
+        // Sort by relevance score descending
+        results.sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
 
-        // Return top 20 matches max
         return { success: true, data: results.slice(0, 20) };
 
     } catch (error) {
-        console.error("Search failed", error);
+        console.error('Search failed', error);
         return { success: false, message: 'Хайлт хийхэд алдаа гарлаа.' };
     }
 }

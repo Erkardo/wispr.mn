@@ -3,7 +3,14 @@
 import type { Compliment, ComplimentOwner } from '@/types';
 import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { MessageCircle, Gift, Loader2, Share2, UserX, KeyRound, ShoppingCart, MessageSquareIcon, Send, X, ArrowRight, ShieldAlert } from 'lucide-react';
+import { MessageCircle, Gift, Loader2, Share2, UserX, KeyRound, ShoppingCart, MessageSquareIcon, Send, X, ArrowRight, ShieldAlert, MoreVertical, Trash2, Archive } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import Image from 'next/image';
 import { Button } from '../ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -138,6 +145,8 @@ function ComplimentCard({
   const [localReplyStatus, setLocalReplyStatus] = useState<string | null>(compliment.replyText || null);
   const [isReporting, setIsReporting] = useState(false);
   const [isReported, setIsReported] = useState(false);
+  const [isArchived, setIsArchived] = useState(compliment.isArchived ?? false);
+  const [isDeleted, setIsDeleted] = useState(false);
 
 
   const getFontSizeClass = (text: string) => {
@@ -466,12 +475,7 @@ function ComplimentCard({
   const handleReport = async () => {
     if (isReporting || isReported) return;
     if (!confirm('Энэ Wispr-ийг зохисгүй контент гэж мэдээлэх үү?')) return;
-
-    // Haptic for feedback
-    if (typeof navigator !== 'undefined' && navigator.vibrate) {
-      navigator.vibrate(60);
-    }
-
+    if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(60);
     setIsReporting(true);
     try {
       const result = await reportComplimentAction(compliment.ownerId, compliment.id);
@@ -481,10 +485,34 @@ function ComplimentCard({
       } else {
         toast({ title: 'Алдаа', description: result.message, variant: 'destructive' });
       }
-    } catch (err) {
+    } catch {
       toast({ title: 'Алдаа', description: 'Report илгээхэд алдаа гарлаа.', variant: 'destructive' });
-    } finally {
-      setIsReporting(false);
+    } finally { setIsReporting(false); }
+  };
+
+  const handleArchive = async () => {
+    if (!firestore) return;
+    try {
+      const ref = doc(firestore, 'complimentOwners', compliment.ownerId, 'compliments', compliment.id);
+      await updateDoc(ref, { isArchived: true });
+      setIsArchived(true);
+      toast({ title: 'Архивлагдлаа', description: 'Wispr архивт хадгалагдлаа.' });
+    } catch {
+      toast({ title: 'Алдаа', description: 'Архивлахад алдаа гарлаа.', variant: 'destructive' });
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!firestore) return;
+    if (!confirm('Энэ Wispr-ийг устгах уу? Буцаах боломжгүй.')) return;
+    try {
+      const { deleteDoc } = await import('firebase/firestore');
+      const ref = doc(firestore, 'complimentOwners', compliment.ownerId, 'compliments', compliment.id);
+      await deleteDoc(ref);
+      setIsDeleted(true);
+      toast({ title: 'Устгагдлаа', description: 'Wispr устгагдлаа.' });
+    } catch {
+      toast({ title: 'Алдаа', description: 'Устгахад алдаа гарлаа.', variant: 'destructive' });
     }
   };
 
@@ -498,9 +526,8 @@ function ComplimentCard({
   }
 
 
-  if (!selectedStyle) {
-    return <Skeleton className="w-full aspect-[16/10] rounded-2xl" />;
-  }
+  if (!selectedStyle) return <Skeleton className="w-full aspect-[16/10] rounded-2xl" />;
+  if (isDeleted || isArchived) return null;
 
   const mainCard = (
     <motion.div
@@ -534,27 +561,50 @@ function ComplimentCard({
           <div className="flex items-center gap-2">
             {getDateBadge()}
           </div>
-          <div className="flex items-center gap-2">
-            <motion.button
-              whileTap={{ scale: 0.88 }}
-              onClick={handleReport}
-              disabled={isReporting || isReported}
-              className={cn(
-                "h-10 w-10 rounded-2xl flex items-center justify-center bg-black/20 hover:bg-black/30 backdrop-blur-xl border border-white/10 transition-all",
-                isReported ? "text-red-400" : "text-white/50 hover:text-white/80"
-              )}
-            >
-              {isReporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldAlert className={cn("h-4 w-4", isReported && "fill-current")} />}
-            </motion.button>
-            <motion.button
-              whileTap={{ scale: 0.88 }}
-              onClick={handleShareClick}
-              disabled={isSharing}
-              className="h-10 w-10 rounded-2xl flex items-center justify-center bg-black/20 hover:bg-black/30 backdrop-blur-xl border border-white/10 text-white/50 hover:text-white/80 transition-all"
-            >
-              {isSharing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
-            </motion.button>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <motion.button
+                whileTap={{ scale: 0.88 }}
+                className="h-10 w-10 rounded-2xl flex items-center justify-center bg-black/20 hover:bg-black/30 backdrop-blur-xl border border-white/10 text-white/60 hover:text-white transition-all"
+              >
+                <MoreVertical className="h-4 w-4" />
+              </motion.button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48 rounded-2xl shadow-2xl border-border/50 bg-card/95 backdrop-blur-xl">
+              <DropdownMenuItem
+                onClick={handleShareClick}
+                disabled={isSharing}
+                className="flex items-center gap-3 rounded-xl cursor-pointer py-3 font-semibold"
+              >
+                {isSharing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4 text-blue-500" />}
+                Хуваалцах
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={handleArchive}
+                className="flex items-center gap-3 rounded-xl cursor-pointer py-3 font-semibold"
+              >
+                <Archive className="h-4 w-4 text-amber-500" />
+                Архивлах
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={handleReport}
+                disabled={isReporting || isReported}
+                className="flex items-center gap-3 rounded-xl cursor-pointer py-3 font-semibold"
+              >
+                {isReporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldAlert className="h-4 w-4 text-orange-500" />}
+                {isReported ? 'Мэдээлэгдсэн' : 'Мэдэгдэх'}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={handleDelete}
+                className="flex items-center gap-3 rounded-xl cursor-pointer py-3 font-semibold text-destructive focus:text-destructive"
+              >
+                <Trash2 className="h-4 w-4" />
+                Устгах
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Main Content Area */}

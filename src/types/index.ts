@@ -62,6 +62,7 @@ export type Compliment = {
   senderDistrict?: string;
   reportsCount?: number;
   isFlagged?: boolean;
+  isArchived?: boolean;
 };
 
 export type ReactionEmoji = '❤️' | '👍' | '😢' | '🔥';

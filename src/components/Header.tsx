@@ -55,47 +55,43 @@ export function Header({
       <div className="container relative flex h-16 max-w-2xl items-center justify-between px-4">
 
         {/* Left Section: Back Button & Logo */}
-        <div className="flex z-10 w-1/4 items-center gap-1.5">
-          {showBackButton ? (
+        <div className="flex z-10 w-1/3 items-center gap-1.5">
+          {showBackButton && (
             <Button
               variant="ghost"
               size="icon"
-              className="-ml-2 h-10 w-10 rounded-full hover:bg-muted/50 active:scale-95 transition-transform"
+              className="-ml-2 h-10 w-10 rounded-full hover:bg-muted/50 active:scale-95 transition-transform shrink-0"
               onClick={() => router.back()}
             >
               <ChevronLeft className="h-6 w-6 text-foreground/80" />
             </Button>
-          ) : (
-            <div className="w-10 h-10 -ml-2" /> /* Placeholder to keep centering */
           )}
+          <Link href="/" passHref className="flex items-center shrink-0">
+            <Logo className={cn("text-primary transition-all", title === 'Wispr-үүд' ? "w-24" : "w-[72px]")} />
+          </Link>
         </div>
 
-        {/* Center Section: Animated Title & Logo */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        {/* Center Section: Animated Title */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none px-4 mx-auto w-1/3">
           <motion.div
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, ease: "easeOut" }}
-            className="flex items-center justify-center gap-2 pointer-events-auto"
+            className="flex w-full items-center justify-center pointer-events-auto"
           >
-            <Link href="/" passHref className="flex items-center shrink-0">
-              <Logo className={cn("text-primary transition-all", title === 'Wispr-үүд' ? "w-24" : "w-16 md:w-20")} />
-            </Link>
-            {title !== 'Wispr-үүд' && (
-              <h1 className="text-[17px] font-bold tracking-tight bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
-                {title}
-              </h1>
-            )}
+            <h1 className="text-[17px] font-bold tracking-tight bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent truncate text-center">
+              {title}
+            </h1>
           </motion.div>
         </div>
 
         {/* Right Section: Notification Bell */}
-        <div className="flex z-10 w-1/4 justify-end">
+        <div className="flex z-10 w-1/3 justify-end">
           <Button
             variant="ghost"
             size="icon"
             className="relative h-10 w-10 rounded-full hover:bg-muted/50 active:scale-95 transition-transform"
-            onClick={() => router.push('/?tab=received')}
+            onClick={() => router.push('/activity')}
           >
             <Bell className="h-[22px] w-[22px] text-foreground/80" />
             {unreadCount > 0 && (

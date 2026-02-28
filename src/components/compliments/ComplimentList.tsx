@@ -109,12 +109,14 @@ function ComplimentCard({
   compliment,
   ownerData,
   ownerLoading,
-  index
+  index,
+  isArchiveView = false,
 }: {
   compliment: WithId<Compliment>,
   ownerData: WithId<ComplimentOwner> | null,
   ownerLoading: boolean,
-  index: number
+  index: number,
+  isArchiveView?: boolean,
 }) {
   const { user } = useUser();
   const { toast } = useToast();
@@ -527,7 +529,9 @@ function ComplimentCard({
 
 
   if (!selectedStyle) return <Skeleton className="w-full aspect-[16/10] rounded-2xl" />;
-  if (isDeleted || isArchived) return null;
+  // In archive view, always render. In normal view, hide archived/deleted cards.
+  if (!isArchiveView && (isDeleted || isArchived)) return null;
+  if (isArchiveView && isDeleted) return null;
 
   const mainCard = (
     <motion.div
@@ -585,9 +589,6 @@ function ComplimentCard({
                   ❤️
                 </motion.span>
                 <span>Таалагдлаа</span>
-                {(localReactions['❤️'] ?? 0) > 0 && (
-                  <span className="ml-auto text-xs font-black text-muted-foreground tabular-nums">{localReactions['❤️']}</span>
-                )}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -599,13 +600,30 @@ function ComplimentCard({
                 Хуваалцах
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={handleArchive}
-                className="flex items-center gap-3 rounded-xl cursor-pointer py-3 font-semibold"
-              >
-                <Archive className="h-4 w-4 text-amber-500" />
-                Архивлах
-              </DropdownMenuItem>
+              {isArchiveView ? (
+                <DropdownMenuItem
+                  onClick={async () => {
+                    if (!firestore) return;
+                    try {
+                      await updateDoc(doc(firestore, 'complimentOwners', compliment.ownerId, 'compliments', compliment.id), { isArchived: false });
+                      setIsDeleted(true); // Remove from archive view
+                      toast({ title: 'Архиваас гаргалаа', description: 'Wispr ирсэн хэсэгт буцлаа.' });
+                    } catch { toast({ title: 'Алдаа', variant: 'destructive' }); }
+                  }}
+                  className="flex items-center gap-3 rounded-xl cursor-pointer py-3 font-semibold"
+                >
+                  <Archive className="h-4 w-4 text-amber-500" />
+                  Архиваас гаргах
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem
+                  onClick={handleArchive}
+                  className="flex items-center gap-3 rounded-xl cursor-pointer py-3 font-semibold"
+                >
+                  <Archive className="h-4 w-4 text-amber-500" />
+                  Архивлах
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem
                 onClick={handleReport}
                 disabled={isReporting || isReported}
@@ -662,18 +680,11 @@ function ComplimentCard({
         {/* Bottom Bar: Metadata + Reactions + Actions — all in one row */}
         <div className="relative z-10 px-5 pb-5 space-y-3">
           {/* Bottom info row — sender badge only */}
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.18em] text-white/50 bg-black/10 backdrop-blur-xl px-3 py-1.5 rounded-xl border border-white/10">
               <UserX className="h-3 w-3 shrink-0" />
               <span>Нэрээ нууцласан</span>
             </div>
-            {/* Total likes display */}
-            {(localReactions['❤️'] ?? 0) > 0 && (
-              <div className="flex items-center gap-1 text-[11px] font-black text-white/60 bg-black/15 backdrop-blur-xl px-2.5 py-1.5 rounded-xl border border-white/10">
-                <span>❤️</span>
-                <span className="tabular-nums">{localReactions['❤️']}</span>
-              </div>
-            )}
           </div>
 
           {/* Action buttons */}
@@ -998,12 +1009,14 @@ export function ComplimentList({
   compliments,
   isLoading,
   ownerData,
-  ownerLoading
+  ownerLoading,
+  isArchiveView = false,
 }: {
   compliments: WithId<Compliment>[];
   isLoading: boolean;
   ownerData: WithId<ComplimentOwner> | null;
   ownerLoading: boolean;
+  isArchiveView?: boolean;
 }) {
   if (isLoading) {
     return (
@@ -1059,7 +1072,7 @@ export function ComplimentList({
   return (
     <div className="space-y-10 pb-20">
       {compliments.map((comp, index) => (
-        <ComplimentCard key={comp.id} compliment={comp} ownerData={ownerData} ownerLoading={ownerLoading} index={index} />
+        <ComplimentCard key={comp.id} compliment={comp} ownerData={ownerData} ownerLoading={ownerLoading} index={index} isArchiveView={isArchiveView} />
       ))}
       <div className="py-12 text-center relative">
         <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 border-t border-white/5 z-0" />

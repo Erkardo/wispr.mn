@@ -12,6 +12,7 @@ import { doc } from 'firebase/firestore';
 import type { ComplimentOwner } from '@/types';
 import type { WithId } from '@/firebase';
 import { SwipeBack } from '@/components/SwipeBack';
+import { PollManager } from '@/components/polls/PollManager';
 
 
 export default function CreatePage() {
@@ -63,6 +64,16 @@ export default function CreatePage() {
                             </div>
                         </>
                     )}
+
+                    {/* Санал асуулга */}
+                    <div className="animate-in fade-in-50 slide-in-from-bottom-5 duration-500 pt-4" style={{ animationDelay: '400ms', animationFillMode: 'both' }}>
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="h-px flex-1 bg-border/50" />
+                            <span className="text-[11px] font-black uppercase tracking-widest text-muted-foreground/60">Санал асуулга</span>
+                            <div className="h-px flex-1 bg-border/50" />
+                        </div>
+                        <PollManager />
+                    </div>
                 </div>
             </div>
         </SwipeBack>

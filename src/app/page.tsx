@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useEffect } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { ComplimentList } from '@/components/compliments/ComplimentList';
 import { SentList } from '@/components/compliments/SentList';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -13,8 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
-import { Gem, RefreshCw } from 'lucide-react';
-import { PollManager } from '@/components/polls/PollManager';
+import { Gem, Inbox, Send, Heart, Archive } from 'lucide-react';
 import { PullToRefresh } from '@/components/ui/PullToRefresh';
 
 function AnonymousLoginPrompt() {
@@ -38,18 +37,24 @@ function AnonymousLoginPrompt() {
   );
 }
 
+function LoadingSkeletons() {
+  return (
+    <div className="space-y-6">
+      <div className="w-full aspect-[16/10] bg-muted/40 animate-pulse rounded-[2rem] border border-white/5 shadow-inner" />
+      <div className="w-full aspect-[16/10] bg-muted/30 animate-pulse rounded-[2rem] border border-white/5" />
+      <div className="w-full aspect-[16/10] bg-muted/20 animate-pulse rounded-[2rem] border border-white/5" />
+    </div>
+  );
+}
 
 export default function HomePage() {
   const { user, loading: userLoading } = useUser();
   const firestore = useFirestore();
   const searchParams = useSearchParams();
-  const router = useRouter();
 
   const complimentsQuery = useMemoFirebase(() => {
     if (!user || !firestore) return null;
-    return query(
-      collection(firestore, 'complimentOwners', user.uid, 'compliments')
-    );
+    return query(collection(firestore, 'complimentOwners', user.uid, 'compliments'));
   }, [user, firestore]);
 
   const ownerRef = useMemoFirebase(() => {
@@ -62,19 +67,25 @@ export default function HomePage() {
 
   const sortedCompliments = useMemo(() => {
     if (!compliments) return [];
-    // sort by isRead first (unread on top), then by date
     return [...compliments].sort((a, b) => {
       const aRead = a.isRead ?? false;
       const bRead = b.isRead ?? false;
-      if (aRead !== bRead) {
-        return aRead ? 1 : -1;
-      }
-      // Defensive checks for createdAt and safer timestamp conversion
+      if (aRead !== bRead) return aRead ? 1 : -1;
       const aTime = (a.createdAt && typeof a.createdAt.toDate === 'function') ? a.createdAt.toDate().getTime() : 0;
       const bTime = (b.createdAt && typeof b.createdAt.toDate === 'function') ? b.createdAt.toDate().getTime() : 0;
-      return bTime - aTime; // Sorts descending by time
+      return bTime - aTime;
     });
   }, [compliments]);
+
+  // Derived filtered lists
+  const receivedCompliments = useMemo(() =>
+    sortedCompliments.filter(c => !c.isArchived), [sortedCompliments]);
+
+  const likedCompliments = useMemo(() =>
+    sortedCompliments.filter(c => !c.isArchived && (c.reactions?.['❤️'] ?? 0) > 0), [sortedCompliments]);
+
+  const archivedCompliments = useMemo(() =>
+    sortedCompliments.filter(c => c.isArchived === true), [sortedCompliments]);
 
   useEffect(() => {
     const complimentId = searchParams.get('complimentId');
@@ -83,77 +94,105 @@ export default function HomePage() {
       if (element) {
         element.scrollIntoView({ behavior: 'smooth', block: 'center' });
         element.classList.add('highlight-card');
-        setTimeout(() => {
-          element.classList.remove('highlight-card');
-        }, 2000);
+        setTimeout(() => element.classList.remove('highlight-card'), 2000);
       }
     }
   }, [searchParams, complimentsLoading, sortedCompliments]);
 
-  const handleTabChange = (value: string) => {
-    // Tab changes handled by state automatically
-  };
-
-  const pageContent = useMemo(() => {
-    const isLoading = userLoading || ownerLoading;
-    if (isLoading) {
-      return (
-        <div className="space-y-6">
-          <div className="w-full aspect-[16/10] bg-muted/40 animate-pulse rounded-[2rem] border border-white/5 shadow-inner" />
-          <div className="w-full aspect-[16/10] bg-muted/30 animate-pulse rounded-[2rem] border border-white/5" />
-          <div className="w-full aspect-[16/10] bg-muted/20 animate-pulse rounded-[2rem] border border-white/5" />
-        </div>
-      );
-    }
-
-    if (user?.isAnonymous) {
-      return <AnonymousLoginPrompt />;
-    }
-
-    return (
-      <PullToRefresh onRefresh={async () => {
-        // Refresh handled by firebase hooks re-evaluating or window reload for full state reset
-        window.location.reload();
-      }}>
-        <ComplimentList
-          compliments={sortedCompliments}
-          isLoading={complimentsLoading}
-          ownerData={ownerData}
-          ownerLoading={ownerLoading}
-        />
-      </PullToRefresh>
-    );
-  }, [user, userLoading, ownerData, ownerLoading, sortedCompliments, complimentsLoading]);
+  const isLoading = userLoading || ownerLoading;
 
   return (
     <>
       <Header title="Wispr-үүд" />
-      <Tabs defaultValue="compliments" onValueChange={handleTabChange} className="w-full pt-4">
+      <Tabs defaultValue="received" className="w-full pt-4">
         <div className="flex justify-center px-4 mb-4">
-          <div className="w-full max-w-sm overflow-x-auto no-scrollbar pb-2 -mb-2">
+          <div className="w-full overflow-x-auto no-scrollbar pb-2 -mb-2">
             <TabsList className="bg-muted/40 p-1.5 rounded-full shadow-inner border border-border/40 backdrop-blur-sm h-auto flex flex-nowrap justify-start sm:justify-center min-w-max mx-auto gap-1">
-              <TabsTrigger value="compliments" className="rounded-full px-5 py-2.5 text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:font-bold transition-all duration-300">Wispr-үүд</TabsTrigger>
-              <TabsTrigger value="sent" className="rounded-full px-5 py-2.5 text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:font-bold transition-all duration-300">Миний бичсэн</TabsTrigger>
-              <TabsTrigger value="polls" className="rounded-full px-5 py-2.5 text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:font-bold transition-all duration-300">Санал асуулга</TabsTrigger>
+              <TabsTrigger value="received" className="rounded-full px-4 py-2.5 text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:font-bold transition-all duration-300 flex items-center gap-1.5">
+                <Inbox className="w-3.5 h-3.5" />Ирсэн
+              </TabsTrigger>
+              <TabsTrigger value="sent" className="rounded-full px-4 py-2.5 text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:font-bold transition-all duration-300 flex items-center gap-1.5">
+                <Send className="w-3.5 h-3.5" />Илгээсэн
+              </TabsTrigger>
+              <TabsTrigger value="liked" className="rounded-full px-4 py-2.5 text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:font-bold transition-all duration-300 flex items-center gap-1.5">
+                <Heart className="w-3.5 h-3.5" />Таалагдсан
+              </TabsTrigger>
+              <TabsTrigger value="archived" className="rounded-full px-4 py-2.5 text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:font-bold transition-all duration-300 flex items-center gap-1.5">
+                <Archive className="w-3.5 h-3.5" />Архив
+              </TabsTrigger>
             </TabsList>
           </div>
         </div>
-        <TabsContent value="compliments" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="container mx-auto max-w-2xl p-4 py-8">
-            {pageContent}
+
+        {/* ── ИРСЭН ── */}
+        <TabsContent value="received" className="animate-in fade-in duration-300 m-0">
+          <div className="container mx-auto max-w-2xl p-4 py-6">
+            {isLoading ? <LoadingSkeletons /> : user?.isAnonymous ? <AnonymousLoginPrompt /> : (
+              <PullToRefresh onRefresh={async () => window.location.reload()}>
+                <ComplimentList
+                  compliments={receivedCompliments}
+                  isLoading={complimentsLoading}
+                  ownerData={ownerData}
+                  ownerLoading={ownerLoading}
+                />
+              </PullToRefresh>
+            )}
           </div>
         </TabsContent>
-        <TabsContent value="sent" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+
+        {/* ── ИЛГЭЭСЭН ── */}
+        <TabsContent value="sent" className="animate-in fade-in duration-300 m-0">
           <div className="container mx-auto max-w-2xl p-4 py-2">
             <SentList />
           </div>
         </TabsContent>
-        <TabsContent value="polls" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="container mx-auto max-w-2xl p-4 py-8">
-            <PollManager />
+
+        {/* ── ТААЛАГДСАН ── */}
+        <TabsContent value="liked" className="animate-in fade-in duration-300 m-0">
+          <div className="container mx-auto max-w-2xl p-4 py-6">
+            {isLoading ? <LoadingSkeletons /> : user?.isAnonymous ? <AnonymousLoginPrompt /> : (
+              likedCompliments.length === 0 ? (
+                <div className="text-center py-20 space-y-3">
+                  <div className="text-5xl">❤️</div>
+                  <h3 className="font-black text-xl">Таалагдсан wispr байхгүй</h3>
+                  <p className="text-muted-foreground text-sm">Wispr-үүдээ ❤️ дарж таалагдсан руу нэмж болно</p>
+                </div>
+              ) : (
+                <ComplimentList
+                  compliments={likedCompliments}
+                  isLoading={complimentsLoading}
+                  ownerData={ownerData}
+                  ownerLoading={ownerLoading}
+                />
+              )
+            )}
+          </div>
+        </TabsContent>
+
+        {/* ── АРХИВ ── */}
+        <TabsContent value="archived" className="animate-in fade-in duration-300 m-0">
+          <div className="container mx-auto max-w-2xl p-4 py-6">
+            {isLoading ? <LoadingSkeletons /> : user?.isAnonymous ? <AnonymousLoginPrompt /> : (
+              archivedCompliments.length === 0 ? (
+                <div className="text-center py-20 space-y-3">
+                  <div className="text-5xl">📁</div>
+                  <h3 className="font-black text-xl">Архив хоосон байна</h3>
+                  <p className="text-muted-foreground text-sm">Wispr-ийг ⋯ цэснээс архивлах боломжтой</p>
+                </div>
+              ) : (
+                <ComplimentList
+                  compliments={archivedCompliments}
+                  isLoading={complimentsLoading}
+                  ownerData={ownerData}
+                  ownerLoading={ownerLoading}
+                  isArchiveView
+                />
+              )
+            )}
           </div>
         </TabsContent>
       </Tabs>
+
       <footer className="w-full py-8 px-4 mt-8 border-t bg-muted/30">
         <div className="container mx-auto max-w-2xl flex flex-col items-center gap-4">
           <div className="flex gap-6 text-sm text-muted-foreground">

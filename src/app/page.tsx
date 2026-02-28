@@ -131,17 +131,17 @@ export default function HomePage() {
             </TabsList>
           </div>
         </div>
-        <TabsContent value="compliments">
+        <TabsContent value="compliments" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="container mx-auto max-w-2xl p-4 py-8">
             {pageContent}
           </div>
         </TabsContent>
-        <TabsContent value="sent">
+        <TabsContent value="sent" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="container mx-auto max-w-2xl p-4 py-2">
             <SentList />
           </div>
         </TabsContent>
-        <TabsContent value="polls">
+        <TabsContent value="polls" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="container mx-auto max-w-2xl p-4 py-8">
             <PollManager />
           </div>

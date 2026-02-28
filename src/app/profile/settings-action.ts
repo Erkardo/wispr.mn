@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache';
 export async function updateProfileSettingsAction(userId: string, data: {
     username: string;
     displayName: string;
+    bio: string;
     school: string;
     workplace: string;
     isPublic: boolean;
@@ -44,6 +45,7 @@ export async function updateProfileSettingsAction(userId: string, data: {
         const updateData: any = {
             username: cleanUsername,
             displayName: data.displayName.trim(),
+            bio: data.bio.trim(),
             school: data.school.trim(),
             workplace: data.workplace.trim(),
             isPublic: data.isPublic,
@@ -53,12 +55,18 @@ export async function updateProfileSettingsAction(userId: string, data: {
         if (!ownerData?.shortId) {
             const shortId = Math.random().toString(36).slice(2, 10);
             updateData.shortId = shortId;
-            updateData.shareUrl = `https://wispr.mn/c/${shortId}`; // Standardize URL
 
             // Create entry in shortLinks
             await db.collection('shortLinks').doc(shortId).set({
                 ownerId: userId
             });
+        }
+
+        // 4. Update shareUrl based on whether username exists
+        if (cleanUsername) {
+            updateData.shareUrl = `https://wispr.mn/@${cleanUsername}`;
+        } else if (!ownerData?.shareUrl) {
+            updateData.shareUrl = `https://wispr.mn/c/${updateData.shortId || ownerData?.shortId}`;
         }
 
         await ownerRef.update(updateData);

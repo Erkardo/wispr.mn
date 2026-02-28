@@ -10,6 +10,8 @@ import type { Compliment } from '@/types';
 import { format, isToday, isYesterday } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 type SentWisprData = Compliment & { receiverId: string };
 
@@ -102,10 +104,25 @@ export function SentList() {
 
     if (sentWisprs.length === 0) {
         return (
-            <div className="text-center py-20 px-4 border-2 border-dashed rounded-2xl mt-8 bg-card/50">
-                <Send className="mx-auto h-12 w-12 text-muted-foreground opacity-50" />
-                <h3 className="mt-4 text-lg font-medium text-foreground">Та одоогоор Wispr илгээгээгүй байна</h3>
-                <p className="mt-2 text-sm text-muted-foreground">Бусад руу урмын үг илгээснээр энд харагдана.</p>
+            <div className="text-center py-24 px-6 rounded-[2rem] mt-8 bg-gradient-to-b from-secondary/50 to-transparent border border-white/5 relative overflow-hidden">
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent opacity-50"></div>
+
+                <div className="relative z-10">
+                    <div className="mx-auto w-24 h-24 bg-primary/10 rounded-[2rem] flex items-center justify-center rotate-3 mb-6 shadow-inner">
+                        <Send className="h-10 w-10 text-primary -rotate-3 drop-shadow-md ml-1" />
+                    </div>
+
+                    <h3 className="text-2xl font-black text-foreground mb-3 tracking-tight">Та одоогоор Wispr илгээгээгүй байна</h3>
+                    <p className="text-base text-muted-foreground max-w-sm mx-auto leading-relaxed mb-8">
+                        Хэн нэгэн рүү урам сэргээсэн, сайхан үгс илгээгээд үзээрэй. Тэдний өдрийг гэрэлтүүлэх үгс энд хадгалагдах болно.
+                    </p>
+
+                    <Button asChild size="lg" className="rounded-full shadow-lg shadow-primary/20 h-14 px-8 font-bold text-base hover:scale-105 transition-transform">
+                        <Link href="/explore">
+                            🔍 Хүмүүсийг хайх
+                        </Link>
+                    </Button>
+                </div>
             </div>
         );
     }

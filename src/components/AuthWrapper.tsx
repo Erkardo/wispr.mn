@@ -59,10 +59,22 @@ export function AuthWrapper({ children }: { children: React.ReactNode }) {
 
           // Check if the shareUrl needs to be updated because the domain has changed
           const needsUpdate = !data.shareUrl || !data.shareUrl.startsWith(appUrl);
+          const updates: any = {};
 
           if (needsUpdate && data.shortId) {
-            const newShareUrl = `${appUrl}/c/${data.shortId}`;
-            await updateDoc(ownerRef, { shareUrl: newShareUrl });
+            updates.shareUrl = `${appUrl}/c/${data.shortId}`;
+          }
+
+          if (!data.photoURL && user.photoURL) {
+            updates.photoURL = user.photoURL;
+          }
+
+          if (!data.displayName && user.displayName) {
+            updates.displayName = user.displayName;
+          }
+
+          if (Object.keys(updates).length > 0) {
+            await updateDoc(ownerRef, updates);
           }
         }
       } catch (error) {

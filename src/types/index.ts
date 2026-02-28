@@ -19,6 +19,7 @@ export type ComplimentOwner = {
   // Social Profile Fields (Phase 1)
   username?: string;
   displayName?: string;
+  bio?: string;
   photoURL?: string;
   school?: string;
   workplace?: string;

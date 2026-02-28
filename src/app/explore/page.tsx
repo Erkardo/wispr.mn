@@ -79,7 +79,7 @@ export default function ExplorePage() {
                         </div>
                     </div>
 
-                    <TabsContent value="search" className="space-y-8 focus-visible:outline-none m-0">
+                    <TabsContent value="search" className="space-y-8 focus-visible:outline-none m-0 animate-in fade-in slide-in-from-bottom-4 duration-500">
                         {/* Premium Search Bar Container */}
                         <div className="sticky top-2 z-30 transition-all duration-300">
                             <Card className={cn(
@@ -292,7 +292,7 @@ export default function ExplorePage() {
                         </AnimatePresence>
                     </TabsContent>
 
-                    <TabsContent value="radar" className="m-0 focus-visible:outline-none">
+                    <TabsContent value="radar" className="m-0 focus-visible:outline-none animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <RadarTab />
                     </TabsContent>
                 </Tabs>

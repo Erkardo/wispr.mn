@@ -33,11 +33,18 @@ export function ShareLink({ ownerData, ownerLoading }: { ownerData: WithId<Compl
       const shortLinkRef = doc(firestore, 'shortLinks', shortId);
       const batch = writeBatch(firestore);
 
-      const ownerDocData = {
+      const ownerDocData: any = {
         ownerId: user.uid,
         shortId: shortId,
         shareUrl: newShareUrl,
       };
+
+      if (!ownerData?.displayName && user.displayName) {
+        ownerDocData.displayName = user.displayName;
+      }
+      if (!ownerData?.photoURL && user.photoURL) {
+        ownerDocData.photoURL = user.photoURL;
+      }
       batch.set(ownerRef, ownerDocData, { merge: true });
 
       const shortLinkDocData = {

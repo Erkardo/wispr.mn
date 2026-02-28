@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Loader2, MapPin, Radar as RadarIcon, Navigation } from 'lucide-react';
+import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { activateRadarAction, getNearbyRadarUsersAction } from './radar-action';
 import { type PublicProfile } from './search-action';
@@ -68,11 +69,27 @@ export function RadarTab() {
                 <div className="absolute bottom-0 left-0 w-32 h-32 bg-secondary/10 rounded-full blur-3xl -ml-16 -mb-16" />
 
                 <CardContent className="p-8 text-center space-y-6 relative z-10">
-                    <div className="relative w-28 h-28 mx-auto flex items-center justify-center mb-2">
-                        <div className={cn("absolute inset-0 bg-primary/20 rounded-full transition-all duration-1000", isRadarActive || isPending ? "animate-ping opacity-75" : "opacity-0")} style={{ animationDuration: '3s' }}></div>
-                        <div className={cn("absolute inset-4 bg-primary/30 rounded-full transition-all duration-700", isRadarActive || isPending ? "animate-pulse opacity-50" : "opacity-0 ")} style={{ animationDuration: '2s' }}></div>
-                        <div className="relative bg-background p-5 rounded-full ring-4 ring-primary/10 shadow-xl z-10 hover:scale-105 transition-transform">
-                            <RadarIcon className={cn("h-10 w-10 text-primary transition-all duration-1000", isPending && "animate-spin")} />
+                    <div className="relative w-28 h-28 mx-auto flex items-center justify-center mb-6 mt-4">
+                        {(isRadarActive || isPending) && (
+                            <>
+                                {[0, 1, 2].map((i) => (
+                                    <motion.div
+                                        key={i}
+                                        className="absolute inset-0 rounded-full border-2 border-primary bg-primary/5"
+                                        initial={{ opacity: 0.8, scale: 0.5 }}
+                                        animate={{ opacity: 0, scale: 3.5 }}
+                                        transition={{
+                                            duration: 3,
+                                            repeat: Infinity,
+                                            delay: i * 1,
+                                            ease: "easeOut",
+                                        }}
+                                    />
+                                ))}
+                            </>
+                        )}
+                        <div className="relative bg-background p-5 rounded-full ring-4 ring-primary/20 shadow-xl z-20 hover:scale-110 transition-transform shadow-primary/30 text-primary">
+                            <RadarIcon className={cn("h-10 w-10 transition-all duration-1000", isPending && "animate-spin")} />
                         </div>
                     </div>
                     <div className="space-y-2">

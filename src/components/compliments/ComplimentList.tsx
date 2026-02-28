@@ -3,7 +3,7 @@
 import type { Compliment, ComplimentOwner } from '@/types';
 import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { MessageCircle, Gift, Loader2, Share2, UserX, KeyRound, ShoppingCart, MessageSquareIcon, Send } from 'lucide-react';
+import { MessageCircle, Gift, Loader2, Share2, UserX, KeyRound, ShoppingCart, MessageSquareIcon, Send, X } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect, useRef, forwardRef, useCallback } from 'react';
@@ -330,6 +330,11 @@ function ComplimentCard({
     if (isReacting) return;
     setIsReacting(reaction);
 
+    // Haptic feedback for micro-interaction
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate(40);
+    }
+
     setLocalReactions(prev => ({ ...prev, [reaction]: (prev[reaction] || 0) + 1 }));
 
     try {
@@ -473,7 +478,7 @@ function ComplimentCard({
     >
       <Card
         id={`compliment-card-${compliment.id}`}
-        className="w-full relative overflow-hidden text-white rounded-3xl border-none shadow-2xl transition-all duration-500"
+        className="w-full relative overflow-hidden text-white rounded-3xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.4)] transition-all duration-500 border border-white/20"
         style={{ backgroundImage: selectedStyle.bg }}
       >
         <CardHeader className="flex flex-row items-center justify-between p-6 pb-2">
@@ -482,14 +487,14 @@ function ComplimentCard({
             {isSharing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
           </Button>
         </CardHeader>
-        <CardContent className="relative flex flex-col items-center justify-center p-6 md:p-10 text-center aspect-[16/10] overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.1)_0%,_rgba(255,255,255,0)_50%)]"></div>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[14rem] opacity-10 select-none -rotate-12">{selectedStyle?.emoji}</div>
+        <CardContent className="relative flex flex-col items-center justify-center p-6 md:p-10 text-center aspect-[16/10] overflow-hidden shadow-[inset_0_1px_2px_rgba(255,255,255,0.4)]">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(255,255,255,0.3)_0%,_rgba(255,255,255,0)_60%)]"></div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[14rem] opacity-10 select-none -rotate-12 blur-sm">{selectedStyle?.emoji}</div>
 
           <p className={cn(
-            "font-black leading-tight my-auto z-10 text-white",
+            "font-black leading-tight my-auto z-10 text-white tracking-tight",
             getFontSizeClass(compliment.text)
-          )} style={{ textShadow: '0 2px 6px rgba(0,0,0,0.2)' }}>
+          )} style={{ textShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
             {compliment.text}
           </p>
 
@@ -514,8 +519,8 @@ function ComplimentCard({
                   handleReaction(emoji);
                 }}
                 className={cn(
-                  "flex items-center gap-1.5 px-2.5 py-1 rounded-full hover:bg-white/20 transition-all text-[11px] font-bold text-white",
-                  isReacting === emoji && 'animate-bounce'
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-white/20 transition-all text-xs font-bold text-white shadow-sm",
+                  isReacting === emoji ? 'animate-in zoom-in spin-in-12 duration-300 scale-125' : 'active:scale-90'
                 )}
                 disabled={!!isReacting}
               >
@@ -525,11 +530,11 @@ function ComplimentCard({
             ))}
           </div>
         </CardContent>
-        <CardFooter className="relative z-10 bg-black/10 flex items-center gap-3 p-4 pt-3 backdrop-blur-md border-t border-white/10">
+        <CardFooter className="relative z-10 bg-black/20 flex items-center gap-3 p-4 pt-3 backdrop-blur-2xl border-t border-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]">
           <Button
             variant="ghost"
             className={cn(
-              "flex-1 font-bold rounded-2xl h-11 border-2 transition-all backdrop-blur-sm text-sm",
+              "flex-1 font-bold rounded-2xl h-12 border-2 transition-all backdrop-blur-sm text-sm",
               isReplying
                 ? "bg-white text-primary border-white shadow-lg"
                 : "bg-white/5 text-white border-white/10 hover:bg-white/15 hover:border-white/20"
@@ -542,7 +547,7 @@ function ComplimentCard({
           </Button>
 
           <Button
-            className="flex-1 font-black bg-white text-primary hover:bg-white/90 rounded-2xl h-11 shadow-lg shadow-black/10 transition-all active:scale-95 border-none text-sm"
+            className="flex-1 font-black bg-white text-primary hover:bg-white/90 rounded-2xl h-12 shadow-lg shadow-black/10 transition-all active:scale-95 border-none text-sm"
             onClick={() => setIsHintDialogOpen(true)}
           >
             <KeyRound className="mr-2 h-4 w-4 text-primary" />
@@ -551,23 +556,36 @@ function ComplimentCard({
         </CardFooter>
       </Card>
 
-      {/* Reply Input Area */}
+      {/* Reply Input Area - Floating Bottom Sheet */}
       {isReplying && !localReplyStatus && (
-        <motion.div
-          initial={{ opacity: 0, height: 0, y: -10 }}
-          animate={{ opacity: 1, height: 'auto', y: 0 }}
-          className="mt-3 relative z-0"
-        >
-          <div className="absolute top-0 left-8 w-4 h-4 bg-muted/50 transform -translate-y-1/2 rotate-45 border-l border-t border-border/50"></div>
-          <div className="bg-muted/50 backdrop-blur-xl rounded-2xl p-4 border border-border/50 shadow-sm relative z-10">
-            <h4 className="text-[10px] font-black mb-3 ml-1 text-primary flex items-center gap-1.5 uppercase tracking-widest">
-              <MessageSquareIcon className="w-3.5 h-3.5" />
-              Хариу илгээх
-            </h4>
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+            onClick={() => !isSubmittingReply && setIsReplying(false)}
+          />
+          <motion.div
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t shadow-[0_-10px_40px_rgba(0,0,0,0.1)] rounded-t-3xl p-4 pb-8 md:max-w-2xl md:mx-auto md:bottom-4 md:rounded-3xl"
+          >
+            <div className="flex items-center justify-between mb-4 px-2">
+              <h4 className="text-xs font-black text-primary flex items-center gap-1.5 uppercase tracking-widest">
+                <MessageSquareIcon className="w-4 h-4" />
+                Риплай бичих
+              </h4>
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full bg-secondary/50 hover:bg-secondary" onClick={() => !isSubmittingReply && setIsReplying(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
             <div className="relative">
               <Textarea
                 placeholder="Таны хариу (Зөвхөн бичсэн хүнд л харагдана)..."
-                className="resize-none min-h-[90px] bg-background/80 border-none shadow-inner rounded-xl pr-3 pb-12 pt-3 text-sm focus-visible:ring-1 focus-visible:ring-primary/30"
+                className="resize-none min-h-[100px] bg-secondary/50 border-none shadow-inner rounded-2xl pr-3 pb-12 pt-4 px-4 text-base focus-visible:ring-1 focus-visible:ring-primary/30"
                 value={replyText}
                 onChange={(e) => setReplyText(e.target.value)}
                 autoFocus
@@ -575,7 +593,7 @@ function ComplimentCard({
               <div className="absolute bottom-2 right-2 flex justify-end">
                 <Button
                   size="sm"
-                  className="rounded-full shadow-md font-bold px-4"
+                  className="rounded-full shadow-lg font-bold px-4 h-9"
                   onClick={handleReplySubmit}
                   disabled={isSubmittingReply || !replyText.trim()}
                 >
@@ -585,13 +603,13 @@ function ComplimentCard({
               </div>
             </div>
             {!compliment.senderId && (
-              <p className="text-[10px] text-muted-foreground mt-3 mx-1 flex items-start gap-1">
-                <span className="text-orange-500">⚠️</span>
-                Жич: Илгээгч бүртгэлгүй бол таны хариуг унших боломжгүй байж магадгүй.
+              <p className="text-[10px] text-muted-foreground mt-4 mx-2 flex items-start gap-1.5">
+                <span className="text-orange-500 text-xs">⚠️</span>
+                Жич: Илгээгч нь бүртгэлгүй зочин байвал таны хариуг унших чадахгүй байх магадлалтай.
               </p>
             )}
-          </div>
-        </motion.div>
+          </motion.div>
+        </>
       )}
 
       {/* Visual Indicator of a Reply existing */}
@@ -624,9 +642,9 @@ function ComplimentCard({
       >
         <Card
           id={`compliment-card-${compliment.id}`}
-          className="hover:soft-shadow transition-shadow overflow-hidden"
+          className="hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.2)] transition-all duration-300 overflow-hidden border border-white/10 dark:border-white/5 bg-background/60 backdrop-blur-3xl rounded-3xl"
         >
-          <CardContent className="p-8 text-center flex flex-col items-center justify-center aspect-[16/10] bg-gradient-to-br from-primary/5 via-background to-background">
+          <CardContent className="p-8 text-center flex flex-col items-center justify-center aspect-[16/10] bg-gradient-to-br from-primary/10 via-background/50 to-background/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.2)] relative">
             <motion.div
               animate={{
                 scale: [1, 1.1, 1],
@@ -642,10 +660,10 @@ function ComplimentCard({
               <Gift className="w-20 h-20 text-primary drop-shadow-[0_4px_10px_hsl(var(--primary)/0.4)]" />
               <div className="w-5 h-5 absolute top-0 right-0 bg-primary rounded-full animate-ping" />
             </motion.div>
-            <p className="text-xl font-bold text-foreground mt-4">
+            <p className="text-xl font-black text-foreground mt-4 tracking-tight">
               🎁 Шинэ нэргүй wispr ирлээ!
             </p>
-            <p className="text-muted-foreground text-sm">Таны сэтгэлийг дулаацуулах wispr хүлээж байна.</p>
+            <p className="text-muted-foreground text-sm font-medium mt-1">Таны сэтгэлийг дулаацуулах wispr хүлээж байна.</p>
             <div className="mt-8 flex gap-4">
               <Button onClick={handleReveal} disabled={isRevealing} size="lg">
                 {isRevealing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -784,15 +802,25 @@ export function ComplimentList({
 
   if (compliments.length === 0) {
     return (
-      <div className="text-center py-20 px-4 border-2 border-dashed rounded-2xl mt-8 bg-card/50">
-        <MessageCircle className="mx-auto h-12 w-12 text-muted-foreground" />
-        <h3 className="mt-4 text-lg font-medium text-foreground">Одоогоор энд чимээгүй байна...</h3>
-        <p className="mt-2 text-sm text-muted-foreground max-w-sm mx-auto">
-          Wispr-үүд ирэхэд заримдаа хугацаа ордог. Линкээ найзуудтайгаа хуваалцаж, тэдний сэтгэлийн үгсийг хүлээгээрэй. Хэн нэгэн таны тухай аль хэдийн бодож байж магадгүй шүү.
-        </p>
-        <Button asChild className="mt-6">
-          <Link href="/create">🔗 Линкээ хуваалцах</Link>
-        </Button>
+      <div className="text-center py-24 px-6 rounded-[2rem] mt-8 bg-gradient-to-b from-secondary/50 to-transparent border border-white/5 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent opacity-50"></div>
+
+        <div className="relative z-10">
+          <div className="mx-auto w-24 h-24 bg-primary/10 rounded-[2rem] flex items-center justify-center rotate-3 mb-6 shadow-inner">
+            <MessageCircle className="h-10 w-10 text-primary -rotate-3 drop-shadow-md" />
+          </div>
+
+          <h3 className="text-2xl font-black text-foreground mb-3 tracking-tight">Энд одоогоор чимээгүй байна</h3>
+          <p className="text-base text-muted-foreground max-w-sm mx-auto leading-relaxed mb-8">
+            Линкээ найзуудтайгаа хуваалцаж, тэдний сэтгэлийн үгсийг хүлээгээрэй. Хэн нэгэн таны тухай аль хэдийн бодож байж магадгүй шүү.
+          </p>
+
+          <Button asChild size="lg" className="rounded-full shadow-lg shadow-primary/20 h-14 px-8 font-bold text-base hover:scale-105 transition-transform">
+            <Link href="/create">
+              🔗 Линкээ хуваалцах
+            </Link>
+          </Button>
+        </div>
       </div>
     );
   }

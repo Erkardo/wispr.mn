@@ -19,6 +19,7 @@ import { useFCM } from '@/firebase';
 const profileSchema = z.object({
     username: z.string().min(3, "Хамгийн багадаа 3 үсэг/тоо байна.").max(20, "Хэтэрхий урт байна.").regex(/^[a-zA-Z0-9_.]+$/, "Зөвхөн англи үсэг, тоо, цэг, доогуур зураас зөвшөөрнө."),
     displayName: z.string().min(2, "Нэрээ оруулна уу.").max(30),
+    bio: z.string().max(150, "Хэтэрхий урт байна.").optional().default(''),
     school: z.string().max(50).optional().default(''),
     workplace: z.string().max(50).optional().default(''),
     isPublic: z.boolean().default(false),
@@ -34,12 +35,14 @@ export function ProfileSettings({ ownerId, ownerData }: ProfileSettingsProps) {
     const [isSaving, setIsSaving] = useState(false);
     const { permission, requestPermission, isSupportedBrowser } = useFCM();
     const [isRequestingPerm, setIsRequestingPerm] = useState(false);
+    const [showAdvanced, setShowAdvanced] = useState(false);
 
     const form = useForm<z.infer<typeof profileSchema>>({
         resolver: zodResolver(profileSchema),
         defaultValues: {
             username: ownerData?.username || '',
             displayName: ownerData?.displayName || '',
+            bio: ownerData?.bio || '',
             school: ownerData?.school || '',
             workplace: ownerData?.workplace || '',
             isPublic: ownerData?.isPublic || false,
@@ -52,6 +55,7 @@ export function ProfileSettings({ ownerId, ownerData }: ProfileSettingsProps) {
             form.reset({
                 username: ownerData.username || '',
                 displayName: ownerData.displayName || '',
+                bio: ownerData.bio || '',
                 school: ownerData.school || '',
                 workplace: ownerData.workplace || '',
                 isPublic: ownerData.isPublic || false,
@@ -191,48 +195,82 @@ export function ProfileSettings({ ownerId, ownerData }: ProfileSettingsProps) {
                             )}
                         />
 
-                        <div className="flex items-center gap-2 mt-8 mb-2 pt-4">
-                            <div className="h-1 w-8 bg-secondary rounded-full" />
-                            <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">Нэмэлт (Хайлтад тусална)</h3>
+                        <FormField
+                            control={form.control}
+                            name="bio"
+                            render={({ field }) => (
+                                <FormItem className="mt-4">
+                                    <FormLabel className="text-xs font-bold uppercase tracking-wider opacity-70">Таны тухай (Bio)</FormLabel>
+                                    <FormControl>
+                                        <textarea
+                                            placeholder="Өөрийнхөө тухай товчхон..."
+                                            className="flex w-full rounded-2xl border border-muted/50 bg-background px-4 py-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50 transition-all resize-none min-h-[80px]"
+                                            {...field}
+                                        />
+                                    </FormControl>
+                                    <FormDescription className="text-[10px] text-right">
+                                        {field.value?.length || 0}/150
+                                    </FormDescription>
+                                    <FormMessage className="text-[10px]" />
+                                </FormItem>
+                            )}
+                        />
+
+                        <div className="flex items-center justify-between mt-8 mb-2 pt-4">
+                            <div className="flex items-center gap-2">
+                                <div className="h-1 w-8 bg-secondary rounded-full" />
+                                <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">Нэмэлт Мэдээлэл</h3>
+                            </div>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setShowAdvanced(!showAdvanced)}
+                                className="text-xs font-bold text-primary"
+                            >
+                                {showAdvanced ? 'Нуух' : 'Дэлгэрүүлэх'}
+                            </Button>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormField
-                                control={form.control}
-                                name="school"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel className="text-xs font-bold uppercase tracking-wider opacity-70">Сургууль</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                placeholder="МУИС, СЭЗИС..."
-                                                className="h-12 rounded-2xl bg-background border-muted/50 focus:border-primary transition-all"
-                                                {...field}
-                                            />
-                                        </FormControl>
-                                        <FormMessage className="text-[10px]" />
-                                    </FormItem>
-                                )}
-                            />
+                        {showAdvanced && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                                <FormField
+                                    control={form.control}
+                                    name="school"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="text-xs font-bold uppercase tracking-wider opacity-70">Сургууль</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    placeholder="МУИС, СЭЗИС..."
+                                                    className="h-12 rounded-2xl bg-background border-muted/50 focus:border-primary transition-all"
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                            <FormMessage className="text-[10px]" />
+                                        </FormItem>
+                                    )}
+                                />
 
-                            <FormField
-                                control={form.control}
-                                name="workplace"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel className="text-xs font-bold uppercase tracking-wider opacity-70">Ажлын газар</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                placeholder="Голомт, Хаан..."
-                                                className="h-12 rounded-2xl bg-background border-muted/50 focus:border-primary transition-all"
-                                                {...field}
-                                            />
-                                        </FormControl>
-                                        <FormMessage className="text-[10px]" />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
+                                <FormField
+                                    control={form.control}
+                                    name="workplace"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className="text-xs font-bold uppercase tracking-wider opacity-70">Ажлын газар</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    placeholder="Голомт, Хаан..."
+                                                    className="h-12 rounded-2xl bg-background border-muted/50 focus:border-primary transition-all"
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                            <FormMessage className="text-[10px]" />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                        )}
                     </div>
                 </div>
 

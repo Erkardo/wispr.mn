@@ -3,6 +3,7 @@
 import { ComplimentForm } from '@/components/compliments/ComplimentForm';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Heart, Loader2, Frown } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useFirestore, useUser } from '@/firebase';
 import { doc, getDoc, collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { useState, useEffect } from 'react';
@@ -12,10 +13,10 @@ import { getTheme } from '@/lib/themes';
 import { PollCard } from '@/components/polls/PollCard';
 import type { Poll, ComplimentOwner } from '@/types';
 
-export function ComplimentSubmitClient({ shortId }: { shortId: string }) {
+export function ComplimentSubmitClient({ shortId, ownerIdProp }: { shortId?: string; ownerIdProp?: string }) {
     const firestore = useFirestore();
     const [isLoading, setIsLoading] = useState(true);
-    const [ownerId, setOwnerId] = useState<string | null>(null);
+    const [ownerId, setOwnerId] = useState<string | null>(ownerIdProp || null);
     const [error, setError] = useState<Error | null>(null);
     const [ownerData, setOwnerData] = useState<ComplimentOwner | null>(null);
     const { user } = useUser();
@@ -51,7 +52,33 @@ export function ComplimentSubmitClient({ shortId }: { shortId: string }) {
     }, [firestore, ownerId]);
 
     useEffect(() => {
-        if (!firestore || !shortId) {
+        if (!firestore) {
+            setIsLoading(false);
+            return;
+        }
+
+        if (ownerIdProp) {
+            const fetchOwnerDataDirectly = async () => {
+                try {
+                    const ownerRef = doc(firestore, 'complimentOwners', ownerIdProp);
+                    const ownerSnap = await getDoc(ownerRef);
+                    if (ownerSnap.exists()) {
+                        setOwnerData(ownerSnap.data() as ComplimentOwner);
+                    } else {
+                        throw new Error("User not found");
+                    }
+                } catch (e: any) {
+                    console.error("Failed to fetch owner profile directly", e);
+                    setError(e);
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+            fetchOwnerDataDirectly();
+            return;
+        }
+
+        if (!shortId) {
             setIsLoading(false);
             return;
         }
@@ -172,11 +199,34 @@ export function ComplimentSubmitClient({ shortId }: { shortId: string }) {
             )}
             <Card className="w-full max-w-md shadow-2xl bg-card backdrop-blur-lg border-primary/20">
                 <CardHeader className="text-center">
-                    <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit mb-4 ring-8 ring-primary/5">
-                        <Heart className="h-8 w-8 text-primary" />
-                    </div>
-                    <CardTitle className="font-bold text-2xl">Wispr илгээгээрэй</CardTitle>
-                    <CardDescription className="text-muted-foreground">Хэн болохыг тань хэн ч мэдэхгүй. Сэтгэлийнхээ дулаан үгсийг wispr болгон үлдээгээрэй.</CardDescription>
+                    {ownerData?.photoURL || ownerData?.bio || ownerData?.displayName ? (
+                        <div className="flex flex-col items-center gap-3 mb-4">
+                            {ownerData?.photoURL ? (
+                                <Avatar className="h-24 w-24 border-4 border-primary/20 shadow-xl">
+                                    <AvatarImage src={ownerData.photoURL} alt={ownerData.displayName || ''} />
+                                    <AvatarFallback>{ownerData.displayName?.charAt(0).toUpperCase() || 'W'}</AvatarFallback>
+                                </Avatar>
+                            ) : (
+                                <div className="mx-auto bg-primary/10 p-4 rounded-full w-fit ring-8 ring-primary/5">
+                                    <Heart className="h-8 w-8 text-primary" />
+                                </div>
+                            )}
+                            {ownerData?.displayName && (
+                                <CardTitle className="font-black text-2xl">{ownerData.displayName}-д Wispr бичих</CardTitle>
+                            )}
+                            {ownerData?.bio && (
+                                <p className="text-sm font-medium text-muted-foreground whitespace-pre-wrap px-4">{ownerData.bio}</p>
+                            )}
+                        </div>
+                    ) : (
+                        <>
+                            <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit mb-4 ring-8 ring-primary/5">
+                                <Heart className="h-8 w-8 text-primary" />
+                            </div>
+                            <CardTitle className="font-bold text-2xl">Wispr илгээгээрэй</CardTitle>
+                        </>
+                    )}
+                    <CardDescription className="text-muted-foreground mt-2">Хэн болохыг тань хэн ч мэдэхгүй. Сэтгэлийнхээ дулаан үгсийг wispr болгон үлдээгээрэй.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     {ownerId && <ComplimentForm ownerId={ownerId} />}

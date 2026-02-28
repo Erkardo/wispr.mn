@@ -123,11 +123,13 @@ export default function HomePage() {
       <Header title="Wispr-үүд" />
       <Tabs defaultValue="compliments" onValueChange={handleTabChange} className="w-full pt-4">
         <div className="flex justify-center px-4 mb-4">
-          <TabsList className="bg-muted/40 p-1.5 rounded-full shadow-inner border border-border/40 backdrop-blur-sm h-auto flex flex-wrap justify-center gap-1">
-            <TabsTrigger value="compliments" className="rounded-full px-6 py-2.5 text-sm data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:font-bold transition-all duration-300">Wispr-үүд</TabsTrigger>
-            <TabsTrigger value="sent" className="rounded-full px-6 py-2.5 text-sm data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:font-bold transition-all duration-300">Миний бичсэн</TabsTrigger>
-            <TabsTrigger value="polls" className="rounded-full px-6 py-2.5 text-sm data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:font-bold transition-all duration-300">Санал асуулга</TabsTrigger>
-          </TabsList>
+          <div className="w-full max-w-sm overflow-x-auto no-scrollbar pb-2 -mb-2">
+            <TabsList className="bg-muted/40 p-1.5 rounded-full shadow-inner border border-border/40 backdrop-blur-sm h-auto flex flex-nowrap justify-start sm:justify-center min-w-max mx-auto gap-1">
+              <TabsTrigger value="compliments" className="rounded-full px-5 py-2.5 text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:font-bold transition-all duration-300">Wispr-үүд</TabsTrigger>
+              <TabsTrigger value="sent" className="rounded-full px-5 py-2.5 text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:font-bold transition-all duration-300">Миний бичсэн</TabsTrigger>
+              <TabsTrigger value="polls" className="rounded-full px-5 py-2.5 text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:font-bold transition-all duration-300">Санал асуулга</TabsTrigger>
+            </TabsList>
+          </div>
         </div>
         <TabsContent value="compliments">
           <div className="container mx-auto max-w-2xl p-4 py-8">

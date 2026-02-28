@@ -11,6 +11,7 @@ import { useEffect } from 'react';
 import { doc } from 'firebase/firestore';
 import type { ComplimentOwner } from '@/types';
 import type { WithId } from '@/firebase';
+import { SwipeBack } from '@/components/SwipeBack';
 
 
 export default function CreatePage() {
@@ -43,7 +44,7 @@ export default function CreatePage() {
     if (!user) return null;
 
     return (
-        <>
+        <SwipeBack threshold={80}>
             <Header title="Үүсгэх" showBackButton={true} />
             <div className="container mx-auto max-w-2xl p-4 py-8">
                 <div className="space-y-6">
@@ -64,6 +65,6 @@ export default function CreatePage() {
                     )}
                 </div>
             </div>
-        </>
+        </SwipeBack>
     )
 }

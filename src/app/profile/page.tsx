@@ -31,6 +31,8 @@ import { ThemeSelector } from '@/components/profile/ThemeSelector';
 import { LevelProgress } from '@/components/gamification/LevelProgress';
 import { BadgeList } from '@/components/gamification/BadgeList';
 import { ProfileSettings } from '@/components/profile/ProfileSettings';
+import { SwipeBack } from '@/components/SwipeBack';
+import { motion, AnimatePresence } from 'framer-motion';
 
 
 type HintPackage = {
@@ -183,7 +185,7 @@ export default function ProfilePage() {
 
     if (userLoading || ownerLoading) {
         return (
-            <>
+            <SwipeBack threshold={80}>
                 <Header title="Профайл" showBackButton={true} />
                 <div className="container mx-auto max-w-2xl p-4 py-8 space-y-6">
                     <div className="space-y-4">
@@ -192,13 +194,13 @@ export default function ProfilePage() {
                         <Skeleton className="h-48 w-full rounded-lg" />
                     </div>
                 </div>
-            </>
+            </SwipeBack>
         )
     }
 
     if (!user || user.isAnonymous) {
         return (
-            <>
+            <SwipeBack threshold={80}>
                 <Header title="Профайл" showBackButton={true} />
                 <div className="container mx-auto max-w-2xl p-4 py-8 space-y-8">
                     <Card className="text-center border-primary/20 bg-primary/5">
@@ -247,15 +249,15 @@ export default function ProfilePage() {
                         </CardContent>
                     </Card>
                 </div>
-            </>
+            </SwipeBack>
         )
     }
 
     return (
-        <>
+        <SwipeBack threshold={80}>
             <Header title="Профайл" showBackButton={true} />
             <div className="container mx-auto max-w-2xl p-4 py-8 space-y-6">
-                <Card className="rounded-3xl border-muted/30 shadow-sm overflow-hidden">
+                <Card className="rounded-3xl border-muted/30 shadow-sm overflow-hidden text-card-foreground bg-card/40 backdrop-blur-md border border-white/10">
                     <CardContent className="flex items-center gap-4 p-6">
                         <Avatar className="h-16 w-16 border-2 border-primary/20">
                             <AvatarImage src={user.photoURL || ''} alt={user.displayName || ''} />
@@ -288,46 +290,64 @@ export default function ProfilePage() {
                         </div>
                     </div>
                     <TabsContent value="profile" className="space-y-4 m-0 focus-visible:outline-none">
-                        <Card className="rounded-3xl border-muted/30 shadow-sm overflow-hidden">
-                            <CardHeader>
-                                <CardTitle>Хувийн мэдээлэл</CardTitle>
-                                <CardDescription>Нийтэд харагдах өөрийн профайл мэдээллээ тохируулна уу.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <ProfileSettings ownerId={user.uid} ownerData={ownerData} />
-                            </CardContent>
-                        </Card>
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4 }}
+                        >
+                            <Card className="rounded-3xl border border-white/10 shadow-sm overflow-hidden bg-card/40 backdrop-blur-md">
+                                <CardHeader>
+                                    <CardTitle>Хувийн мэдээлэл</CardTitle>
+                                    <CardDescription>Нийтэд харагдах өөрийн профайл мэдээллээ тохируулна уу.</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <ProfileSettings ownerId={user.uid} ownerData={ownerData} />
+                                </CardContent>
+                            </Card>
+                        </motion.div>
                     </TabsContent>
                     <TabsContent value="themes" className="space-y-4 m-0 focus-visible:outline-none">
-                        <ThemeSelector currentThemeId={ownerData?.theme} ownerData={ownerData} />
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4 }}
+                        >
+                            <ThemeSelector currentThemeId={ownerData?.theme} ownerData={ownerData} />
+                        </motion.div>
                     </TabsContent>
                     <TabsContent value="achievements" className="space-y-4 m-0 focus-visible:outline-none">
-                        <Card className="rounded-3xl border-muted/30 shadow-sm overflow-hidden">
-                            <CardHeader>
-                                <CardTitle>Миний амжилтууд</CardTitle>
-                                <CardDescription>Таны цуглуулсан оноо болон тэмдэгүүд</CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-8">
-                                <LevelProgress xp={ownerData?.xp || 0} />
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4 }}
+                        >
+                            <Card className="rounded-3xl border border-white/10 shadow-sm overflow-hidden bg-card/40 backdrop-blur-md">
+                                <CardHeader>
+                                    <CardTitle>Миний амжилтууд</CardTitle>
+                                    <CardDescription>Таны цуглуулсан оноо болон тэмдэгүүд</CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-8">
+                                    <LevelProgress xp={ownerData?.xp || 0} />
 
-                                <div className="pt-4">
-                                    <h3 className="text-sm font-medium mb-4">Тэмдэгүүд</h3>
-                                    <BadgeList
-                                        ownerId={user.uid}
-                                        earnedBadges={ownerData?.badges || []}
-                                        stats={{
-                                            totalCompliments: ownerData?.totalCompliments || 0,
-                                            xp: ownerData?.xp || 0
-                                        }}
-                                    />
-                                </div>
-                            </CardContent>
-                        </Card>
+                                    <div className="pt-4">
+                                        <h3 className="text-sm font-medium mb-4">Тэмдэгүүд</h3>
+                                        <BadgeList
+                                            ownerId={user.uid}
+                                            earnedBadges={ownerData?.badges || []}
+                                            stats={{
+                                                totalCompliments: ownerData?.totalCompliments || 0,
+                                                xp: ownerData?.xp || 0
+                                            }}
+                                        />
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </motion.div>
                     </TabsContent>
                 </Tabs>
 
                 {/* Hint & Payment Section */}
-                <Card className="relative overflow-hidden bg-gradient-to-br from-violet-600 via-indigo-600 to-blue-600 shadow-xl border-none">
+                <Card className="relative overflow-hidden bg-gradient-to-br from-violet-600 via-indigo-600 to-blue-600 shadow-xl border-none rounded-[2rem]">
                     <div className="absolute -bottom-10 -right-10 w-48 h-48 text-white/20 rotate-12">
                         <Gift className="w-full h-full" />
                     </div>
@@ -344,9 +364,9 @@ export default function ProfilePage() {
                         <CardFooter>
                             <Dialog open={isBuyHintDialogOpen} onOpenChange={setIsBuyHintDialogOpen}>
                                 <DialogTrigger asChild>
-                                    <Button className="w-full bg-white/90 text-primary hover:bg-white font-bold"><ShoppingCart className="mr-2 h-4 w-4" /> Hint худалдаж авах</Button>
+                                    <Button className="w-full bg-white/90 text-primary hover:bg-white font-bold rounded-2xl h-12 transition-all active:scale-95"><ShoppingCart className="mr-2 h-4 w-4" /> Hint худалдаж авах</Button>
                                 </DialogTrigger>
-                                <DialogContent>
+                                <DialogContent className="rounded-[2rem]">
                                     <DialogHeader>
                                         <DialogTitle>Нэмэлт Hint авах</DialogTitle>
                                         <DialogDescription>
@@ -354,14 +374,14 @@ export default function ProfilePage() {
                                         </DialogDescription>
                                     </DialogHeader>
                                     <div className="grid gap-6 py-4">
-                                        <div className="rounded-lg border p-4 space-y-3">
+                                        <div className="rounded-[1.5rem] border p-4 space-y-3">
                                             <div>
                                                 <h3 className="font-semibold text-foreground">Hint худалдаж авах</h3>
                                                 <p className="text-sm text-muted-foreground">Нэмэлт hint-ийн багц сонгоно уу.</p>
                                             </div>
                                             <div className="grid grid-cols-1 gap-2">
                                                 {hintPackages.map((pkg) => (
-                                                    <Button key={pkg.id} onClick={() => handleCreateInvoice(pkg)} disabled={!!isCreatingInvoice}>
+                                                    <Button key={pkg.id} onClick={() => handleCreateInvoice(pkg)} disabled={!!isCreatingInvoice} className="rounded-xl h-12">
                                                         {isCreatingInvoice === pkg.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Gem className="mr-2 h-4 w-4" />}
                                                         {pkg.name} - {pkg.amount.toLocaleString()}₮
                                                     </Button>
@@ -378,12 +398,12 @@ export default function ProfilePage() {
                                                 </span>
                                             </div>
                                         </div>
-                                        <div className="rounded-lg border p-4 bg-secondary space-y-4">
+                                        <div className="rounded-[1.5rem] border p-4 bg-secondary space-y-4">
                                             <div>
                                                 <h3 className="font-semibold text-foreground">Найзаа урих</h3>
                                                 <p className="text-sm text-muted-foreground">Урьсан найз бүрийнхээ тоогоор та <span className="font-bold text-primary">1 үнэгүй hint</span>-ийн эрх авах болно.</p>
                                             </div>
-                                            <Button className="w-full" onClick={() => {
+                                            <Button className="w-full rounded-xl h-12" onClick={() => {
                                                 handleShare();
                                                 setIsBuyHintDialogOpen(false);
                                             }}>
@@ -413,35 +433,35 @@ export default function ProfilePage() {
 
 
                 {/* Settings and Legal Section */}
-                <Card className="rounded-3xl border-muted/30 shadow-sm overflow-hidden mb-20">
+                <Card className="rounded-[2.5rem] border border-white/10 shadow-sm overflow-hidden mb-20 bg-card/40 backdrop-blur-md">
                     <CardHeader>
                         <CardTitle>Тохиргоо &amp; Бусад</CardTitle>
                     </CardHeader>
                     <CardContent className="p-2">
                         <div className="space-y-1">
                             {isAdmin && (
-                                <Button asChild variant="ghost" className="w-full justify-start gap-3 text-base h-12">
+                                <Button asChild variant="ghost" className="w-full justify-start gap-3 text-base h-12 rounded-2xl">
                                     <Link href="/admin">
                                         <Shield className="w-5 h-5 text-muted-foreground" /> Админ самбар
                                     </Link>
                                 </Button>
                             )}
-                            <Button asChild variant="ghost" className="w-full justify-start gap-3 text-base h-12">
+                            <Button asChild variant="ghost" className="w-full justify-start gap-3 text-base h-12 rounded-2xl">
                                 <Link href="/privacy">
                                     <FileText className="w-5 h-5 text-muted-foreground" /> Үйлчилгээний нөхцөл
                                 </Link>
                             </Button>
-                            <Button asChild variant="ghost" className="w-full justify-start gap-3 text-base h-12">
+                            <Button asChild variant="ghost" className="w-full justify-start gap-3 text-base h-12 rounded-2xl">
                                 <Link href="/privacy">
                                     <Shield className="w-5 h-5 text-muted-foreground" /> Нууцлалын бодлого
                                 </Link>
                             </Button>
-                            <Button asChild variant="ghost" className="w-full justify-start gap-3 text-base h-12">
+                            <Button asChild variant="ghost" className="w-full justify-start gap-3 text-base h-12 rounded-2xl">
                                 <Link href="/feedback">
                                     <MessageCircle className="w-5 h-5 text-muted-foreground" /> Санал хүсэлт
                                 </Link>
                             </Button>
-                            <Button asChild variant="ghost" className="w-full justify-start gap-3 text-base h-12">
+                            <Button asChild variant="ghost" className="w-full justify-start gap-3 text-base h-12 rounded-2xl">
                                 <Link href="/help">
                                     <HelpCircle className="w-5 h-5 text-muted-foreground" /> Тусламж
                                 </Link>
@@ -449,13 +469,13 @@ export default function ProfilePage() {
                         </div>
                         <Separator className="my-2" />
                         <div className="pt-1">
-                            <Button variant="ghost" className="w-full justify-start gap-3 text-base h-12 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={handleSignOut}>
+                            <Button variant="ghost" className="w-full justify-start gap-3 text-base h-12 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-2xl" onClick={handleSignOut}>
                                 <LogOut className="w-5 h-5" /> Гарах
                             </Button>
                         </div>
                     </CardContent>
                 </Card>
             </div>
-        </>
+        </SwipeBack>
     )
 }

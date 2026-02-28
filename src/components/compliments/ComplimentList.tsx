@@ -3,7 +3,8 @@
 import type { Compliment, ComplimentOwner } from '@/types';
 import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { MessageCircle, Gift, Loader2, Share2, UserX, KeyRound, ShoppingCart, MessageSquareIcon, Send, X } from 'lucide-react';
+import { MessageCircle, Gift, Loader2, Share2, UserX, KeyRound, ShoppingCart, MessageSquareIcon, Send, X, ArrowRight } from 'lucide-react';
+import Image from 'next/image';
 import { Button } from '../ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useState, useEffect, useRef, forwardRef, useCallback } from 'react';
@@ -457,9 +458,9 @@ function ComplimentCard({
     if (!compliment.createdAt) return null;
     const date = (typeof compliment.createdAt.toDate === 'function') ? compliment.createdAt.toDate() : (compliment.createdAt as unknown as Date);
     if (!compliment.isRead) return <Badge className="border-none bg-white text-primary font-bold shadow-lg animate-pulse">Шинэ</Badge>;
-    if (isToday(date)) return <Badge variant="secondary" className="border-none bg-black/20 text-white/80 backdrop-blur-sm">Өнөөдөр</Badge>;
-    if (isYesterday(date)) return <Badge variant="secondary" className="border-none bg-black/20 text-white/80 backdrop-blur-sm">Өчигдөр</Badge>;
-    return <Badge variant="secondary" className="border-none bg-black/20 text-white/80 backdrop-blur-sm">{format(date, 'MMM d')}</Badge>;
+    if (isToday(date)) return <Badge variant="secondary" className="border-none bg-black/10 text-white/50 backdrop-blur-sm font-medium">Өнөөдөр</Badge>;
+    if (isYesterday(date)) return <Badge variant="secondary" className="border-none bg-black/10 text-white/50 backdrop-blur-sm font-medium">Өчигдөр</Badge>;
+    return <Badge variant="secondary" className="border-none bg-black/10 text-white/50 backdrop-blur-sm font-medium">{format(date, 'MMM d')}</Badge>;
   }
 
 
@@ -478,13 +479,13 @@ function ComplimentCard({
     >
       <Card
         id={`compliment-card-${compliment.id}`}
-        className="w-full relative overflow-hidden text-white rounded-3xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.4)] transition-all duration-500 border border-white/20"
+        className="w-full relative overflow-hidden text-white rounded-3xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.4)] transition-all duration-500 border border-white/10"
         style={{ backgroundImage: selectedStyle.bg }}
       >
         <CardHeader className="flex flex-row items-center justify-between p-6 pb-2">
           {getDateBadge()}
-          <Button variant="ghost" size="icon" onClick={handleShareClick} className="h-9 w-9 rounded-full bg-black/20 hover:bg-black/30 text-white/90 backdrop-blur-sm" disabled={isSharing}>
-            {isSharing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
+          <Button variant="ghost" size="icon" onClick={handleShareClick} className="h-8 w-8 rounded-full bg-black/10 hover:bg-black/20 text-white/50 backdrop-blur-sm opacity-60 hover:opacity-100 transition-opacity" disabled={isSharing}>
+            {isSharing ? <Loader2 className="h-3 w-3 animate-spin" /> : <Share2 className="h-3 w-3" />}
           </Button>
         </CardHeader>
         <CardContent className="relative flex flex-col items-center justify-center p-6 md:p-10 text-center aspect-[16/10] overflow-hidden shadow-[inset_0_1px_2px_rgba(255,255,255,0.4)]">
@@ -504,8 +505,8 @@ function ComplimentCard({
             </div>
           )}
 
-          <div className="absolute bottom-4 left-6 flex items-center gap-2 text-[10px] z-10 select-none text-white/70 uppercase tracking-[0.2em] font-black">
-            <UserX className="h-3.5 w-3.5 opacity-80" />
+          <div className="absolute bottom-4 left-6 flex items-center gap-2 text-[9px] z-10 select-none text-white/40 uppercase tracking-[0.2em] font-bold opacity-70">
+            <UserX className="h-3 w-3 opacity-60" />
             Нэрээ нууцалсан
           </div>
 
@@ -802,22 +803,37 @@ export function ComplimentList({
 
   if (compliments.length === 0) {
     return (
-      <div className="text-center py-24 px-6 rounded-[2rem] mt-8 bg-gradient-to-b from-secondary/50 to-transparent border border-white/5 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent opacity-50"></div>
+      <div className="text-center py-20 px-6 rounded-[3rem] mt-8 bg-gradient-to-b from-secondary/30 to-background border border-border/40 relative overflow-hidden shadow-2xl shadow-primary/5">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent opacity-30"></div>
 
-        <div className="relative z-10">
-          <div className="mx-auto w-24 h-24 bg-primary/10 rounded-[2rem] flex items-center justify-center rotate-3 mb-6 shadow-inner">
-            <MessageCircle className="h-10 w-10 text-primary -rotate-3 drop-shadow-md" />
+        <div className="relative z-10 space-y-8">
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="relative w-48 h-48 mx-auto"
+          >
+            <div className="absolute inset-0 bg-primary/20 rounded-full blur-3xl animate-pulse"></div>
+            <Image
+              src="/images/empty-inbox.png"
+              alt="Empty Inbox"
+              width={192}
+              height={192}
+              className="relative z-10 object-contain drop-shadow-2xl"
+            />
+          </motion.div>
+
+          <div className="space-y-3">
+            <h3 className="text-3xl font-black text-foreground tracking-tighter">Энд одоогоор чимээгүй байна</h3>
+            <p className="text-base text-muted-foreground max-w-sm mx-auto leading-relaxed font-medium">
+              Линкээ найзуудтайгаа хуваалцаж, тэдний сэтгэлийн үгсийг хүлээгээрэй. Хэн нэгэн таны тухай аль хэдийн бодож байж магадгүй шүү.
+            </p>
           </div>
 
-          <h3 className="text-2xl font-black text-foreground mb-3 tracking-tight">Энд одоогоор чимээгүй байна</h3>
-          <p className="text-base text-muted-foreground max-w-sm mx-auto leading-relaxed mb-8">
-            Линкээ найзуудтайгаа хуваалцаж, тэдний сэтгэлийн үгсийг хүлээгээрэй. Хэн нэгэн таны тухай аль хэдийн бодож байж магадгүй шүү.
-          </p>
-
-          <Button asChild size="lg" className="rounded-full shadow-lg shadow-primary/20 h-14 px-8 font-bold text-base hover:scale-105 transition-transform">
-            <Link href="/create">
-              🔗 Линкээ хуваалцах
+          <Button asChild size="lg" className="rounded-2xl shadow-xl shadow-primary/20 h-16 px-10 font-black text-lg hover:scale-105 active:scale-95 transition-all bg-primary text-primary-foreground group">
+            <Link href="/create" className="flex items-center gap-2">
+              Линкээ хуваалцах
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
           </Button>
         </div>

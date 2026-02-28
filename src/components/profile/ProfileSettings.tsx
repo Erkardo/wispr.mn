@@ -95,7 +95,7 @@ export function ProfileSettings({ ownerId, ownerData }: ProfileSettingsProps) {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
 
                 <div className="space-y-6">
-                    <Card className="overflow-hidden border-none shadow-xl bg-gradient-to-br from-primary/10 to-transparent rounded-3xl">
+                    <Card className="overflow-hidden border border-white/10 shadow-xl bg-background/40 backdrop-blur-xl rounded-[2.5rem]">
                         <CardContent className="p-6">
                             <FormField
                                 control={form.control}
@@ -103,9 +103,9 @@ export function ProfileSettings({ ownerId, ownerData }: ProfileSettingsProps) {
                                 render={({ field }) => (
                                     <FormItem className="flex flex-row items-center justify-between gap-4">
                                         <div className="space-y-1">
-                                            <FormLabel className="text-lg font-black tracking-tight">Нийтэд нээлттэй болгох</FormLabel>
-                                            <FormDescription className="text-xs leading-relaxed max-w-[240px]">
-                                                Хайлтаар болон Радараар дамжуулан бусад хүмүүс таныг олж, Wispr бичүүлэх боломжийг нээх үү?
+                                            <FormLabel className="text-lg font-black tracking-tight">Нийтийн профайл</FormLabel>
+                                            <FormDescription className="text-[10px] leading-relaxed max-w-[200px] opacity-70">
+                                                Бусад хүмүүс таныг Радараар олж харах боломжтой.
                                             </FormDescription>
                                         </div>
                                         <FormControl>
@@ -123,23 +123,23 @@ export function ProfileSettings({ ownerId, ownerData }: ProfileSettingsProps) {
 
                     {/* Mэдэгдэл (Notifications) Toggle Card */}
                     {isSupportedBrowser && (
-                        <Card className="overflow-hidden border-none shadow-xl bg-gradient-to-br from-secondary/50 to-transparent rounded-3xl">
+                        <Card className="overflow-hidden border border-white/10 shadow-xl bg-background/40 backdrop-blur-xl rounded-[2.5rem]">
                             <CardContent className="p-6">
                                 <div className="flex flex-row items-center justify-between gap-4">
                                     <div className="space-y-1">
                                         <div className="flex items-center gap-2">
                                             {permission === 'granted' ? <BellRing className="w-5 h-5 text-primary" /> : <BellOff className="w-5 h-5 text-muted-foreground" />}
-                                            <Label className="text-lg font-black tracking-tight border-none">Апп-н мэдэгдэл</Label>
+                                            <Label className="text-lg font-black tracking-tight border-none">Мэдэгдэл</Label>
                                         </div>
-                                        <p className="text-xs leading-relaxed max-w-[240px] text-muted-foreground">
-                                            Шинэ зурвас болон хариу ирсэн үед унтруулсан үед ч мэдэгдэл авах уу?
+                                        <p className="text-[10px] leading-relaxed max-w-[200px] text-muted-foreground opacity-70">
+                                            Шинэ wispr ирэх үед танд шууд мэдэгдэнэ.
                                         </p>
                                     </div>
                                     <div>
                                         {permission === 'granted' ? (
                                             <span className="text-sm font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-full">Асаалттай</span>
                                         ) : (
-                                            <Button type="button" variant="outline" size="sm" onClick={handleEnableNotifications} disabled={isRequestingPerm}>
+                                            <Button type="button" variant="outline" size="sm" onClick={handleEnableNotifications} disabled={isRequestingPerm} className="rounded-full border-primary/20 hover:bg-primary/5">
                                                 {isRequestingPerm ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : "Асаах"}
                                             </Button>
                                         )}

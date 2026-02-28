@@ -12,6 +12,7 @@ import { type PublicProfile } from './search-action';
 import { useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 
 export function RadarTab() {
     const { user } = useUser();
@@ -75,14 +76,14 @@ export function RadarTab() {
                                 {[0, 1, 2].map((i) => (
                                     <motion.div
                                         key={i}
-                                        className="absolute inset-0 rounded-full border-2 border-primary bg-primary/5"
-                                        initial={{ opacity: 0.8, scale: 0.5 }}
-                                        animate={{ opacity: 0, scale: 3.5 }}
+                                        className="absolute inset-0 rounded-full border border-primary/40 bg-primary/10"
+                                        initial={{ opacity: 0.6, scale: 0.8 }}
+                                        animate={{ opacity: 0, scale: 4 }}
                                         transition={{
-                                            duration: 3,
+                                            duration: 4,
                                             repeat: Infinity,
-                                            delay: i * 1,
-                                            ease: "easeOut",
+                                            delay: i * 1.3,
+                                            ease: "linear",
                                         }}
                                     />
                                 ))}
@@ -121,13 +122,26 @@ export function RadarTab() {
                     </h3>
 
                     {nearbyUsers.length === 0 ? (
-                        <div className="text-center p-12 bg-muted/20 rounded-[2rem] border-2 border-dashed border-muted-foreground/20 space-y-4">
-                            <div className="bg-background w-16 h-16 rounded-full flex items-center justify-center mx-auto shadow-sm">
-                                <RadarIcon className="w-8 h-8 text-muted-foreground/40" />
-                            </div>
+                        <div className="text-center p-12 bg-secondary/20 rounded-[3rem] space-y-6 relative overflow-hidden border border-border/40">
+                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent opacity-30" />
+                            <motion.div
+                                initial={{ scale: 0.8, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                transition={{ duration: 0.5 }}
+                                className="w-32 h-32 bg-background/50 rounded-full flex items-center justify-center mx-auto shadow-inner relative"
+                            >
+                                <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl animate-pulse"></div>
+                                <Image
+                                    src="/images/radar-icon.png"
+                                    alt="Radar"
+                                    width={128}
+                                    height={128}
+                                    className="relative z-10 object-contain drop-shadow-xl"
+                                />
+                            </motion.div>
                             <div>
-                                <h3 className="font-bold text-lg text-muted-foreground">Одоогоор хэн ч алга</h3>
-                                <p className="text-sm text-muted-foreground mt-1 max-w-[200px] mx-auto">
+                                <h3 className="font-black text-2xl tracking-tight">Одоогоор хэн ч алга</h3>
+                                <p className="text-base text-muted-foreground mt-2 max-w-[240px] mx-auto leading-relaxed">
                                     Таны эргэн тойронд радар асаасан хүн олдсонгүй.
                                 </p>
                             </div>

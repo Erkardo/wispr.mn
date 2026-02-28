@@ -13,6 +13,7 @@ import { RadarTab } from './RadarTab';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Header } from '@/components/Header';
+import Image from 'next/image';
 
 const CATEGORIES = [
     { id: 'name', label: 'Нэр', icon: User, color: 'text-blue-500', bg: 'bg-blue-500/10' },
@@ -218,14 +219,27 @@ export default function ExplorePage() {
                                             ))}
                                         </div>
                                     ) : results.length === 0 ? (
-                                        <Card className="border-2 border-dashed border-muted-foreground/10 bg-transparent rounded-[2.5rem]">
-                                            <CardContent className="p-12 text-center space-y-4">
-                                                <div className="w-16 h-16 bg-muted/20 rounded-full flex items-center justify-center mx-auto opacity-50">
-                                                    <Search className="w-8 h-8 text-muted-foreground" />
-                                                </div>
-                                                <div className="space-y-1">
-                                                    <h4 className="font-black text-lg">Уучлаарай, олдсонгүй</h4>
-                                                    <p className="text-sm text-muted-foreground">Энэ хайлтаар нийтэд нээлттэй хэрэглэгч олдсонгүй. Өөр үгээр оролдоод үзээрэй.</p>
+                                        <Card className="border-none shadow-2xl shadow-primary/5 bg-secondary/20 rounded-[3rem] overflow-hidden relative">
+                                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent opacity-30" />
+                                            <CardContent className="p-12 text-center space-y-6 relative z-10">
+                                                <motion.div
+                                                    initial={{ scale: 0.8, opacity: 0 }}
+                                                    animate={{ scale: 1, opacity: 1 }}
+                                                    transition={{ duration: 0.5 }}
+                                                    className="w-40 h-40 mx-auto relative"
+                                                >
+                                                    <div className="absolute inset-0 bg-primary/20 rounded-full blur-3xl animate-pulse"></div>
+                                                    <Image
+                                                        src="/images/empty-search.png"
+                                                        alt="No Results"
+                                                        width={160}
+                                                        height={160}
+                                                        className="relative z-10 object-contain drop-shadow-2xl"
+                                                    />
+                                                </motion.div>
+                                                <div className="space-y-2">
+                                                    <h4 className="font-black text-2xl tracking-tight">Уучлаарай, олдсонгүй</h4>
+                                                    <p className="text-base text-muted-foreground max-w-xs mx-auto">Энэ хайлтаар нийтэд нээлттэй хэрэглэгч олдсонгүй. Өөр үгээр оролдоод үзээрэй.</p>
                                                 </div>
                                             </CardContent>
                                         </Card>

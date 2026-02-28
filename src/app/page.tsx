@@ -18,7 +18,7 @@ import { PollManager } from '@/components/polls/PollManager';
 
 function AnonymousLoginPrompt() {
   return (
-    <Card className="text-center border-primary/20 bg-primary/5 mt-8">
+    <Card className="text-center border-none shadow-sm bg-primary/5 mt-8 rounded-3xl overflow-hidden">
       <CardHeader>
         <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit mb-4 ring-8 ring-primary/5">
           <Gem className="h-8 w-8 text-primary" />

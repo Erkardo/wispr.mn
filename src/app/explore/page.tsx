@@ -64,17 +64,19 @@ export default function ExplorePage() {
             <div className="container mx-auto max-w-2xl p-4 pt-4 relative space-y-8">
 
                 <Tabs defaultValue="search" className="w-full">
-                    <div className="flex items-center justify-between mb-6 px-1">
-                        <TabsList className="bg-muted/50 p-1 rounded-2xl">
-                            <TabsTrigger value="search" className="rounded-xl px-6 data-[state=active]:bg-background data-[state=active]:shadow-sm">
-                                <Search className="w-4 h-4 mr-2" />
-                                Хайх
-                            </TabsTrigger>
-                            <TabsTrigger value="radar" className="rounded-xl px-6 data-[state=active]:bg-background data-[state=active]:shadow-sm">
-                                <Radar className="w-4 h-4 mr-2" />
-                                Радар
-                            </TabsTrigger>
-                        </TabsList>
+                    <div className="flex justify-center px-4 mb-6">
+                        <div className="w-full max-w-sm overflow-x-auto no-scrollbar pb-2 -mb-2">
+                            <TabsList className="bg-muted/40 p-1.5 rounded-full shadow-inner border border-border/40 backdrop-blur-sm h-auto flex flex-nowrap justify-start sm:justify-center min-w-max mx-auto gap-1">
+                                <TabsTrigger value="search" className="rounded-full px-5 py-2.5 text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:font-bold transition-all duration-300">
+                                    <Search className="w-4 h-4 mr-2" />
+                                    Хайх
+                                </TabsTrigger>
+                                <TabsTrigger value="radar" className="rounded-full px-5 py-2.5 text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:font-bold transition-all duration-300">
+                                    <Radar className="w-4 h-4 mr-2" />
+                                    Радар
+                                </TabsTrigger>
+                            </TabsList>
+                        </div>
                     </div>
 
                     <TabsContent value="search" className="space-y-8 focus-visible:outline-none m-0">

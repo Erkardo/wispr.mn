@@ -255,7 +255,7 @@ export default function ProfilePage() {
         <>
             <Header title="Профайл" showBackButton={true} />
             <div className="container mx-auto max-w-2xl p-4 py-8 space-y-6">
-                <Card>
+                <Card className="rounded-3xl border-muted/30 shadow-sm overflow-hidden">
                     <CardContent className="flex items-center gap-4 p-6">
                         <Avatar className="h-16 w-16 border-2 border-primary/20">
                             <AvatarImage src={user.photoURL || ''} alt={user.displayName || ''} />
@@ -268,23 +268,27 @@ export default function ProfilePage() {
                     </CardContent>
                 </Card>
 
-                <Tabs defaultValue="profile" className="w-full">
-                    <TabsList className="grid w-full grid-cols-3">
-                        <TabsTrigger value="profile" className="gap-2">
-                            <User className="h-4 w-4" />
-                            <span className="hidden sm:inline">Мэдээлэл</span>
-                        </TabsTrigger>
-                        <TabsTrigger value="themes" className="gap-2">
-                            <Palette className="h-4 w-4" />
-                            <span className="hidden sm:inline">Загвар</span>
-                        </TabsTrigger>
-                        <TabsTrigger value="achievements" className="gap-2">
-                            <Trophy className="h-4 w-4" />
-                            <span className="hidden sm:inline">Амжилт</span>
-                        </TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="profile" className="mt-4 space-y-4">
-                        <Card>
+                <Tabs defaultValue="profile" className="w-full mt-2">
+                    <div className="flex justify-center mb-6">
+                        <div className="w-full overflow-x-auto no-scrollbar pb-2 -mb-2">
+                            <TabsList className="bg-muted/40 p-1.5 rounded-full shadow-inner border border-border/40 backdrop-blur-sm h-auto flex flex-nowrap justify-start sm:justify-center min-w-max mx-auto gap-1">
+                                <TabsTrigger value="profile" className="rounded-full px-5 py-2.5 text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:font-bold transition-all duration-300">
+                                    <User className="h-4 w-4 mr-2" />
+                                    <span>Мэдээлэл</span>
+                                </TabsTrigger>
+                                <TabsTrigger value="themes" className="rounded-full px-5 py-2.5 text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:font-bold transition-all duration-300">
+                                    <Palette className="h-4 w-4 mr-2" />
+                                    <span>Загвар</span>
+                                </TabsTrigger>
+                                <TabsTrigger value="achievements" className="rounded-full px-5 py-2.5 text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:font-bold transition-all duration-300">
+                                    <Trophy className="h-4 w-4 mr-2" />
+                                    <span>Амжилт</span>
+                                </TabsTrigger>
+                            </TabsList>
+                        </div>
+                    </div>
+                    <TabsContent value="profile" className="space-y-4 m-0 focus-visible:outline-none">
+                        <Card className="rounded-3xl border-muted/30 shadow-sm overflow-hidden">
                             <CardHeader>
                                 <CardTitle>Хувийн мэдээлэл</CardTitle>
                                 <CardDescription>Нийтэд харагдах өөрийн профайл мэдээллээ тохируулна уу.</CardDescription>
@@ -294,11 +298,11 @@ export default function ProfilePage() {
                             </CardContent>
                         </Card>
                     </TabsContent>
-                    <TabsContent value="themes" className="mt-4 space-y-4">
+                    <TabsContent value="themes" className="space-y-4 m-0 focus-visible:outline-none">
                         <ThemeSelector currentThemeId={ownerData?.theme} ownerData={ownerData} />
                     </TabsContent>
-                    <TabsContent value="achievements" className="mt-4 space-y-4">
-                        <Card>
+                    <TabsContent value="achievements" className="space-y-4 m-0 focus-visible:outline-none">
+                        <Card className="rounded-3xl border-muted/30 shadow-sm overflow-hidden">
                             <CardHeader>
                                 <CardTitle>Миний амжилтууд</CardTitle>
                                 <CardDescription>Таны цуглуулсан оноо болон тэмдэгүүд</CardDescription>
@@ -409,7 +413,7 @@ export default function ProfilePage() {
 
 
                 {/* Settings and Legal Section */}
-                <Card>
+                <Card className="rounded-3xl border-muted/30 shadow-sm overflow-hidden mb-20">
                     <CardHeader>
                         <CardTitle>Тохиргоо &amp; Бусад</CardTitle>
                     </CardHeader>

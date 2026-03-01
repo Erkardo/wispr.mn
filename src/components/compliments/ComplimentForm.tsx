@@ -165,12 +165,8 @@ export function ComplimentForm({ ownerId }: { ownerId: string }) {
           console.error("Failed to update extra DB data", e);
         }
 
-        // Redirect OR Show Success
-        if (user && !user.isAnonymous && data.createOwnLink) {
-          router.push('/create');
-        } else {
-          setIsSubmitted(true);
-        }
+        // ALWAYS show success screen with paper plane animation
+        setIsSubmitted(true);
 
       } else {
         toast({

@@ -38,7 +38,7 @@ const formatPrivateKey = (key: string | undefined) => {
 const privateKey = formatPrivateKey(process.env.FIREBASE_PRIVATE_KEY);
 
 if (!projectId || !clientEmail || !privateKey) {
-    if (process.env.NODE_ENV === 'production') {
+    if (process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE !== 'phase-production-build') {
         console.warn("[Admin SDK] Missing credentials. Webhooks will fail.");
     }
 } else {

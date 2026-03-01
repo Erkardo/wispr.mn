@@ -2,8 +2,9 @@
 
 import { useState, useTransition, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
+import Image from 'next/image';
 import { MapPin, Navigation, Briefcase, GraduationCap, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
@@ -356,11 +357,21 @@ export function RadarTab() {
                                             <Card className="overflow-hidden border-green-900/30 hover:border-green-700/50 transition-all cursor-pointer group hover:shadow-xl bg-card/60 backdrop-blur-md rounded-[1.5rem]">
                                                 <CardContent className="p-4 flex items-center gap-4">
                                                     <div className="relative">
-                                                        <Avatar className="h-14 w-14 ring-2 ring-background shadow-lg">
-                                                            <AvatarImage src={profile.photoURL || ''} alt={profile.displayName || profile.username} />
-                                                            <AvatarFallback className="bg-green-950 text-green-400 font-black">
-                                                                {(profile.displayName || profile.username || 'U').charAt(0).toUpperCase()}
-                                                            </AvatarFallback>
+                                                        <Avatar className="h-14 w-14 ring-2 ring-background shadow-lg overflow-hidden relative">
+                                                            {profile.photoURL && (
+                                                                <Image
+                                                                    src={profile.photoURL}
+                                                                    alt={profile.displayName || profile.username || 'Profile'}
+                                                                    fill
+                                                                    sizes="56px"
+                                                                    className="object-cover"
+                                                                />
+                                                            )}
+                                                            {!profile.photoURL && (
+                                                                <AvatarFallback className="bg-green-950 text-green-400 font-black h-full w-full flex items-center justify-center">
+                                                                    {(profile.displayName || profile.username || 'U').charAt(0).toUpperCase()}
+                                                                </AvatarFallback>
+                                                            )}
                                                         </Avatar>
                                                         <div className="absolute -bottom-0.5 -right-0.5 bg-green-500 w-3.5 h-3.5 rounded-full border-2 border-background shadow-[0_0_6px_rgba(34,197,94,0.8)]" />
                                                     </div>

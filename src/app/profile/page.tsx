@@ -161,6 +161,14 @@ export default function ProfilePage() {
     };
 
     const handleToggleNotification = async (val: boolean) => {
+        if (!isSupportedBrowser) {
+            toast({
+                title: 'Мэдэгдэл идэвхжүүлэх боломжгүй ⚠️',
+                description: 'Таны ашиглаж буй хөтөч эсвэл төхөөрөмж дэмжихгүй байна. Google Chrome эсвэл Safari хөтчөөр орж Home Screen дээрээ нэмнэ үү.',
+                variant: 'destructive',
+            });
+            return;
+        }
         if (val && permission !== 'granted') {
             setIsRequestingPerm(true);
             await requestPermission?.();
@@ -288,7 +296,7 @@ export default function ProfilePage() {
                             </Card>
 
                             {/* Notification Activation Card */}
-                            {isSupportedBrowser && permission !== 'granted' && (
+                            {permission !== 'granted' && (
                                 <Card className="rounded-[1.75rem] border-none bg-primary/10 overflow-hidden">
                                     <div className="p-5 flex items-start gap-4 cursor-pointer hover:bg-primary/15 transition-colors" onClick={() => handleToggleNotification(true)}>
                                         <div className="p-2.5 rounded-2xl bg-primary/20 shrink-0">
@@ -318,7 +326,7 @@ export default function ProfilePage() {
                                     onCheckedChange={handleTogglePublic}
                                     disabled={isTogglingPublic}
                                 />
-                                {isSupportedBrowser && permission === 'granted' && (
+                                {permission === 'granted' && (
                                     <>
                                         <Separator />
                                         <div className="flex items-center justify-between gap-3 py-3 px-4 opacity-70">

@@ -137,7 +137,7 @@ export function ComplimentForm({ ownerId }: { ownerId: string }) {
       <form id="compliment-form" onSubmit={form.handleSubmit(onSubmit)} className="w-full">
 
         {/* ─── Message card ─── */}
-        <div className="relative w-full rounded-[28px] bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_24px_-4px_rgba(0,0,0,0.4)] overflow-hidden focus-within:border-zinc-300 dark:focus-within:border-zinc-600 transition-all duration-300">
+        <div className="relative w-full rounded-[28px] bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_24px_-4px_rgba(0,0,0,0.4)] overflow-hidden transition-all duration-300 focus-within:shadow-[0_4px_32px_-4px_rgba(0,0,0,0.14)] dark:focus-within:shadow-[0_4px_32px_-4px_rgba(0,0,0,0.6)] focus-within:border-zinc-300 dark:focus-within:border-zinc-600">
           <FormField
             control={form.control}
             name="text"
@@ -146,7 +146,7 @@ export function ComplimentForm({ ownerId }: { ownerId: string }) {
                 <FormControl>
                   <Textarea
                     placeholder="Хэлмээр байсан үгээ энд үлдээгээрэй…"
-                    className="resize-none min-h-[180px] max-h-[320px] bg-transparent border-0 focus-visible:ring-0 px-6 pt-6 pb-2 text-[17px] font-medium leading-relaxed text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 overflow-y-auto shadow-none caret-primary"
+                    className="resize-none min-h-[200px] max-h-[340px] bg-transparent border-0 focus-visible:ring-0 px-6 pt-7 pb-3 text-[17px] font-medium leading-relaxed text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 overflow-y-auto shadow-none caret-primary"
                     {...field}
                   />
                 </FormControl>
@@ -155,30 +155,31 @@ export function ComplimentForm({ ownerId }: { ownerId: string }) {
             )}
           />
 
-          {/* Toolbar */}
-          <div className="flex items-center justify-between px-4 py-3 border-t border-zinc-100 dark:border-zinc-800/70 bg-zinc-50/50 dark:bg-zinc-900/50">
-            <div className="flex items-center gap-2">
-              <AudioRecorder
-                ownerId={ownerId}
-                onAudioReady={(url, duration) => { setAudioUrl(url); setAudioDuration(duration); }}
-                onAudioRemoved={() => { setAudioUrl(null); setAudioDuration(0); }}
-              />
-              <AISuggestionsDialog onSelect={(text) => form.setValue('text', text, { shouldValidate: true })} />
-            </div>
-            <Button
-              type="button"
-              onClick={handleOpenDrawer}
-              className="h-11 px-5 rounded-2xl font-bold text-[14px] bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-100 active:scale-95 transition-all flex items-center gap-2 shadow-sm"
-            >
-              Илгээх <ArrowRight className="w-4 h-4" />
-            </Button>
+          {/* Tiny toolbar — AudioRecorder + AI only */}
+          <div className="flex items-center gap-2 px-4 py-3 border-t border-zinc-100 dark:border-zinc-800/70">
+            <AudioRecorder
+              ownerId={ownerId}
+              onAudioReady={(url, duration) => { setAudioUrl(url); setAudioDuration(duration); }}
+              onAudioRemoved={() => { setAudioUrl(null); setAudioDuration(0); }}
+            />
+            <AISuggestionsDialog onSelect={(text) => form.setValue('text', text, { shouldValidate: true })} />
           </div>
         </div>
 
-        {/* ─── Hint Pill ─── */}
-        <div className="mt-4 flex items-center justify-center gap-1.5 opacity-60">
+        {/* ─── Primary CTA ─── */}
+        <Button
+          type="button"
+          onClick={handleOpenDrawer}
+          className="w-full mt-4 h-14 rounded-2xl font-black text-[17px] bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-100 active:scale-[0.98] transition-all flex items-center justify-center gap-2.5 shadow-lg shadow-black/10 dark:shadow-white/5 group"
+        >
+          Үргэлжлүүлэх
+          <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
+        </Button>
+
+        {/* ─── Trust Hint ─── */}
+        <div className="mt-4 flex items-center justify-center gap-1.5 opacity-50">
           <Lock className="w-3 h-3 text-zinc-500" />
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-600 dark:text-zinc-400">Таны нэр хаана ч харагдахгүй</p>
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">Таны нэр хаана ч харагдахгүй</p>
         </div>
 
         {/* ─── Drawer ─── */}
@@ -244,8 +245,8 @@ export function ComplimentForm({ ownerId }: { ownerId: string }) {
                               type="button"
                               onClick={() => form.setValue('location', isSelected ? '' : option, { shouldValidate: true })}
                               className={`h-11 px-5 rounded-xl text-[14px] font-semibold border-2 transition-all duration-200 active:scale-95 ${isSelected
-                                  ? 'border-zinc-950 dark:border-white bg-zinc-950 dark:bg-white text-white dark:text-zinc-950'
-                                  : 'border-transparent bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800'
+                                ? 'border-zinc-950 dark:border-white bg-zinc-950 dark:bg-white text-white dark:text-zinc-950'
+                                : 'border-transparent bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800'
                                 }`}
                             >
                               {option}

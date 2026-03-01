@@ -19,6 +19,7 @@ export async function GET(request: Request) {
                         justifyContent: 'center',
                         background: 'linear-gradient(135deg, #1e1b4b 0%, #3b1d8a 50%, #6d28d9 100%)',
                         fontFamily: 'system-ui, -apple-system, sans-serif',
+                        padding: '60px',
                     }}
                 >
                     {/* Ambient glow */}
@@ -27,108 +28,121 @@ export async function GET(request: Request) {
                         top: '50%',
                         left: '50%',
                         transform: 'translate(-50%, -50%)',
-                        width: '700px',
-                        height: '700px',
-                        background: 'radial-gradient(circle, rgba(139,92,246,0.3) 0%, transparent 70%)',
+                        width: '800px',
+                        height: '800px',
+                        background: 'radial-gradient(circle, rgba(139,92,246,0.25) 0%, transparent 70%)',
                         display: 'flex',
                     }} />
 
-                    {/* Card */}
-                    <div
-                        style={{
+                    {/* Main layout: icon left + text right */}
+                    <div style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '70px',
+                        width: '100%',
+                        position: 'relative',
+                    }}>
+                        {/* Brand icon — purple rounded square + white W */}
+                        <svg
+                            width="220"
+                            height="220"
+                            viewBox="0 0 256 256"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                        >
+                            <defs>
+                                <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+                                    <stop offset="0%" stopColor="#a78bfa" />
+                                    <stop offset="100%" stopColor="#8b5cf6" />
+                                </linearGradient>
+                            </defs>
+                            {/* Purple rounded rect */}
+                            <rect width="256" height="256" rx="55" fill="url(#g)" />
+                            {/* White W glyph */}
+                            <g transform="translate(-45.843262,-56.243885)">
+                                <path
+                                    d="m 149.33094,230.15505 c 4.52468,-2.33928 4.94219,-3.236 11.01364,-23.65505 2.78015,-9.35 6.53812,-21.63967 8.35106,-27.31038 l 3.29624,-10.31038 4.29899,15.81038 c 8.97005,32.98918 11.30221,38.29834 18.4461,41.99259 3.67998,1.90299 14.25709,2.16716 20.14765,0.50319 6.52057,-1.84193 14.72003,-7.35468 18.46528,-12.41476 l 3.50045,-4.72937 1.29907,2.47937 c 2.0403,3.89404 3.34115,3.0065 2.5952,-1.77064 -0.74887,-4.79584 -1.9555,-6.06903 -4.86,-5.12808 -3.94965,1.27956 -12.34731,1.53017 -14.40329,0.42984 -4.12207,-2.20607 -2.58027,-4.55173 3.86717,-5.88343 7.0734,-1.46098 13.49186,-5.94421 16.7717,-11.71484 1.23587,-2.17442 3.35328,-7.55349 4.70535,-11.95349 3.3681,-10.96066 9.55907,-35.80745 9.55907,-38.36426 0,-4.16643 -4.02905,-5.44108 -15.57549,-4.92756 -7.59621,0.33784 -10.95303,0.89177 -12.04966,1.9884 -0.94564,0.94564 -2.59568,7.90357 -4.36626,18.41176 -4.67272,27.73206 -10.7075,48.29467 -14.61357,49.79357 -3.10996,1.1934 -7.00172,-9.47788 -14.48858,-39.72797 -6.52325,-26.35666 -6.55247,-26.43953 -9.94007,-28.19133 -3.70717,-1.91705 -23.75544,-2.09453 -26.27689,-0.23261 -1.09027,0.80509 -3.79828,9.08044 -7.60829,23.25 -6.6338,24.67129 -14.27251,48.04157 -15.66261,47.91901 -1.26314,-0.11136 -6.50274,-19.79556 -11.90779,-44.73532 -2.48127,-11.44898 -4.95842,-21.65158 -5.50478,-22.67245 -0.54635,-1.02088 -2.1819,-2.79103 -3.63455,-3.93369 C 112.42258,133.24202 110.74683,133 100.37108,133 H 88.627255 l -1.2359,2.98373 c -1.09907,2.6534 -0.83639,4.12033 2.37263,13.25 1.98469,5.64645 7.469,22.64127 12.187345,37.76627 4.71834,15.125 9.4544,30.28095 10.52457,33.67989 2.23427,7.09619 5.58905,9.88299 13.66154,11.34858 6.95548,1.2628 19.0108,0.28905 23.1935,-1.87342 z"
+                                    fill="#ffffff"
+                                />
+                            </g>
+                        </svg>
+
+                        {/* Text column */}
+                        <div style={{
                             display: 'flex',
                             flexDirection: 'column',
-                            alignItems: 'center',
+                            alignItems: 'flex-start',
                             justifyContent: 'center',
-                            background: 'rgba(255,255,255,0.07)',
-                            border: '1px solid rgba(255,255,255,0.15)',
-                            borderRadius: '32px',
-                            padding: '50px 70px',
-                            width: '82%',
-                            textAlign: 'center',
-                            backdropFilter: 'blur(20px)',
-                        }}
-                    >
-                        {/* Logo wordmark - solid white, no gradient so all messengers render it */}
-                        <div
-                            style={{
-                                fontSize: 72,
+                        }}>
+                            {/* Wispr wordmark */}
+                            <div style={{
+                                fontSize: 64,
                                 fontWeight: 900,
                                 color: '#ffffff',
                                 letterSpacing: '-3px',
-                                marginBottom: 8,
                                 lineHeight: 1,
-                            }}
-                        >
-                            Wispr
-                        </div>
+                                marginBottom: 6,
+                            }}>
+                                Wispr
+                            </div>
 
-                        {/* Tagline */}
-                        <div style={{
-                            fontSize: 22,
-                            color: 'rgba(255,255,255,0.5)',
-                            fontWeight: 500,
-                            marginBottom: 40,
-                            letterSpacing: '0.05em',
-                        }}>
-                            wispr.mn
-                        </div>
+                            {/* wispr.mn */}
+                            <div style={{
+                                fontSize: 20,
+                                color: 'rgba(255,255,255,0.45)',
+                                fontWeight: 500,
+                                letterSpacing: '0.05em',
+                                marginBottom: 40,
+                            }}>
+                                wispr.mn
+                            </div>
 
-                        {/* Recipient name */}
-                        <div
-                            style={{
-                                fontSize: 44,
+                            {/* Recipient */}
+                            <div style={{
+                                fontSize: 42,
                                 fontWeight: 800,
                                 color: '#e9d5ff',
-                                marginBottom: 16,
+                                marginBottom: 12,
                                 letterSpacing: '-1px',
-                            }}
-                        >
-                            {name}-д
-                        </div>
+                            }}>
+                                {name}-д
+                            </div>
 
-                        {/* Description */}
-                        <div
-                            style={{
-                                fontSize: 28,
-                                color: 'rgba(255,255,255,0.7)',
+                            {/* Invite text */}
+                            <div style={{
+                                fontSize: 26,
+                                color: 'rgba(255,255,255,0.65)',
                                 lineHeight: 1.5,
-                                marginBottom: 40,
                                 fontWeight: 500,
-                            }}
-                        >
-                            нэргүйгээр сэтгэлийн үг үлдээгээч 💛
-                        </div>
+                                marginBottom: 36,
+                            }}>
+                                нэргүйгээр сэтгэлийн үг үлдээгээч 💛
+                            </div>
 
-                        {/* CTA Button */}
-                        <div
-                            style={{
+                            {/* CTA pill */}
+                            <div style={{
                                 display: 'flex',
                                 alignItems: 'center',
-                                justifyContent: 'center',
                                 background: '#8b5cf6',
                                 color: 'white',
-                                padding: '16px 40px',
+                                padding: '14px 36px',
                                 borderRadius: '50px',
-                                fontSize: 26,
+                                fontSize: 24,
                                 fontWeight: 700,
                                 boxShadow: '0 8px 32px rgba(139,92,246,0.5)',
-                            }}
-                        >
-                            Энд дарж бичих ✍️
+                            }}>
+                                Энд дарж бичих ✍️
+                            </div>
                         </div>
                     </div>
                 </div>
             ),
-            {
-                width: 1200,
-                height: 630,
-            },
+            { width: 1200, height: 630 },
         );
     } catch (e: any) {
         console.log(`${e.message}`);
-        return new Response(`Failed to generate the image`, {
-            status: 500,
-        });
+        return new Response(`Failed to generate the image`, { status: 500 });
     }
 }

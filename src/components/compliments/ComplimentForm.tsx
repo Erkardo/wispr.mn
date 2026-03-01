@@ -193,50 +193,58 @@ export function ComplimentForm({ ownerId }: { ownerId: string }) {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-0 w-full">
 
         {/* --- STEP 1: Just Write (Frictionless UX) --- */}
-        <div className="flex flex-col relative w-full pt-4">
+        <div className="flex flex-col relative w-full">
           <FormField
             control={form.control}
             name="text"
             render={({ field }) => (
-              <FormItem className="space-y-0 relative w-full">
+              <FormItem className="space-y-0 w-full">
                 <FormControl>
                   <Textarea
                     placeholder="Надад хэлмээр санагдсан тэр үгээ энд зоригтойгоор үлдээгээрэй... 💭"
-                    className="resize-none min-h-[160px] max-h-[250px] bg-transparent border-0 focus-visible:ring-0 px-5 pt-3 pb-12 text-lg md:text-xl font-medium !placeholder-muted-foreground/50 overflow-y-auto leading-relaxed shadow-none caret-primary"
+                    className="resize-none min-h-[160px] max-h-[300px] bg-transparent border-0 focus-visible:ring-0 px-6 py-6 text-lg md:text-xl font-medium !placeholder-muted-foreground/50 overflow-y-auto leading-relaxed shadow-none caret-primary"
                     {...field}
                   />
                 </FormControl>
-
-                {/* Fixed controls bar over the textarea bottom */}
-                <div className="absolute bottom-2 left-2 right-2 flex justify-between items-center bg-white/40 dark:bg-black/40 backdrop-blur-md rounded-xl p-1 shadow-sm border border-white/20">
-                  <div className="flex items-center gap-1">
-                    <AudioRecorder
-                      ownerId={ownerId}
-                      onAudioReady={(url, duration) => {
-                        setAudioUrl(url);
-                        setAudioDuration(duration);
-                      }}
-                      onAudioRemoved={() => {
-                        setAudioUrl(null);
-                        setAudioDuration(0);
-                      }}
-                    />
-                    <AISuggestionsDialog onSelect={(text) => form.setValue('text', text, { shouldValidate: true })} />
-                  </div>
-
-                  {/* Primary Trigger */}
-                  <Button
-                    type="button"
-                    onClick={handleOpenDrawer}
-                    className="rounded-lg shadow-xl hover:scale-105 transition-transform active:scale-95 px-5 bg-gradient-to-r from-primary to-accent"
-                  >
-                    Ахиулах <ArrowRight className="ml-2 w-4 h-4" />
-                  </Button>
-                </div>
-                <FormMessage className="absolute -bottom-6 left-4 text-xs font-semibold" />
+                <FormMessage className="px-6 pb-2 text-xs font-semibold text-destructive" />
               </FormItem>
             )}
           />
+
+          {/* Action Row */}
+          <div className="px-6 pb-6 pt-2 w-full flex flex-col gap-4 border-t border-muted/20">
+            <div className="flex items-center justify-between gap-3 w-full">
+              <div className="flex-1 max-w-[50%]">
+                <AudioRecorder
+                  ownerId={ownerId}
+                  onAudioReady={(url, duration) => {
+                    setAudioUrl(url);
+                    setAudioDuration(duration);
+                  }}
+                  onAudioRemoved={() => {
+                    setAudioUrl(null);
+                    setAudioDuration(0);
+                  }}
+                />
+              </div>
+              <div className="flex-shrink-0">
+                <AISuggestionsDialog onSelect={(text) => form.setValue('text', text, { shouldValidate: true })} />
+              </div>
+            </div>
+
+            {/* Primary Submit CTA */}
+            <Button
+              type="button"
+              onClick={handleOpenDrawer}
+              className="w-full h-14 rounded-2xl font-black text-lg bg-gradient-to-r from-primary to-accent hover:opacity-90 shadow-xl shadow-primary/20 hover:-translate-y-1 active:translate-y-0 active:scale-[0.98] transition-all text-white relative overflow-hidden group"
+            >
+              <span className="relative z-10 flex items-center justify-center">
+                Үргэлжлүүлэх <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </span>
+              {/* Shine effect */}
+              <div className="absolute top-0 -inset-full h-full w-1/2 z-0 block transform -skew-x-12 bg-gradient-to-r from-white/0 via-white/20 to-white/0 opacity-0 group-hover:animate-shine" />
+            </Button>
+          </div>
         </div>
 
         {/* --- STEP 2: The Bottom Drawer (Hint & Login) --- */}

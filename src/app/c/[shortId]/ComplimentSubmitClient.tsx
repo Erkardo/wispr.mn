@@ -2,10 +2,9 @@
 
 import { useUser, useFirestore } from '@/firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import { useEffect, useState, useMemo } from 'react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { useEffect, useState } from 'react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Heart, Frown, Loader2, Lock } from 'lucide-react';
+import { Heart, Frown, Share2, ShieldCheck } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -83,19 +82,17 @@ export function ComplimentSubmitClient({ shortId, username }: ComplimentSubmitCl
 
     if (userLoading || loading) {
         return (
-            <div className="flex min-h-[calc(100vh-56px)] flex-col items-center justify-center p-4">
-                <Card className="w-full max-w-sm border-0 shadow-none bg-transparent">
-                    <CardHeader className="text-center space-y-4">
-                        <div className="mx-auto mt-4 mb-4">
-                            <Skeleton className="h-20 w-20 rounded-full" />
-                        </div>
-                        <Skeleton className="h-6 w-3/4 mx-auto rounded-full" />
-                        <Skeleton className="h-4 w-5/6 mx-auto rounded-full mt-2" />
-                    </CardHeader>
-                    <CardContent className="space-y-4 pb-8 items-center justify-center">
-                        <Skeleton className="h-32 w-full rounded-3xl" />
-                    </CardContent>
-                </Card>
+            <div className="flex min-h-screen flex-col items-center justify-center p-6 bg-white dark:bg-zinc-950">
+                <div className="w-full max-w-md flex flex-col items-center gap-5">
+                    <Skeleton className="h-28 w-28 rounded-full" />
+                    <div className="space-y-2.5 w-full flex flex-col items-center">
+                        <Skeleton className="h-7 w-44 rounded-full" />
+                        <Skeleton className="h-4 w-64 rounded-full" />
+                        <Skeleton className="h-4 w-56 rounded-full" />
+                    </div>
+                    <Skeleton className="h-44 w-full rounded-3xl mt-4" />
+                    <Skeleton className="h-14 w-full rounded-2xl" />
+                </div>
             </div>
         );
     }
@@ -105,101 +102,114 @@ export function ComplimentSubmitClient({ shortId, username }: ComplimentSubmitCl
 
     if (isNotFound) {
         return (
-            <div className="flex min-h-[calc(100vh-56px)] flex-col items-center justify-center p-4 bg-zinc-50 dark:bg-zinc-950">
-                <Card className="w-full max-w-sm text-center p-8 border-transparent shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-1 ring-black/5 dark:ring-white/10 bg-white dark:bg-zinc-900 rounded-[2rem]">
-                    <Frown className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
-                    <h2 className="text-xl font-semibold text-foreground tracking-tight">Хуудас олдсонгүй</h2>
-                    <p className="mt-2 text-sm text-muted-foreground">Энэ холбоос буруу эсвэл устгагдсан байна.</p>
-                </Card>
+            <div className="flex min-h-screen flex-col items-center justify-center p-6 bg-zinc-50 dark:bg-zinc-950">
+                <div className="w-full max-w-sm text-center flex flex-col items-center gap-4">
+                    <div className="w-20 h-20 rounded-3xl bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center mb-2">
+                        <Frown className="h-9 w-9 text-zinc-400" />
+                    </div>
+                    <h2 className="text-xl font-bold text-zinc-900 dark:text-white tracking-tight">Хуудас олдсонгүй</h2>
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400">Энэ холбоос буруу эсвэл устгагдсан байна.</p>
+                    <Button asChild variant="outline" className="mt-4 rounded-xl px-6">
+                        <Link href="/">Нүүр хуудас руу буцах</Link>
+                    </Button>
+                </div>
             </div>
-        );
+        )
     }
 
     if (isOwner) {
         return (
-            <div className="flex min-h-[calc(100vh-56px)] flex-col items-center justify-center p-4 bg-zinc-50 dark:bg-zinc-950">
-                <Card className="w-full max-w-sm text-center p-8 border-transparent shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-1 ring-black/5 dark:ring-white/10 bg-white dark:bg-zinc-900 rounded-[2rem]">
-                    <div className="mx-auto bg-primary/10 p-4 rounded-full w-fit mb-5">
-                        <Heart className="h-6 w-6 text-primary" />
+            <div className="flex min-h-screen flex-col items-center justify-center p-6 bg-zinc-50 dark:bg-zinc-950">
+                <div className="w-full max-w-sm text-center flex flex-col items-center gap-4">
+                    <div className="w-20 h-20 rounded-3xl bg-primary/10 flex items-center justify-center mb-2">
+                        <Heart className="h-9 w-9 text-primary" />
                     </div>
-                    <h2 className="text-xl font-semibold text-foreground tracking-tight">Өөрийн линк байна</h2>
-                    <p className="mt-3 text-sm text-muted-foreground leading-relaxed">Та энэ линкийг найзууддаа хуваалцаж сэтгэлийн үгсийг нь сонсоорой.</p>
-                    <div className="mt-8 flex flex-col gap-3">
-                        <Button asChild className="w-full rounded-2xl h-14 bg-black dark:bg-white text-white dark:text-black font-semibold shadow-md active:scale-[0.98] transition-all">
-                            <Link href="/create">Линкээ хуваалцах</Link>
+                    <h2 className="text-xl font-bold text-zinc-900 dark:text-white tracking-tight">Өөрийн линк байна</h2>
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">Та энэ линкийг найзууддаа хуваалцаж сэтгэлийн үгсийг нь сонсоорой.</p>
+                    <div className="flex flex-col gap-3 w-full mt-4">
+                        <Button asChild className="w-full rounded-2xl h-14 bg-black dark:bg-white text-white dark:text-black font-bold shadow-lg active:scale-[0.98] transition-all flex items-center gap-2">
+                            <Link href="/create"><Share2 className="w-4 h-4" /> Линкээ хуваалцах</Link>
                         </Button>
-                        <Button variant="ghost" asChild className="w-full rounded-2xl h-14 font-semibold hover:bg-black/5 dark:hover:bg-white/5">
+                        <Button variant="ghost" asChild className="w-full rounded-2xl h-14 font-semibold">
                             <Link href="/">Хүлээн авсан зурвасууд</Link>
                         </Button>
                     </div>
-                </Card>
+                </div>
             </div>
         )
     }
 
     return (
-        <div className="flex min-h-[calc(100vh-56px)] justify-center px-4 pt-8 pb-24 relative overflow-hidden bg-[#FAFAFA] dark:bg-[#0A0A0A]">
-            {/* Extremely subtle, premium gradient sweep */}
-            <div className="absolute top-0 inset-x-0 h-[500px] w-full bg-gradient-to-b from-primary/10 via-primary/[0.02] to-transparent pointer-events-none" />
+        <div className="min-h-screen w-full bg-white dark:bg-zinc-950 relative overflow-hidden">
+            {/* Subtle top gradient wash */}
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-80 bg-gradient-to-b from-primary/[0.07] to-transparent" />
 
-            <div className="w-full max-w-md flex flex-col items-center animate-in fade-in slide-in-from-bottom-8 duration-1000 ease-out relative z-10 pt-4">
+            <div className="relative z-10 flex flex-col items-center px-5 pt-12 pb-32 mx-auto max-w-md">
 
-                {/* Poll Card (if exists) */}
+                {/* Poll Card */}
                 {activePoll && (
-                    <div className="w-full mb-8">
+                    <div className="w-full mb-10">
                         <PollCard poll={activePoll} publicView={true} />
                     </div>
                 )}
 
-                <div className="mb-10 flex flex-col items-center relative w-full">
-                    {/* Trust Badge */}
-                    <div className="mb-10 flex items-center justify-center gap-2 px-4 py-1.5 rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm animate-in fade-in slide-in-from-top-4 duration-700 delay-150 fill-mode-both">
-                        <Lock className="w-3.5 h-3.5 text-emerald-500" />
-                        <span className="text-[12px] font-bold uppercase tracking-widest text-zinc-900 dark:text-zinc-100">100% Үл танигдах</span>
+                {/* ─── Hero Section ─── */}
+                <div className="flex flex-col items-center text-center w-full animate-in fade-in slide-in-from-bottom-6 duration-700 ease-out">
+
+                    {/* Trust pill */}
+                    <div className="mb-8 inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/50 shadow-sm">
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                        <span className="text-[11px] font-bold tracking-widest uppercase text-emerald-700 dark:text-emerald-400">100% нэрээ нууцалсан</span>
                     </div>
 
-                    <div className="relative group perspective-1000">
-                        {/* Premium Glow around avatar */}
-                        <div className="absolute -inset-4 rounded-full bg-primary/20 dark:bg-primary/30 blur-2xl opacity-0 transition-all duration-1000 group-hover:opacity-100 scale-90 group-hover:scale-100"></div>
+                    {/* Avatar */}
+                    <div className="relative mb-7">
+                        {/* Glow ring — appears on mount with a delay */}
+                        <div className="absolute -inset-3 rounded-full bg-primary/15 dark:bg-primary/20 blur-2xl animate-in fade-in duration-1000 delay-500 fill-mode-both" />
                         {ownerData?.photoURL ? (
-                            <Avatar className="h-32 w-32 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.2)] dark:shadow-[0_20px_40px_-15px_rgba(255,255,255,0.05)] ring-4 ring-white dark:ring-zinc-900 mb-6 relative z-10 transition-transform duration-700 ease-out group-hover:scale-[1.03] group-hover:-translate-y-1">
+                            <Avatar className="h-32 w-32 relative z-10 ring-4 ring-white dark:ring-zinc-950 shadow-2xl shadow-black/10 dark:shadow-black/40">
                                 <Image
                                     src={ownerData.photoURL}
                                     alt={ownerData.displayName || 'Profile'}
-                                    width={112}
-                                    height={112}
+                                    width={128}
+                                    height={128}
                                     priority
                                     className="object-cover"
                                 />
-                                <AvatarFallback className="bg-zinc-100 dark:bg-zinc-800 text-zinc-400 text-3xl font-bold">{ownerData.displayName?.charAt(0).toUpperCase() || 'W'}</AvatarFallback>
+                                <AvatarFallback className="text-4xl font-black bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100">
+                                    {ownerData.displayName?.charAt(0).toUpperCase() || 'W'}
+                                </AvatarFallback>
                             </Avatar>
                         ) : (
-                            <div className="mx-auto bg-white dark:bg-zinc-900 p-8 rounded-[2rem] shadow-xl shadow-black/5 dark:shadow-black/20 ring-1 ring-black/5 dark:ring-white/10 mb-6 relative z-10 transition-transform duration-500 group-hover:scale-[1.02] rotate-3 group-hover:rotate-0">
-                                <Heart className="h-10 w-10 text-primary drop-shadow-sm" />
+                            <div className="relative z-10 w-32 h-32 rounded-[2rem] bg-gradient-to-br from-primary/20 to-primary/5 ring-4 ring-white dark:ring-zinc-950 shadow-2xl flex items-center justify-center">
+                                <Heart className="h-12 w-12 text-primary" />
                             </div>
                         )}
                     </div>
 
-                    <div className="text-center px-4 w-full mt-2">
-                        <h1 className="font-black text-[32px] text-zinc-950 dark:text-white tracking-tight leading-none mb-4">
-                            @{ownerData?.displayName || 'Энэ хэрэглэгч'}
-                        </h1>
-                        <p className="text-[16px] font-medium text-zinc-500 dark:text-zinc-400 max-w-[280px] mx-auto leading-relaxed">
-                            {ownerData?.bio || "Надад хэлмээр байсан ч хэлж чадаагүй тэр үгээ энд зоригтойгоор үлдээгээрэй..."}
-                        </p>
-                    </div>
+                    {/* Name & Bio */}
+                    <h1 className="text-[30px] font-black text-zinc-950 dark:text-white tracking-tight leading-none">
+                        @{ownerData?.displayName || 'Хэрэглэгч'}
+                    </h1>
+                    <p className="mt-3 text-[15px] leading-relaxed text-zinc-500 dark:text-zinc-400 max-w-[72%]">
+                        {ownerData?.bio || 'Надад хэлмээр байсан ч хэлж чадаагүй тэр үгийг энд зоригтойгоор үлдээгээрэй'}
+                    </p>
                 </div>
 
-                {/* Minimal Form Wrapper */}
-                <div className="w-full">
+                {/* ─── Form ─── */}
+                <div className="w-full mt-10 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200 ease-out fill-mode-both">
                     {ownerId && <ComplimentForm ownerId={ownerId} />}
                 </div>
             </div>
 
-            <div className="mt-14 opacity-40 hover:opacity-100 transition-opacity">
-                <Link href="/" className="flex items-center gap-1.5 bg-transparent px-3 py-1.5 rounded-full">
-                    <span className="font-bold text-[11px] tracking-tight text-foreground uppercase">wispr</span>
-                    <span className="text-[11px] font-medium text-muted-foreground">— get your own link</span>
+            {/* Wispr footer brand */}
+            <div className="fixed bottom-6 left-0 right-0 flex justify-center pointer-events-none z-20">
+                <Link
+                    href="/"
+                    className="pointer-events-auto inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border border-black/5 dark:border-white/10 shadow-lg hover:shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+                >
+                    <span className="text-[12px] font-black tracking-tight text-zinc-900 dark:text-white">wispr</span>
+                    <span className="text-[12px] text-zinc-400 dark:text-zinc-500">· Өөрийн линкийг аваарай</span>
                 </Link>
             </div>
         </div>

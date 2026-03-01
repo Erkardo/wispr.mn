@@ -1,119 +1,134 @@
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Sparkles, Check, Send } from 'lucide-react';
+import { Sparkles, Share2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUser } from '@/firebase';
 
 export function ComplimentSentSuccess() {
-  const [showCheck, setShowCheck] = useState(false);
+  const [showContent, setShowContent] = useState(false);
   const { user } = useUser();
   const isUserLoggedIn = user && !user.isAnonymous;
 
   useEffect(() => {
-    // Elegant tiny haptic pop
     if (typeof navigator !== 'undefined' && navigator.vibrate) {
-      navigator.vibrate([30, 100, 30]);
+      navigator.vibrate([30, 80, 30]);
     }
-
-    // Very quick delay before drawing checkmark
-    const t = setTimeout(() => {
-      setShowCheck(true);
-    }, 150);
-
+    const t = setTimeout(() => setShowContent(true), 200);
     return () => clearTimeout(t);
   }, []);
 
   return (
-    <div className="w-full flex flex-col items-center justify-center min-h-[60vh] px-4 animate-in fade-in duration-700">
+    <div className="w-full flex flex-col items-center justify-center py-6 px-4">
 
-      {/* Sleek Animated Success Icon (Checkmark inside a circle) */}
-      <div className="relative mb-10 mt-6">
-        <div className="absolute inset-0 bg-green-500/10 dark:bg-green-400/10 rounded-full blur-2xl animate-pulse" />
-        <div className="relative bg-white dark:bg-zinc-900 shadow-xl border border-zinc-100 dark:border-zinc-800 rounded-full p-6 z-10">
-          <svg
-            className="w-16 h-16 text-zinc-900 dark:text-white"
-            viewBox="0 0 52 52"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <motion.circle
-              cx="26" cy="26" r="24"
-              stroke="currentColor"
-              strokeWidth="3.5"
+      {/* Animated Check */}
+      <div className="relative mb-8">
+        {/* Glow */}
+        <div
+          className="absolute inset-0 rounded-full"
+          style={{
+            background: 'radial-gradient(circle, rgba(139,92,246,0.25) 0%, transparent 70%)',
+            transform: 'scale(2)',
+            filter: 'blur(16px)',
+          }}
+        />
+        {/* Circle with animated checkmark */}
+        <div
+          className="relative z-10 flex items-center justify-center"
+          style={{
+            width: '88px', height: '88px',
+            background: 'linear-gradient(135deg, #7c3aed, #8b5cf6)',
+            borderRadius: '50%',
+            boxShadow: '0 12px 32px rgba(124,58,237,0.4)',
+          }}
+        >
+          <svg viewBox="0 0 52 52" fill="none" className="w-11 h-11">
+            <motion.path
+              d="M14 27 L22 35 L38 17"
+              stroke="white"
+              strokeWidth="4.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
               initial={{ pathLength: 0, opacity: 0 }}
               animate={{ pathLength: 1, opacity: 1 }}
-              transition={{ duration: 0.8, ease: "easeInOut" }}
+              transition={{ duration: 0.5, ease: 'easeOut' }}
             />
-            {showCheck && (
-              <motion.path
-                d="M14 27 L22 35 L38 17"
-                stroke="currentColor"
-                strokeWidth="4.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                initial={{ pathLength: 0 }}
-                animate={{ pathLength: 1 }}
-                transition={{ duration: 0.4, delay: 0.2, ease: "easeOut" }}
-              />
-            )}
           </svg>
         </div>
       </div>
 
       <AnimatePresence>
-        {showCheck && (
+        {showContent && (
           <motion.div
-            key="success-text"
-            initial={{ y: 20, opacity: 0 }}
+            key="content"
+            initial={{ y: 16, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ type: "spring", damping: 20, stiffness: 100, delay: 0.4 }}
-            className="flex flex-col items-center text-center space-y-3 w-full max-w-sm mb-12"
+            transition={{ type: 'spring', damping: 22, stiffness: 120 }}
+            className="flex flex-col items-center text-center w-full"
           >
-            <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">
-              Илгээгдлээ
+            <h1
+              className="font-black tracking-tight mb-2"
+              style={{ fontSize: '30px', color: '#18181b' }}
+            >
+              Илгээгдлээ ✨
             </h1>
-            <p className="text-[15px] font-medium text-zinc-500 max-w-[260px] mx-auto leading-relaxed text-balance">
-              Бид үүнийг нууцаар, мөн найдвартай хүргэж өгөх болно.
+            <p className="text-[15px] text-zinc-500 leading-relaxed mb-9" style={{ maxWidth: '240px' }}>
+              Таны мессеж нэргүйгээр хүрч очно. Баяр хүргэе!
             </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
-      <AnimatePresence>
-        {showCheck && (
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.5, type: "spring", damping: 20 }}
-            className="w-full max-w-sm flex flex-col gap-3"
-          >
-            {/* Extremely Clean Viral Loop Card */}
-            <div className="bg-white dark:bg-zinc-900 p-6 rounded-[1.5rem] border border-zinc-100 dark:border-zinc-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)] text-center relative overflow-hidden">
-              <h3 className="font-bold text-lg text-zinc-900 dark:text-white mb-2">
-                {isUserLoggedIn ? 'Таны линк бэлэн байна' : 'Одоо таны ээлж'}
+            {/* Upsell card */}
+            <div
+              className="w-full p-6 text-center mb-3"
+              style={{
+                background: 'rgba(255,255,255,0.85)',
+                border: '1.5px solid rgba(139,92,246,0.18)',
+                borderRadius: '24px',
+                backdropFilter: 'blur(16px)',
+                boxShadow: '0 8px 32px rgba(139,92,246,0.1)',
+              }}
+            >
+              {/* Shimmer top */}
+              <div
+                className="absolute top-0 left-0 right-0 h-0.5 rounded-full"
+                style={{ background: 'linear-gradient(90deg, transparent, rgba(139,92,246,0.5), transparent)' }}
+              />
+              <h3 className="font-black text-[18px] text-zinc-900 mb-1.5">
+                {isUserLoggedIn ? 'Линкээ хуваалц' : 'Өөрийн линк аваарай'}
               </h3>
-              <p className="text-[14px] text-zinc-500 font-medium mb-6 leading-relaxed px-2">
+              <p className="text-[14px] text-zinc-500 leading-relaxed mb-5 px-1">
                 {isUserLoggedIn
-                  ? 'Та өөрийн линкээ стори дээрээ тавиад хүмүүс таны юунд хамгийн их дуртайг олж мэдээрэй.'
-                  : 'Өөрийн линктэй болоод бусдаас бас ийм гоё үгс сонсоорой.'}
+                  ? 'Өөрийн линкийг стори дээрээ тавиад бусдын санааг сонс.'
+                  : 'Өөрийн линктэй болоод та ч ийм гоё зурвас хүлээн авах боломжтой.'}
               </p>
-
-              <Button asChild className="w-full h-14 rounded-2xl font-bold text-[16px] bg-black text-white dark:bg-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-200 shadow-md active:scale-[0.98] transition-all">
-                <Link href={isUserLoggedIn ? "/profile" : "/create"}>
-                  {isUserLoggedIn ? 'Линкээ хуулах' : 'Өөрийнхийгөө нээх'}
-                  {!isUserLoggedIn && <Sparkles className="ml-2 w-4 h-4 text-zinc-400 dark:text-zinc-600" />}
-                </Link>
-              </Button>
+              <Link
+                href={isUserLoggedIn ? '/profile' : '/create'}
+                className="flex items-center justify-center gap-2.5 font-black text-white w-full transition-all active:scale-[0.97]"
+                style={{
+                  height: '52px',
+                  borderRadius: '16px',
+                  fontSize: '16px',
+                  background: 'linear-gradient(135deg, #7c3aed 0%, #8b5cf6 50%, #a78bfa 100%)',
+                  boxShadow: '0 6px 20px rgba(124,58,237,0.35)',
+                }}
+              >
+                {isUserLoggedIn
+                  ? <><Share2 className="w-4 h-4" />Линкээ хуулах</>
+                  : <><Sparkles className="w-4 h-4" />Өөрийнхийгөө нэзх</>
+                }
+              </Link>
             </div>
 
-            <Button variant="ghost" onClick={() => window.location.reload()} className="w-full h-12 rounded-[14px] font-semibold text-zinc-500 hover:text-zinc-900 dark:hover:text-white dark:hover:bg-zinc-800 active:scale-[0.98] transition-all">
+            {/* Send again */}
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="w-full h-12 font-bold text-[15px] transition-all active:scale-[0.98]"
+              style={{ color: '#8b5cf6', background: 'transparent', border: 'none', cursor: 'pointer' }}
+            >
               Шинээр зурвас бичих
-            </Button>
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
-
     </div>
   );
 }

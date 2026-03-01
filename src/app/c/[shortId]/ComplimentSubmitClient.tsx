@@ -31,9 +31,14 @@ export function ComplimentSubmitClient({ shortId, username, ownerIdProp }: Compl
     useEffect(() => {
         if (!firestore) return;
         if (ownerIdProp) {
-            getDoc(doc(firestore, 'complimentOwners', ownerIdProp)).then(profileDoc => {
-                if (profileDoc.exists()) setOwnerData(profileDoc.data());
-            });
+            (async () => {
+                try {
+                    const profileDoc = await getDoc(doc(firestore, 'complimentOwners', ownerIdProp));
+                    if (profileDoc.exists()) setOwnerData(profileDoc.data());
+                } catch (_) {
+                    // Silently fail in local dev (permission rules)
+                }
+            })();
             return;
         }
         async function resolveUser() {

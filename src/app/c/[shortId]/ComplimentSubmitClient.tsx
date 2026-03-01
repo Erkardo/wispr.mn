@@ -45,7 +45,7 @@ export function ComplimentSubmitClient({ shortId, username }: ComplimentSubmitCl
                 } else if (shortId) {
                     const lookupDoc = await getDoc(doc(firestore, 'shortLinks', shortId));
                     if (lookupDoc.exists()) {
-                        resolvedOwnerId = lookupDoc.data().uid;
+                        resolvedOwnerId = lookupDoc.data().ownerId;
                     }
                 }
 

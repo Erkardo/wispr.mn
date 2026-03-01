@@ -218,9 +218,9 @@ export function RadarTab() {
                     }
                 },
                 () => {
-                    toast({ title: 'Байршил тогтоож чадсангүй', description: 'GPS зөвшөөрлөө шалгаад дахин оролдоно уу.', variant: 'destructive' });
+                    toast({ title: 'Байршил тогтоож чадсангүй', description: 'GPS зөвшөөрлөө шалгаад дахин оролдоно уу эсвэл түр хүлээгээд үзнэ үү.', variant: 'destructive' });
                 },
-                { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                { enableHighAccuracy: false, timeout: 15000, maximumAge: 30000 }
             );
         });
     };

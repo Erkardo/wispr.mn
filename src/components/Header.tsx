@@ -72,7 +72,7 @@ export function Header({
           )}
           {!isHomePage && (
             <Link href="/" passHref className="flex items-center shrink-0">
-              <Logo iconOnly className="w-10 text-primary transition-all" />
+              <Logo iconOnly className="w-11 md:w-12 text-primary transition-all" />
             </Link>
           )}
         </div>
@@ -87,7 +87,7 @@ export function Header({
           >
             {isHomePage ? (
               <Link href="/" passHref className="flex items-center shrink-0">
-                <Logo className="w-[84px] text-primary" />
+                <Logo className="w-[100px] text-primary" />
               </Link>
             ) : (
               <h1 className="text-[17px] font-bold tracking-tight bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent truncate text-center">

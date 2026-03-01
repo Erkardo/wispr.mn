@@ -203,55 +203,88 @@ export function ComplimentSubmitClient({ shortId, ownerIdProp }: { shortId?: str
     return (
         <div
             style={themeStyles}
-            className="flex min-h-[calc(100vh-56px)] flex-col items-center justify-center bg-background p-4 transition-colors duration-500"
+            className="flex min-h-[calc(100vh-56px)] flex-col items-center p-4 pt-12 transition-colors duration-500 relative overflow-hidden"
         >
-            {activePoll && (
-                <div className="w-full max-w-md animate-in fade-in slide-in-from-top-4 mb-6">
-                    <PollCard poll={activePoll} publicView={true} />
-                </div>
-            )}
-            <Card className="w-full max-w-md shadow-2xl bg-card backdrop-blur-lg border-primary/20">
-                <CardHeader className="text-center">
-                    {ownerData?.photoURL || ownerData?.bio || ownerData?.displayName ? (
-                        <div className="flex flex-col items-center gap-3 mb-4">
-                            {ownerData?.photoURL ? (
-                                <Avatar className="h-24 w-24 border-4 border-primary/20 shadow-xl overflow-hidden">
-                                    <Image
-                                        src={ownerData.photoURL}
-                                        alt={ownerData.displayName || 'Profile'}
-                                        width={96}
-                                        height={96}
-                                        priority
-                                        className="rounded-full object-cover"
-                                    />
-                                    <AvatarFallback>{ownerData.displayName?.charAt(0).toUpperCase() || 'W'}</AvatarFallback>
-                                </Avatar>
-                            ) : (
-                                <div className="mx-auto bg-primary/10 p-4 rounded-full w-fit ring-8 ring-primary/5">
-                                    <Heart className="h-8 w-8 text-primary" />
-                                </div>
-                            )}
-                            {ownerData?.displayName && (
-                                <CardTitle className="font-black text-2xl">{ownerData.displayName}-д Wispr бичих</CardTitle>
-                            )}
-                            {ownerData?.bio && (
-                                <p className="text-sm font-medium text-muted-foreground whitespace-pre-wrap px-4">{ownerData.bio}</p>
-                            )}
+            {/* Immersive mesh background */}
+            <div className="absolute inset-0 bg-background z-0">
+                <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-primary/20 blur-[100px] rounded-full mix-blend-multiply opacity-50 animate-blob" />
+                <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-accent/20 blur-[100px] rounded-full mix-blend-multiply opacity-50 animate-blob animation-delay-2000" />
+                <div className="absolute -bottom-32 left-20 w-[600px] h-[600px] bg-primary/10 blur-[120px] rounded-full mix-blend-multiply opacity-50 animate-blob animation-delay-4000" />
+            </div>
+
+            <div className="relative z-10 w-full max-w-sm flex flex-col items-center">
+
+                {/* Poll Card (if exists) */}
+                {activePoll && (
+                    <div className="w-full mb-6 animate-in slide-in-from-top-10 fade-in duration-500">
+                        <PollCard poll={activePoll} publicView={true} />
+                    </div>
+                )}
+
+                {/* Profile Avatar / Heart */}
+                <div className="mb-6 relative animate-in fade-in zoom-in duration-700 delay-100 flex flex-col items-center">
+                    {ownerData?.photoURL ? (
+                        <div className="relative">
+                            <div className="absolute inset-0 bg-primary/30 rounded-full blur-xl animate-pulse" />
+                            <Avatar className="h-28 w-28 border-[3px] border-background shadow-2xl overflow-hidden relative z-10">
+                                <Image
+                                    src={ownerData.photoURL}
+                                    alt={ownerData.displayName || 'Profile'}
+                                    width={112}
+                                    height={112}
+                                    priority
+                                    className="rounded-full object-cover"
+                                />
+                                <AvatarFallback className="bg-primary/10 text-primary text-3xl font-black">{ownerData.displayName?.charAt(0).toUpperCase() || 'W'}</AvatarFallback>
+                            </Avatar>
                         </div>
                     ) : (
-                        <>
-                            <div className="mx-auto bg-primary/10 p-3 rounded-full w-fit mb-4 ring-8 ring-primary/5">
-                                <Heart className="h-8 w-8 text-primary" />
+                        <div className="relative">
+                            <div className="absolute inset-0 bg-primary/30 rounded-full blur-xl animate-pulse" />
+                            <div className="mx-auto bg-primary/10 p-5 rounded-full w-fit border-[3px] border-background shadow-2xl relative z-10">
+                                <Heart className="h-10 w-10 text-primary fill-primary/20" />
                             </div>
-                            <CardTitle className="font-bold text-2xl">Wispr илгээгээрэй</CardTitle>
-                        </>
+                        </div>
                     )}
-                    <CardDescription className="text-muted-foreground mt-2">Хэн болохыг тань хэн ч мэдэхгүй. Сэтгэлийнхээ дулаан үгсийг wispr болгон үлдээгээрэй.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    {ownerId && <ComplimentForm ownerId={ownerId} />}
-                </CardContent>
-            </Card>
+
+                    {ownerData?.displayName ? (
+                        <div className="text-center mt-4">
+                            <h1 className="font-extrabold text-2xl tracking-tight text-foreground drop-shadow-sm">
+                                @{ownerData.displayName}
+                            </h1>
+                            <p className="text-sm font-medium text-muted-foreground mt-1 max-w-[280px] leading-relaxed mx-auto text-balance">
+                                {ownerData.bio || "Надад хэлмээр байсан тэр үгээ энд зоригтойгоор үлдээгээрэй..."}
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="text-center mt-4">
+                            <h1 className="font-extrabold text-2xl tracking-tight text-foreground drop-shadow-sm">
+                                Wispr илгээгээрэй
+                            </h1>
+                            <p className="text-sm font-medium text-muted-foreground mt-1 text-balance">
+                                Надад хэлмээр байсан тэр үгээ энд зоригтойгоор үлдээгээрэй...
+                            </p>
+                        </div>
+                    )}
+                </div>
+
+                {/* Form Card */}
+                <div className="w-full animate-in fade-in slide-in-from-bottom-10 duration-700 delay-300">
+                    <Card className="w-full shadow-2xl bg-white/70 dark:bg-black/40 backdrop-blur-2xl border-white/40 dark:border-white/10 rounded-[2rem] overflow-hidden">
+                        <CardContent className="p-1 pt-1">
+                            {ownerId && <ComplimentForm ownerId={ownerId} />}
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+
+            {/* Footer Badge */}
+            <div className="mt-auto pt-12 pb-6 relative z-10 opacity-70 hover:opacity-100 transition-opacity">
+                <Link href="/" className="flex items-center gap-2 bg-white/50 dark:bg-black/30 backdrop-blur-md px-4 py-2 rounded-full border border-black/5 dark:border-white/5 shadow-sm">
+                    <span className="font-bold text-sm tracking-tight bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Wispr</span>
+                    <span className="text-xs font-semibold text-muted-foreground border-l border-muted pl-2">Get your own link</span>
+                </Link>
+            </div>
         </div>
     );
 }

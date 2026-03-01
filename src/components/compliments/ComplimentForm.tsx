@@ -21,9 +21,8 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Loader2, ArrowRight, ChevronsUpDown, Lock } from 'lucide-react';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter } from '@/components/ui/drawer';
+import { Loader2, ArrowRight, Lock, Sparkles, Send } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '../ui/skeleton';
 
@@ -47,7 +46,7 @@ const GoogleIcon = () => (
 
 
 export function ComplimentForm({ ownerId }: { ownerId: string }) {
-  const [step, setStep] = useState(1);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -68,10 +67,10 @@ export function ComplimentForm({ ownerId }: { ownerId: string }) {
     },
   });
 
-  const handleNextStep = async () => {
+  const handleOpenDrawer = async () => {
     const isTextValid = await form.trigger('text');
     if (isTextValid) {
-      setStep(2);
+      setIsDrawerOpen(true);
     }
   };
 
@@ -191,139 +190,116 @@ export function ComplimentForm({ ownerId }: { ownerId: string }) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-0 w-full">
 
-        {/* --- STEP 1: Just Write --- */}
-        <div className={step === 1 ? 'block' : 'hidden'}>
+        {/* --- STEP 1: Just Write (Frictionless UX) --- */}
+        <div className="flex flex-col relative w-full pt-4">
           <FormField
             control={form.control}
             name="text"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="space-y-0 relative w-full">
                 <FormControl>
                   <Textarea
-                    placeholder="Нэрээ бичихгүйгээр хэлмээр санагдсан зүйлээ энд үлдээгээрэй…"
-                    className="resize-none h-40 bg-background/50"
+                    placeholder="Надад хэлмээр санагдсан тэр үгээ энд зоригтойгоор үлдээгээрэй... 💭"
+                    className="resize-none min-h-[160px] max-h-[250px] bg-transparent border-0 focus-visible:ring-0 px-5 pt-3 pb-12 text-lg md:text-xl font-medium !placeholder-muted-foreground/50 overflow-y-auto leading-relaxed shadow-none caret-primary"
                     {...field}
                   />
                 </FormControl>
-                <FormDescription className="text-center pt-2">
-                  Та дараа нь нэмэлт мэдээлэл өгч болно.
-                </FormDescription>
-                <div className="flex justify-between items-center mt-2">
-                  <AudioRecorder
-                    ownerId={ownerId}
-                    onAudioReady={(url, duration) => {
-                      setAudioUrl(url);
-                      setAudioDuration(duration);
-                    }}
-                    onAudioRemoved={() => {
-                      setAudioUrl(null);
-                      setAudioDuration(0);
-                    }}
-                  />
-                  <AISuggestionsDialog onSelect={(text) => form.setValue('text', text, { shouldValidate: true })} />
+
+                {/* Fixed controls bar over the textarea bottom */}
+                <div className="absolute bottom-2 left-2 right-2 flex justify-between items-center bg-white/40 dark:bg-black/40 backdrop-blur-md rounded-xl p-1 shadow-sm border border-white/20">
+                  <div className="flex items-center gap-1">
+                    <AudioRecorder
+                      ownerId={ownerId}
+                      onAudioReady={(url, duration) => {
+                        setAudioUrl(url);
+                        setAudioDuration(duration);
+                      }}
+                      onAudioRemoved={() => {
+                        setAudioUrl(null);
+                        setAudioDuration(0);
+                      }}
+                    />
+                    <AISuggestionsDialog onSelect={(text) => form.setValue('text', text, { shouldValidate: true })} />
+                  </div>
+
+                  {/* Primary Trigger */}
+                  <Button
+                    type="button"
+                    onClick={handleOpenDrawer}
+                    className="rounded-lg shadow-xl hover:scale-105 transition-transform active:scale-95 px-5 bg-gradient-to-r from-primary to-accent"
+                  >
+                    Ахиулах <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
                 </div>
-                <FormMessage />
+                <FormMessage className="absolute -bottom-6 left-4 text-xs font-semibold" />
               </FormItem>
             )}
           />
-          <Button type="button" onClick={handleNextStep} className="w-full mt-4 !mb-0" size="lg">
-            Дараагийн алхам <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
         </div>
 
-        {/* --- STEP 2: Make it Better --- */}
-        <div className={step === 2 ? 'space-y-8 animate-in fade-in-50' : 'hidden'}>
-          {/* 2.1 Google Login */}
-          {userLoading ? (
-            <div className="flex justify-center items-center h-28">
-              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : (!user || user.isAnonymous) && (
-            <Card className="bg-secondary/50 border-dashed border-2">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Lock className="w-4 h-4 text-green-600" />
-                  Таны нэр харагдахгүй
-                </CardTitle>
-                <CardDescription>
-                  Бид таны нэрийг хүлээн авагчид <strong>хэзээ ч</strong> харуулахгүй.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button type="button" onClick={handleGoogleSignIn} variant="outline" className="w-full font-bold relative overflow-hidden group">
-                  <span className="relative z-10 flex items-center justify-center">
-                    <GoogleIcon />
-                    Google-ээр баталгаажуулах
-                  </span>
-                  <div className="absolute inset-0 bg-primary/5 group-hover:bg-primary/10 transition-colors" />
-                </Button>
-                <p className="text-[10px] text-center text-muted-foreground">
-                  Зөвхөн хиймэл оюун ухаан (AI) hint үүсгэхэд ашиглана.
-                </p>
-              </CardContent>
-            </Card>
-          )}
+        {/* --- STEP 2: The Bottom Drawer (Hint & Login) --- */}
+        <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+          <DrawerContent className="bg-background/95 backdrop-blur-xl border-t-white/10 sm:max-w-md mx-auto h-[90vh] md:h-auto">
+            <div className="overflow-y-auto w-full px-4 pt-4 pb-8 h-full">
+              <DrawerHeader className="text-left px-0 pb-6 pt-2">
+                <DrawerTitle className="text-2xl font-black flex items-center gap-2 text-foreground tracking-tight">
+                  Жаахан hint өгөх үү? <Sparkles className="w-5 h-5 text-yellow-400" />
+                </DrawerTitle>
+                <DrawerDescription className="text-base font-medium mt-1">
+                  Бид таны нэрийг <strong className="text-primary font-bold">ХЭЗЭЭ Ч</strong> харуулахгүй.
+                </DrawerDescription>
+              </DrawerHeader>
 
-          {/* 2.2 Hint Questions */}
-          <div className="space-y-6">
-            {/* Question 1 (Mandatory) */}
-            <FormField
-              control={form.control}
-              name="frequency"
-              render={({ field }) => (
-                <FormItem className="space-y-3">
-                  <FormLabel className="font-bold text-foreground">Та энэ хүнийг хэр ойрхон анзаардаг вэ?</FormLabel>
-                  <FormDescription>Энэ нь hint-ийг илүү зөв болгоход тусална.</FormDescription>
-                  <FormControl>
-                    <RadioGroup
-                      onValueChange={field.onChange}
-                      value={field.value}
-                      className="grid grid-cols-2 gap-3"
-                    >
-                      {frequencyOptions.map(option => (
-                        <div key={option}>
-                          <RadioGroupItem value={option} id={`freq-${option}`} className="peer sr-only" />
-                          <Label
-                            htmlFor={`freq-${option}`}
-                            className="flex items-center justify-center p-3 text-sm font-medium rounded-md border-2 border-muted bg-popover hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary peer-data-[state=checked]:text-primary-foreground transition-all cursor-pointer"
-                          >
-                            {option}
-                          </Label>
-                        </div>
-                      ))}
-                    </RadioGroup>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <div className="space-y-6 flex-1">
 
-            {/* Question 2 (Optional) */}
-            <Collapsible>
-              <CollapsibleTrigger asChild>
-                <Button variant="link" className="p-0 h-auto text-muted-foreground">
-                  Нэмэлт мэдээлэл өгөх
-                  <ChevronsUpDown className="ml-2 h-4 w-4" />
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="space-y-3 pt-4 animate-in fade-in-50">
+                {/* Bento Box: Hint 1 */}
+                <FormField
+                  control={form.control}
+                  name="frequency"
+                  render={({ field }) => (
+                    <FormItem className="space-y-3 bg-muted/40 p-4 rounded-3xl border border-muted/50">
+                      <FormLabel className="font-bold text-foreground text-sm tracking-tight ml-1">Та энэ хүнтэй хэр ойрхон анзааралцдаг вэ?</FormLabel>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          className="flex flex-wrap gap-2"
+                        >
+                          {frequencyOptions.map(option => (
+                            <div key={option} className="flex-1 min-w-[30%]">
+                              <RadioGroupItem value={option} id={`freq-${option}`} className="peer sr-only" />
+                              <Label
+                                htmlFor={`freq-${option}`}
+                                className="flex items-center justify-center p-3 text-sm font-semibold rounded-2xl border-2 border-transparent bg-background shadow-sm text-foreground/80 hover:bg-accent/10 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/10 peer-data-[state=checked]:text-primary transition-all duration-300 cursor-pointer active:scale-95"
+                              >
+                                {option}
+                              </Label>
+                            </div>
+                          ))}
+                        </RadioGroup>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Bento Box: Hint 2 */}
                 <FormField
                   control={form.control}
                   name="location"
                   render={({ field }) => (
-                    <FormItem className="space-y-3">
-                      <FormLabel className="font-bold text-foreground">Та энэ хүнийг хаана ихэвчлэн анзаардаг вэ?</FormLabel>
+                    <FormItem className="space-y-3 bg-muted/40 p-4 rounded-3xl border border-muted/50">
+                      <FormLabel className="font-bold text-foreground text-sm tracking-tight ml-1">Та энэ хүнийг хаана их харсан бэ?</FormLabel>
                       <div className="flex flex-wrap gap-2">
                         {locationOptions.map(option => (
                           <Button
                             key={option}
                             type="button"
-                            size="sm"
-                            variant={form.watch('location') === option ? 'default' : 'secondary'}
+                            variant="outline"
                             onClick={() => form.setValue('location', form.watch('location') === option ? '' : option, { shouldValidate: true })}
-                            className="h-auto py-1.5 px-3"
+                            className={`rounded-xl border-2 text-sm font-semibold transition-all h-10 px-4 ${form.watch('location') === option ? 'border-primary bg-primary/10 text-primary' : 'border-transparent bg-background shadow-sm hover:bg-accent/10'}`}
                           >
                             {option}
                           </Button>
@@ -332,48 +308,51 @@ export function ComplimentForm({ ownerId }: { ownerId: string }) {
                     </FormItem>
                   )}
                 />
-              </CollapsibleContent>
-            </Collapsible>
-          </div>
 
-          {/* 3. Convert Sender to User */}
-          <Card className="bg-primary/5 border-primary/20">
-            <CardHeader>
-              <CardTitle className="text-base">Та ч бас wispr авахыг хүсэж байна уу?</CardTitle>
-              <CardDescription>Өөрийн хувийн линк үүсгээд нэргүй wispr-үүд хүлээн аваарай.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <FormField
-                control={form.control}
-                name="createOwnLink"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 bg-background shadow-sm">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>
-                        Надад ч бас wispr харах сонирхолтой байна
-                      </FormLabel>
+                {/* Google Auth Block - Optional Viral Loop trap */}
+                {(!user || user.isAnonymous) && (
+                  <div className="bg-primary/5 p-4 rounded-3xl border border-primary/20 flex flex-col items-start gap-3">
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="bg-primary/20 p-1.5 rounded-full"><Lock className="w-4 h-4 text-primary" /></div>
+                      <h4 className="font-bold text-sm tracking-tight text-foreground">Та өөрөө линктэй болох уу?</h4>
                     </div>
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
+                    <p className="text-xs text-muted-foreground font-medium leading-relaxed">Таныг хэн гэдгийг бид цааш нь хэзээ ч задлахгүй. Харин та өөртөө линк үүсгэвэл бусдаас ийм халуун дулаан зүйл сонсох болно.</p>
 
-          {/* 4. Submit Button */}
-          <div className="!mt-8 text-center">
-            <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Wispr илгээх
-            </Button>
-            <p className="text-xs text-muted-foreground mt-2">Нэр тань харагдахгүй</p>
-          </div>
-        </div>
+                    <Button type="button" onClick={handleGoogleSignIn} variant="outline" className="w-full h-11 rounded-xl bg-background shadow-sm font-bold mt-1 text-foreground relative overflow-hidden group">
+                      <span className="relative z-10 flex items-center justify-center">
+                        <GoogleIcon />
+                        Google-ээр үүсгэх
+                      </span>
+                    </Button>
+                  </div>
+                )}
+
+              </div>
+
+              <DrawerFooter className="px-0 pt-6 mt-auto">
+                <Button
+                  type="submit"
+                  className="w-full h-14 rounded-2xl font-black text-lg bg-primary hover:bg-primary/90 shadow-xl shadow-primary/30 group active:scale-[0.98] transition-all relative overflow-hidden"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <Loader2 className="w-6 h-6 animate-spin text-white" />
+                  ) : (
+                    <>
+                      <span className="relative z-10 flex items-center drop-shadow-sm">Зүрхлээд нисгэх <Send className="ml-2 w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" /></span>
+                    </>
+                  )}
+                  {/* Button shine effect */}
+                  <div className="absolute top-0 -inset-full h-full w-1/2 z-0 block transform -skew-x-12 bg-gradient-to-r from-transparent to-white opacity-20 group-hover:animate-shine" />
+                </Button>
+                <div className="flex items-center justify-center gap-1.5 mt-3 opacity-60">
+                  <Lock className="w-3 h-3 text-muted-foreground" />
+                  <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest text-center">Your secret is safe with us</p>
+                </div>
+              </DrawerFooter>
+            </div>
+          </DrawerContent>
+        </Drawer>
       </form>
     </Form>
   );

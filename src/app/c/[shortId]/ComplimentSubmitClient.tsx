@@ -4,6 +4,7 @@ import { ComplimentForm } from '@/components/compliments/ComplimentForm';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Heart, Loader2, Frown } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useFirestore, useUser } from '@/firebase';
 import { doc, getDoc, collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { useState, useEffect } from 'react';
@@ -144,8 +145,19 @@ export function ComplimentSubmitClient({ shortId, ownerIdProp }: { shortId?: str
     if (isLoading) {
         return (
             <div className="flex min-h-[calc(100vh-56px)] flex-col items-center justify-center p-4">
-                <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                <p className="mt-4 text-muted-foreground">Хэрэглэгчийг хайж байна...</p>
+                <Card className="w-full max-w-md shadow-2xl bg-card border-border border">
+                    <CardHeader className="text-center space-y-4">
+                        <div className="mx-auto mt-4 mb-4">
+                            <Skeleton className="h-24 w-24 rounded-full" />
+                        </div>
+                        <Skeleton className="h-8 w-3/4 mx-auto rounded-full" />
+                        <Skeleton className="h-4 w-5/6 mx-auto rounded-full mt-2" />
+                    </CardHeader>
+                    <CardContent className="space-y-4 pb-8 items-center justify-center">
+                        <Skeleton className="h-24 w-full rounded-2xl" />
+                        <Skeleton className="h-12 w-[140px] mx-auto rounded-xl" />
+                    </CardContent>
+                </Card>
             </div>
         );
     }

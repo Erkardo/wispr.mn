@@ -40,9 +40,9 @@ function AnonymousLoginPrompt() {
 function LoadingSkeletons() {
   return (
     <div className="space-y-6">
-      <div className="w-full aspect-[16/10] bg-muted/40 animate-pulse rounded-[2rem] border border-white/5 shadow-inner" />
-      <div className="w-full aspect-[16/10] bg-muted/30 animate-pulse rounded-[2rem] border border-white/5" />
-      <div className="w-full aspect-[16/10] bg-muted/20 animate-pulse rounded-[2rem] border border-white/5" />
+      <div className="w-full min-h-[350px] bg-muted/40 animate-pulse rounded-[3rem] border border-white/5 shadow-inner" />
+      <div className="w-full min-h-[350px] bg-muted/30 animate-pulse rounded-[3rem] border border-white/5" />
+      <div className="w-full min-h-[350px] bg-muted/20 animate-pulse rounded-[3rem] border border-white/5" />
     </div>
   );
 }

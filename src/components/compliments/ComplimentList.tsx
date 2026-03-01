@@ -528,7 +528,7 @@ function ComplimentCard({
   }
 
 
-  if (!selectedStyle) return <Skeleton className="w-full aspect-[16/10] rounded-2xl" />;
+  if (!selectedStyle) return <Skeleton className="w-full min-h-[350px] rounded-[3rem]" />;
   // In archive view, always render. In normal view, hide archived/deleted cards.
   if (!isArchiveView && (isDeleted || isArchived)) return null;
   if (isArchiveView && isDeleted) return null;

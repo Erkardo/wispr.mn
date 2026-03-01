@@ -5,7 +5,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { useEffect, useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Heart, Frown, Loader2 } from 'lucide-react';
+import { Heart, Frown, Loader2, Lock } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -138,12 +138,11 @@ export function ComplimentSubmitClient({ shortId, username }: ComplimentSubmitCl
     }
 
     return (
-        <div className="flex min-h-[calc(100vh-56px)] justify-center px-4 pt-10 pb-20 relative overflow-hidden bg-white dark:bg-zinc-950">
-            {/* Elegant Ambient Glow Backgrounds */}
-            <div className="absolute top-[-5%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary/10 blur-[100px] pointer-events-none opacity-50 dark:opacity-20 mix-blend-multiply dark:mix-blend-screen" />
-            <div className="absolute top-[20%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-500/10 blur-[120px] pointer-events-none opacity-50 dark:opacity-20 mix-blend-multiply dark:mix-blend-screen" />
+        <div className="flex min-h-[calc(100vh-56px)] justify-center px-4 pt-8 pb-24 relative overflow-hidden bg-[#FAFAFA] dark:bg-[#0A0A0A]">
+            {/* Extremely subtle, premium gradient sweep */}
+            <div className="absolute top-0 inset-x-0 h-[500px] w-full bg-gradient-to-b from-primary/10 via-primary/[0.02] to-transparent pointer-events-none" />
 
-            <div className="w-full max-w-md flex flex-col items-center animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out relative z-10">
+            <div className="w-full max-w-md flex flex-col items-center animate-in fade-in slide-in-from-bottom-8 duration-1000 ease-out relative z-10 pt-4">
 
                 {/* Poll Card (if exists) */}
                 {activePoll && (
@@ -152,34 +151,41 @@ export function ComplimentSubmitClient({ shortId, username }: ComplimentSubmitCl
                     </div>
                 )}
 
-                <div className="mb-10 flex flex-col items-center relative">
-                    <div className="relative">
-                        <div className="absolute -inset-4 rounded-full bg-gradient-to-tr from-primary/30 to-blue-500/30 blur-2xl opacity-50 dark:opacity-30"></div>
+                <div className="mb-10 flex flex-col items-center relative w-full">
+                    {/* Trust Badge */}
+                    <div className="mb-10 flex items-center justify-center gap-2 px-4 py-1.5 rounded-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm animate-in fade-in slide-in-from-top-4 duration-700 delay-150 fill-mode-both">
+                        <Lock className="w-3.5 h-3.5 text-emerald-500" />
+                        <span className="text-[12px] font-bold uppercase tracking-widest text-zinc-900 dark:text-zinc-100">100% Үл танигдах</span>
+                    </div>
+
+                    <div className="relative group perspective-1000">
+                        {/* Premium Glow around avatar */}
+                        <div className="absolute -inset-4 rounded-full bg-primary/20 dark:bg-primary/30 blur-2xl opacity-0 transition-all duration-1000 group-hover:opacity-100 scale-90 group-hover:scale-100"></div>
                         {ownerData?.photoURL ? (
-                            <Avatar className="h-[104px] w-[104px] shadow-2xl shadow-black/10 dark:shadow-white/5 ring-4 ring-white dark:ring-zinc-900 mb-6 relative z-10">
+                            <Avatar className="h-32 w-32 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.2)] dark:shadow-[0_20px_40px_-15px_rgba(255,255,255,0.05)] ring-4 ring-white dark:ring-zinc-900 mb-6 relative z-10 transition-transform duration-700 ease-out group-hover:scale-[1.03] group-hover:-translate-y-1">
                                 <Image
                                     src={ownerData.photoURL}
                                     alt={ownerData.displayName || 'Profile'}
-                                    width={104}
-                                    height={104}
+                                    width={112}
+                                    height={112}
                                     priority
                                     className="object-cover"
                                 />
-                                <AvatarFallback className="bg-muted text-muted-foreground text-2xl font-bold">{ownerData.displayName?.charAt(0).toUpperCase() || 'W'}</AvatarFallback>
+                                <AvatarFallback className="bg-zinc-100 dark:bg-zinc-800 text-zinc-400 text-3xl font-bold">{ownerData.displayName?.charAt(0).toUpperCase() || 'W'}</AvatarFallback>
                             </Avatar>
                         ) : (
-                            <div className="mx-auto bg-gradient-to-br from-primary/10 to-primary/5 p-6 rounded-full w-fit shadow-2xl shadow-primary/10 ring-4 ring-white dark:ring-zinc-900 mb-6 relative z-10">
+                            <div className="mx-auto bg-white dark:bg-zinc-900 p-8 rounded-[2rem] shadow-xl shadow-black/5 dark:shadow-black/20 ring-1 ring-black/5 dark:ring-white/10 mb-6 relative z-10 transition-transform duration-500 group-hover:scale-[1.02] rotate-3 group-hover:rotate-0">
                                 <Heart className="h-10 w-10 text-primary drop-shadow-sm" />
                             </div>
                         )}
                     </div>
 
-                    <div className="text-center px-2">
-                        <h1 className="font-extrabold text-[24px] text-zinc-900 dark:text-zinc-50 tracking-tight">
-                            @{ownerData?.displayName || 'Хэрэглэгч'}
+                    <div className="text-center px-4 w-full mt-2">
+                        <h1 className="font-black text-[32px] text-zinc-950 dark:text-white tracking-tight leading-none mb-4">
+                            @{ownerData?.displayName || 'Энэ хэрэглэгч'}
                         </h1>
-                        <p className="text-[15px] font-medium text-zinc-500 dark:text-zinc-400 mt-2.5 max-w-[280px] mx-auto leading-relaxed">
-                            {ownerData?.bio || "Надад хэлмээр байсан тэр үгээ энд зоригтойгоор үлдээгээрэй..."}
+                        <p className="text-[16px] font-medium text-zinc-500 dark:text-zinc-400 max-w-[280px] mx-auto leading-relaxed">
+                            {ownerData?.bio || "Надад хэлмээр байсан ч хэлж чадаагүй тэр үгээ энд зоригтойгоор үлдээгээрэй..."}
                         </p>
                     </div>
                 </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useUser, useFirestore, useFirebase } from '@/firebase';
+import { useUser, useFirestore } from '@/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { useEffect, useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -12,7 +12,6 @@ import Link from 'next/link';
 import { ComplimentForm } from '@/components/compliments/ComplimentForm';
 import { Button } from '@/components/ui/button';
 import { PollCard } from '@/components/polls/PollCard';
-import { UserTheme } from '@/types';
 
 interface ComplimentSubmitClientProps {
     shortId?: string;
@@ -22,7 +21,6 @@ interface ComplimentSubmitClientProps {
 export function ComplimentSubmitClient({ shortId, username }: ComplimentSubmitClientProps) {
     const { user, loading: userLoading } = useUser();
     const firestore = useFirestore();
-    const { isInitialized } = useFirebase();
 
     const [ownerData, setOwnerData] = useState<any>(null);
     const [ownerId, setOwnerId] = useState<string | null>(null);
@@ -30,21 +28,8 @@ export function ComplimentSubmitClient({ shortId, username }: ComplimentSubmitCl
     const [error, setError] = useState(false);
     const [activePoll, setActivePoll] = useState<any>(null);
 
-    const themeStyles = useMemo(() => {
-        if (!ownerData?.theme) return {};
-        const t = ownerData.theme as UserTheme;
-        return {
-            '--theme-primary': t.primaryColor,
-            '--theme-bg': t.backgroundColor,
-            '--theme-text': t.textColor,
-            '--theme-accent': t.accentColor,
-            backgroundColor: 'var(--theme-bg)',
-            color: 'var(--theme-text)',
-        } as React.CSSProperties;
-    }, [ownerData?.theme]);
-
     useEffect(() => {
-        if (!isInitialized || !firestore) return;
+        if (!firestore) return;
 
         async function resolveUser() {
             setLoading(true);
@@ -93,10 +78,10 @@ export function ComplimentSubmitClient({ shortId, username }: ComplimentSubmitCl
         }
 
         resolveUser();
-    }, [shortId, username, firestore, isInitialized]);
+    }, [shortId, username, firestore]);
 
 
-    if (!isInitialized || userLoading || loading) {
+    if (userLoading || loading) {
         return (
             <div className="flex min-h-[calc(100vh-56px)] flex-col items-center justify-center p-4">
                 <Card className="w-full max-w-sm border-0 shadow-none bg-transparent">
@@ -154,7 +139,6 @@ export function ComplimentSubmitClient({ shortId, username }: ComplimentSubmitCl
 
     return (
         <div
-            style={themeStyles}
             className="flex min-h-[calc(100vh-56px)] flex-col items-center justify-start px-4 pt-10 pb-20 transition-colors duration-500 bg-[#FCFCFC] dark:bg-[#0A0A0A]"
         >
             <div className="w-full max-w-md flex flex-col items-center animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">

@@ -1,207 +1,114 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Sparkles, ArrowRight } from 'lucide-react';
+import { Sparkles, Check, Send } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import Confetti from 'react-confetti';
-import { useWindowSize } from 'react-use';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUser } from '@/firebase';
 
-const KINDNESS_QUOTES = [
-  "Таны энэ үгс хэн нэгний өдрийг гэрэлтүүлнэ. ✨",
-  "Сайхан үг сэтгэлийн эм болдог. 💛",
-  "Та гайхалтай байлаа! 🌟",
-  "Баярлалаа, таны wispr хэн нэгнийг маш их инээлгэх болно. 😊",
-  "Positive vibes only! 🌈",
-  "Тэр энэ үгсийг сонсоод ямар их баярлах бол доо. 😌"
-];
-
 export function ComplimentSentSuccess() {
-  const [quote, setQuote] = useState("");
-  const [showPlane, setShowPlane] = useState(true);
-  const [showConfetti, setShowConfetti] = useState(false);
-  const { width, height } = useWindowSize();
+  const [showCheck, setShowCheck] = useState(false);
   const { user } = useUser();
-
   const isUserLoggedIn = user && !user.isAnonymous;
 
   useEffect(() => {
-    setQuote(KINDNESS_QUOTES[Math.floor(Math.random() * KINDNESS_QUOTES.length)]);
-
+    // Elegant tiny haptic pop
     if (typeof navigator !== 'undefined' && navigator.vibrate) {
-      navigator.vibrate([20, 50, 20]);
+      navigator.vibrate([30, 100, 30]);
     }
 
-    const planeTimer = setTimeout(() => {
-      setShowPlane(false);
-      setShowConfetti(true);
-      if (typeof navigator !== 'undefined' && navigator.vibrate) {
-        navigator.vibrate([30, 100, 30, 200, 100]);
-      }
-    }, 2800);
+    // Very quick delay before drawing checkmark
+    const t = setTimeout(() => {
+      setShowCheck(true);
+    }, 150);
 
-    return () => clearTimeout(planeTimer);
+    return () => clearTimeout(t);
   }, []);
 
   return (
-    <div className="w-full flex flex-col items-center justify-center min-h-[75vh] px-4 animate-in fade-in duration-1000 overflow-hidden relative">
+    <div className="w-full flex flex-col items-center justify-center min-h-[60vh] px-4 animate-in fade-in duration-700">
 
-      {showConfetti && (
-        <div className="fixed inset-0 pointer-events-none z-50">
-          <Confetti
-            width={width}
-            height={height}
-            recycle={false}
-            numberOfPieces={600}
-            gravity={0.12}
-            colors={['#8B5CF6', '#EC4899', '#FCD34D', '#10B981', '#3B82F6', '#FFFFFF']}
-          />
-        </div>
-      )}
-
-      {/* Majestic Flight Path Backdrop */}
-      <AnimatePresence>
-        {showPlane && (
-          <motion.svg
-            className="absolute inset-0 w-full h-full pointer-events-none z-0"
-            viewBox="0 0 400 600"
-            preserveAspectRatio="none"
-            initial={{ opacity: 1 }}
-            exit={{ opacity: 0, transition: { duration: 0.5 } }}
+      {/* Sleek Animated Success Icon (Checkmark inside a circle) */}
+      <div className="relative mb-10 mt-6">
+        <div className="absolute inset-0 bg-green-500/10 dark:bg-green-400/10 rounded-full blur-2xl animate-pulse" />
+        <div className="relative bg-white dark:bg-zinc-900 shadow-xl border border-zinc-100 dark:border-zinc-800 rounded-full p-6 z-10">
+          <svg
+            className="w-16 h-16 text-zinc-900 dark:text-white"
+            viewBox="0 0 52 52"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
           >
-            <defs>
-              <linearGradient id="flightGradient" x1="0%" y1="100%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0" />
-                <stop offset="50%" stopColor="#ec4899" stopOpacity="0.5" />
-                <stop offset="100%" stopColor="#8b5cf6" stopOpacity="1" />
-              </linearGradient>
-            </defs>
-            <motion.path
-              d="M 50,550 C 150,450 50,250 350,50"
-              fill="none"
-              stroke="url(#flightGradient)"
-              strokeWidth="4"
-              strokeDasharray="10 12"
-              strokeLinecap="round"
+            <motion.circle
+              cx="26" cy="26" r="24"
+              stroke="currentColor"
+              strokeWidth="3.5"
               initial={{ pathLength: 0, opacity: 0 }}
-              animate={{ pathLength: 1, opacity: [0, 1, 1] }}
-              transition={{ duration: 2.2, ease: "easeInOut" }}
+              animate={{ pathLength: 1, opacity: 1 }}
+              transition={{ duration: 0.8, ease: "easeInOut" }}
             />
-          </motion.svg>
+            {showCheck && (
+              <motion.path
+                d="M14 27 L22 35 L38 17"
+                stroke="currentColor"
+                strokeWidth="4.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: 1 }}
+                transition={{ duration: 0.4, delay: 0.2, ease: "easeOut" }}
+              />
+            )}
+          </svg>
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {showCheck && (
+          <motion.div
+            key="success-text"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ type: "spring", damping: 20, stiffness: 100, delay: 0.4 }}
+            className="flex flex-col items-center text-center space-y-3 w-full max-w-sm mb-12"
+          >
+            <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">
+              Илгээгдлээ
+            </h1>
+            <p className="text-[15px] font-medium text-zinc-500 max-w-[260px] mx-auto leading-relaxed text-balance">
+              Бид үүнийг нууцаар, мөн найдвартай хүргэж өгөх болно.
+            </p>
+          </motion.div>
         )}
       </AnimatePresence>
 
-      <div className="relative w-full max-w-sm aspect-square flex items-center justify-center mb-6">
-
-        {/* The Premium Paper Plane Fly-out */}
-        <AnimatePresence>
-          {showPlane && (
-            <motion.div
-              key="plane"
-              initial={{ x: -180, y: 250, scale: 0.2, rotate: -35, opacity: 0 }}
-              animate={{
-                x: [-180, -50, 50, 200, 300],
-                y: [250, 100, -50, -200, -350],
-                scale: [0.2, 1, 1.3, 0.8, 0.2],
-                rotate: [-35, 10, 30, 50, 60],
-                opacity: [0, 1, 1, 1, 0],
-              }}
-              transition={{
-                duration: 2.5,
-                ease: [0.22, 1, 0.36, 1], // Custom bouncy ease
-                times: [0, 0.3, 0.6, 0.8, 1]
-              }}
-              className="absolute z-20 pointer-events-none drop-shadow-[0_20px_45px_rgba(139,92,246,0.6)]"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/paper-plane.webp"
-                alt="Paper Plane"
-                width={160}
-                height={160}
-                className="select-none scale-x-[-1] object-contain"
-                style={{ WebkitUserDrag: 'none' }}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* The Success State Typography - Appears elegantly */}
-        <AnimatePresence>
-          {!showPlane && (
-            <motion.div
-              key="success"
-              initial={{ scale: 0.5, y: 20, opacity: 0 }}
-              animate={{ scale: 1, y: 0, opacity: 1 }}
-              transition={{ type: "spring", damping: 15, stiffness: 150, delay: 0.1 }}
-              className="flex flex-col items-center text-center space-y-6 w-full"
-            >
-              <div className="relative mb-2">
-                <div className="absolute inset-0 bg-gradient-to-tr from-primary/30 to-accent/30 rounded-full blur-[40px] animate-pulse" />
-                <motion.h2
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1, rotate: [0, 10, -10, 0] }}
-                  transition={{ type: "spring", delay: 0.2 }}
-                  className="text-7xl md:text-8xl relative z-10"
-                >
-                  ✨
-                </motion.h2>
-              </div>
-
-              <div className="space-y-3 px-2">
-                <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-foreground drop-shadow-sm bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/70">
-                  Гайхалтай!
-                </h1>
-                <p className="text-xl font-semibold text-muted-foreground/90 leading-snug px-4 text-balance max-w-[280px] mx-auto">
-                  Таны илгээсэн онгоц амжилттай нислээ.
-                </p>
-                <motion.p
-                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }}
-                  className="text-base text-primary/80 font-medium italic mt-2"
-                >
-                  "{quote}"
-                </motion.p>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      {/* The Viral Loop Box (Smart State checking) */}
       <AnimatePresence>
-        {!showPlane && (
+        {showCheck && (
           <motion.div
-            initial={{ y: 50, opacity: 0 }}
+            initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.4, type: "spring", damping: 16 }}
-            className="w-full max-w-sm mt-4 space-y-4"
+            transition={{ delay: 0.5, type: "spring", damping: 20 }}
+            className="w-full max-w-sm flex flex-col gap-3"
           >
-            <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-2xl p-6 rounded-[2rem] border-2 border-primary/10 dark:border-white/5 shadow-2xl relative overflow-hidden text-center group">
-              <div className="absolute top-0 right-0 w-40 h-40 bg-primary/20 rounded-full blur-[50px] transition-transform duration-1000 group-hover:scale-150" />
-              <div className="absolute bottom-0 left-0 w-40 h-40 bg-accent/20 rounded-full blur-[50px] transition-transform duration-1000 group-hover:scale-150" />
-
-              <h3 className="font-extrabold text-2xl text-foreground text-balance relative z-10 tracking-tight leading-tight mb-2">
-                {isUserLoggedIn ? 'Таны линк бэлэн байна! 👀' : 'Тан руу ч гэсэн гоё үгс ирэх болно! 👀'}
+            {/* Extremely Clean Viral Loop Card */}
+            <div className="bg-white dark:bg-zinc-900 p-6 rounded-[1.5rem] border border-zinc-100 dark:border-zinc-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)] text-center relative overflow-hidden">
+              <h3 className="font-bold text-lg text-zinc-900 dark:text-white mb-2">
+                {isUserLoggedIn ? 'Таны линк бэлэн байна' : 'Одоо таны ээлж'}
               </h3>
-              <p className="text-sm text-foreground/70 font-medium relative z-10 px-1 text-balance mb-6">
+              <p className="text-[14px] text-zinc-500 font-medium mb-6 leading-relaxed px-2">
                 {isUserLoggedIn
                   ? 'Та өөрийн линкээ стори дээрээ тавиад хүмүүс таны юунд хамгийн их дуртайг олж мэдээрэй.'
-                  : 'Өөрийн Wispr линкийг хуваалцаад хүмүүс таны юунд хамгийн их дуртай байдгийг олж мэдээрэй.'}
+                  : 'Өөрийн линктэй болоод бусдаас бас ийм гоё үгс сонсоорой.'}
               </p>
 
-              <Button asChild className="w-full h-14 rounded-2xl font-black text-lg bg-gradient-to-r from-primary to-accent hover:opacity-[0.85] shadow-[0_8px_30px_rgba(139,92,246,0.3)] hover:-translate-y-1 transition-all active:scale-[0.97] relative z-10 overflow-hidden">
+              <Button asChild className="w-full h-14 rounded-2xl font-bold text-[16px] bg-black text-white dark:bg-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-200 shadow-md active:scale-[0.98] transition-all">
                 <Link href={isUserLoggedIn ? "/profile" : "/create"}>
-                  <span className="relative z-10 flex items-center">
-                    {isUserLoggedIn ? 'Линкээ хуулах' : 'Өөрийн линк үүсгэх'}
-                    {isUserLoggedIn ? <ArrowRight className="ml-2 w-5 h-5" /> : <Sparkles className="ml-2 w-5 h-5 text-yellow-300 group-hover:rotate-12 transition-transform" />}
-                  </span>
-                  <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+                  {isUserLoggedIn ? 'Линкээ хуулах' : 'Өөрийнхийгөө нээх'}
+                  {!isUserLoggedIn && <Sparkles className="ml-2 w-4 h-4 text-zinc-400 dark:text-zinc-600" />}
                 </Link>
               </Button>
             </div>
 
-            <Button variant="ghost" onClick={() => window.location.reload()} className="w-full h-12 rounded-xl font-bold text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5 active:scale-95 transition-all outline-none">
-              Дахиад нэгийг бичих
+            <Button variant="ghost" onClick={() => window.location.reload()} className="w-full h-12 rounded-[14px] font-semibold text-zinc-500 hover:text-zinc-900 dark:hover:text-white dark:hover:bg-zinc-800 active:scale-[0.98] transition-all">
+              Шинээр зурвас бичих
             </Button>
           </motion.div>
         )}

@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useMemo, useEffect, Suspense, useState, useCallback } from 'react';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { ComplimentList } from '@/components/compliments/ComplimentList';
 import { SentList } from '@/components/compliments/SentList';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -51,6 +51,24 @@ export default function HomePage() {
   const { user, loading: userLoading } = useUser();
   const firestore = useFirestore();
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'received');
+
+  // Keep local state in sync if URL changes externally
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && tab !== activeTab) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
+
+  const handleTabChange = useCallback((value: string) => {
+    setActiveTab(value);
+    // Soft update URL without triggering full Next.js App Router navigation reload
+    // This maintains the tab in the URL for sharing/refreshing without layout shifts
+    window.history.replaceState(null, '', `?tab=${value}`);
+  }, []);
 
   const complimentsQuery = useMemoFirebase(() => {
     if (!user || !firestore) return null;
@@ -87,8 +105,6 @@ export default function HomePage() {
   const archivedCompliments = useMemo(() =>
     sortedCompliments.filter(c => c.isArchived === true), [sortedCompliments]);
 
-  const activeTab = searchParams.get('tab') || 'received';
-
   useEffect(() => {
     const complimentId = searchParams.get('complimentId');
     if (complimentId && !complimentsLoading && (sortedCompliments.length > 0 || activeTab === 'sent')) {
@@ -110,7 +126,7 @@ export default function HomePage() {
     <>
       <Header title="Wispr-үүд" />
       <Suspense fallback={<div className="container mx-auto max-w-2xl p-4 pt-6"><LoadingSkeletons /></div>}>
-        <Tabs defaultValue={activeTab} className="w-full pt-4">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full pt-4">
           <div className="flex justify-center px-4 mb-4">
             <div className="w-full overflow-x-auto no-scrollbar pb-2 -mb-2">
               <TabsList className="h-auto flex flex-nowrap justify-start sm:justify-center min-w-max mx-auto gap-1">

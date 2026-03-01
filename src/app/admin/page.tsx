@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { getDashboardStats, getAdminUsersList, type DashboardStats, type UserDetail, checkAdminAccess } from './actions';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Loader2, Users, MessageSquare, DollarSign, Activity, Shield, TrendingUp, ArrowUpRight, CreditCard, UserPlus, Search, GripVertical } from 'lucide-react';
@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUser } from '@/firebase/auth/use-user';
+import { useSearchParams } from 'next/navigation';
 import {
     AreaChart,
     Area,
@@ -39,6 +40,19 @@ export default function AdminPage() {
 
     // Search state
     const [userSearch, setUserSearch] = useState('');
+    const searchParams = useSearchParams();
+
+    // Tab state management
+    const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
+    useEffect(() => {
+        const tab = searchParams.get('tab');
+        if (tab && tab !== activeTab) setActiveTab(tab);
+    }, [searchParams]);
+
+    const handleTabChange = useCallback((value: string) => {
+        setActiveTab(value);
+        window.history.replaceState(null, '', `?tab=${value}`);
+    }, []);
 
     useEffect(() => {
         async function init() {
@@ -129,7 +143,7 @@ export default function AdminPage() {
                     </Badge>
                 </div>
 
-                <Tabs defaultValue="overview" className="space-y-6">
+                <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
                     <TabsList className="h-auto min-h-[44px] flex flex-wrap md:flex-nowrap justify-start gap-1 w-full md:w-fit">
                         <TabsTrigger value="overview" className="flex-1 md:flex-none py-2">Тойм</TabsTrigger>
                         <TabsTrigger value="users" className="flex-1 md:flex-none py-2">Хэрэглэгчид ({usersList.length})</TabsTrigger>

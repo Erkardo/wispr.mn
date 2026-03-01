@@ -10,9 +10,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { doc, updateDoc } from 'firebase/firestore';
 import type { ComplimentOwner } from '@/types';
@@ -93,10 +93,23 @@ export default function ProfilePage() {
     const auth = useAuth();
     const firestore = useFirestore();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { toast } = useToast();
     const { permission, requestPermission, isSupportedBrowser } = useFCM();
     const [isRequestingPerm, setIsRequestingPerm] = useState(false);
     const [isTogglingPublic, setIsTogglingPublic] = useState(false);
+
+    // Tab state management
+    const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'settings');
+    useEffect(() => {
+        const tab = searchParams.get('tab');
+        if (tab && tab !== activeTab) setActiveTab(tab);
+    }, [searchParams]);
+
+    const handleTabChange = useCallback((value: string) => {
+        setActiveTab(value);
+        window.history.replaceState(null, '', `?tab=${value}`);
+    }, []);
 
     const [isBuyHintDialogOpen, setIsBuyHintDialogOpen] = useState(false);
     const [isCreatingInvoice, setIsCreatingInvoice] = useState<number | false>(false);
@@ -218,7 +231,7 @@ export default function ProfilePage() {
             <Header title="Тохиргоо" showBackButton={true} />
             <div className="container mx-auto max-w-2xl px-4 pb-24">
 
-                <Tabs defaultValue="settings" className="w-full pt-4">
+                <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full pt-4">
                     {/* Tab switcher */}
                     <div className="flex justify-center mb-5">
                         <div className="w-full overflow-x-auto no-scrollbar pb-1">

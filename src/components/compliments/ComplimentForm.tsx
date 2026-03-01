@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -7,14 +8,26 @@ import { Form, FormControl, FormField, FormItem, FormMessage, FormLabel } from '
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, ArrowRight, Lock, Send } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { createCompliment } from '@/app/compliments/actions';
+import { submitComplimentAction, notifyNewWisprAction } from '@/app/compliments/actions';
+import { collection, addDoc, doc, updateDoc, increment, serverTimestamp, setDoc } from 'firebase/firestore';
+import type { HintContext } from '@/types';
 import { ComplimentSentSuccess } from './ComplimentSentSuccess';
 import { AudioRecorder } from './AudioRecorder';
 import { AISuggestionsDialog } from './AISuggestionsDialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Drawer, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Label } from '@/components/ui/label';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore } from '@/firebase';
+
+const getSenderOS = () => {
+  if (typeof window === 'undefined') return 'Unknown';
+  const ua = navigator.userAgent;
+  if (/android/i.test(ua)) return 'Android';
+  if (/iPad|iPhone|iPod/.test(ua)) return 'iOS';
+  if (/Mac/.test(ua)) return 'Mac';
+  if (/Win/.test(ua)) return 'Windows';
+  return 'Web';
+};
 
 const complimentSchema = z.object({
   text: z.string().min(2, "Хамгийн багадаа 2 тэмдэгт бичнэ үү.").max(500, "500 тэмдэгтээс хэтрэхгүй байх хэрэгтэй."),
@@ -36,7 +49,7 @@ export function ComplimentForm({ ownerId }: { ownerId: string }) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const { toast } = useToast();
-  const { user, signInWithGoogle } = useUser();
+  const { user } = useUser();
 
   const form = useForm<ComplimentFormValues>({
     resolver: zodResolver(complimentSchema),
@@ -55,23 +68,6 @@ export function ComplimentForm({ ownerId }: { ownerId: string }) {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    try {
-      await signInWithGoogle();
-      form.setValue('createOwnLink', true);
-      toast({
-        title: "Амжилттай холбогдлоо",
-        description: "Одоо зурвасаа илгээнэ үү.",
-      });
-    } catch {
-      toast({
-        title: "Алдаа",
-        description: "Google-ээр нэвтэрч чадсангүй.",
-        variant: "destructive"
-      });
-    }
-  };
-
   async function onSubmit(data: ComplimentFormValues) {
     if (!ownerId) {
       toast({ title: "Алдаа гарлаа", description: "Хүлээн авагчийн ID олдсонгүй.", variant: "destructive" });
@@ -80,43 +76,60 @@ export function ComplimentForm({ ownerId }: { ownerId: string }) {
 
     setIsSubmitting(true);
     try {
-      const dbData: any = {
-        receiverId: ownerId,
-        text: data.text,
-        theme: 'default',
-        emoji: '💭',
-      };
+      const result = await submitComplimentAction(data.text, audioUrl || undefined, audioDuration);
 
-      if (audioUrl) {
-        dbData.audioUrl = audioUrl;
-        dbData.audioDuration = audioDuration;
-      }
+      if (result.success && (result.filteredText || audioUrl) && firestore) {
+        const hintContext: HintContext = {
+          frequency: (data.frequency as any) || '',
+          location: (data.location as any) || '',
+        };
+        const complimentsRef = collection(firestore, 'complimentOwners', ownerId, 'compliments');
+        const complimentData = {
+          ownerId: ownerId,
+          text: result.filteredText || '',
+          hintContext: hintContext,
+          createdAt: serverTimestamp(),
+          isRead: false,
+          reactions: { '💛': 0, '😄': 0, '✨': 0 },
+          senderId: user && !user.isAnonymous ? user.uid : null,
+          senderOS: getSenderOS(),
+        };
 
-      const result = await createCompliment(dbData);
-
-      if (result.success && result.complimentId) {
-        try {
-          // Extra hints
-          if (data.frequency || data.location) {
-            const extras = {
-              complimentId: result.complimentId,
-              frequency: data.frequency,
-              location: data.location
-            };
-            // In a real scenario, this would go into a subcollection or update the doc. 
-            // We can pass it off for now.
-          }
-        } catch (e) {
-          console.error("Failed to update extra DB data", e);
+        if (audioUrl) {
+          Object.assign(complimentData, { audioUrl, audioDuration });
         }
 
-        // Always show success screen with new sleek checkmark
-        setIsSubmitted(true);
+        const docRef = await addDoc(complimentsRef, complimentData);
 
+        try {
+          const ownerDocRef = doc(firestore, 'complimentOwners', ownerId);
+          const batchPromises = [
+            updateDoc(ownerDocRef, {
+              xp: increment(10),
+              totalCompliments: increment(1),
+            })
+          ];
+
+          if (user && !user.isAnonymous) {
+            const sentRef = doc(firestore, 'complimentOwners', user.uid, 'sentWisprs', docRef.id);
+            batchPromises.push(setDoc(sentRef, {
+              receiverId: ownerId,
+              complimentId: docRef.id,
+              sentAt: serverTimestamp()
+            }));
+          }
+
+          await Promise.all(batchPromises);
+          notifyNewWisprAction(ownerId, complimentData.senderOS, docRef.id).catch(console.error);
+        } catch (e) {
+          console.error("Follow up updates failed:", e);
+        }
+
+        setIsSubmitted(true);
       } else {
         toast({
           title: "Илгээхэд алдаа гарлаа",
-          description: result.error || "Дахин оролдоно уу.",
+          description: result.message || "Дахин оролдоно уу.",
           variant: "destructive",
         });
       }
@@ -265,9 +278,8 @@ export function ComplimentForm({ ownerId }: { ownerId: string }) {
                     </div>
                     <p className="text-[13px] text-zinc-500 font-medium leading-relaxed">Дахин сануулахад, бид таныг хэн болохыг илгээгчид хэлэхгүй.</p>
 
-                    <Button type="button" onClick={handleGoogleSignIn} variant="outline" className="w-full h-12 rounded-2xl bg-white dark:bg-zinc-950 font-semibold mt-1 hover:bg-zinc-50 dark:hover:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
-                      <svg viewBox="0 0 24 24" className="w-5 h-5 mr-2" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" /><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" /><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" /><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" /><path d="M1 1h22v22H1z" fill="none" /></svg>
-                      Google-ээр үүсгэх
+                    <Button asChild variant="outline" className="w-full h-12 rounded-2xl bg-white dark:bg-zinc-950 font-semibold mt-1 hover:bg-zinc-50 dark:hover:bg-zinc-900 border-zinc-200 dark:border-zinc-800">
+                      <Link href="/create">Өөрийн линкээ үүсгэх</Link>
                     </Button>
                   </div>
                 )}

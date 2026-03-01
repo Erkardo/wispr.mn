@@ -143,6 +143,7 @@ export function ComplimentForm({ ownerId }: { ownerId: string }) {
           const batchPromises = [
             updateDoc(ownerDocRef, {
               xp: increment(10), // +10 XP per wispr
+              totalCompliments: increment(1), // Increment total Wisprs received
             })
           ];
 

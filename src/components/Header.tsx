@@ -32,9 +32,9 @@ export function Header({
   useEffect(() => {
     if (!user || !firestore) return;
 
-    // Listen to changes in unread compliments
+    // Listen to changes in unread compliments (fetch all unread, filter out archived client-side)
     const complimentsRef = collection(firestore, 'complimentOwners', user.uid, 'compliments');
-    const complimentsQuery = query(complimentsRef, where('isRead', '==', false), where('isArchived', 'in', [false, null]));
+    const complimentsQuery = query(complimentsRef, where('isRead', '==', false));
 
     // Listen to changes in unread replies
     const repliesRef = collection(firestore, 'complimentOwners', user.uid, 'sentWisprs');
@@ -47,9 +47,11 @@ export function Header({
 
     importFirestore.then(({ onSnapshot }) => {
       unsubComps = onSnapshot(complimentsQuery, (snap) => {
-        const compsCount = snap.docs.length;
+        // Filter out archived compliments client-side because undefined fields can't be queried effectively with 'in'
+        const unarchivedCount = snap.docs.filter(doc => doc.data().isArchived !== true).length;
+
         onSnapshot(repliesQuery, (repSnap) => {
-          setUnreadCount(compsCount + repSnap.docs.length);
+          setUnreadCount(unarchivedCount + repSnap.docs.length);
         });
       });
     });

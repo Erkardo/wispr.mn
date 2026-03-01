@@ -190,7 +190,7 @@ export function ComplimentForm({ ownerId }: { ownerId: string }) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-0 w-full">
+      <form id="compliment-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-0 w-full">
 
         {/* --- STEP 1: Just Write (Frictionless UX) --- */}
         <div className="flex flex-col relative w-full">
@@ -340,6 +340,7 @@ export function ComplimentForm({ ownerId }: { ownerId: string }) {
               <DrawerFooter className="px-0 pt-6 mt-auto">
                 <Button
                   type="submit"
+                  form="compliment-form"
                   className="w-full h-14 rounded-2xl font-black text-lg bg-primary hover:bg-primary/90 shadow-xl shadow-primary/30 group active:scale-[0.98] transition-all relative overflow-hidden"
                   disabled={isSubmitting}
                 >

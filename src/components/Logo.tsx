@@ -5,7 +5,7 @@ export function Logo({ className, iconOnly = false }: { className?: string, icon
     <svg
       version="1.1"
       id="svg1"
-      viewBox={iconOnly ? "46 56 240 240" : "0 0 886.42157 239.5717"}
+      viewBox={iconOnly ? "45.84 56.24 240 240" : "0 0 886.42157 239.5717"}
       className={cn("w-full h-auto", className)}
       xmlns="http://www.w3.org/2000/svg"
     >

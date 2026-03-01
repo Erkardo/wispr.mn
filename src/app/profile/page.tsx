@@ -247,26 +247,7 @@ export default function ProfilePage() {
                                             <p className="text-xs text-primary/70 font-mono font-bold mt-0.5">@{ownerData.username}</p>
                                         )}
                                     </div>
-                                    <Button asChild variant="ghost" size="icon" className="rounded-full h-10 w-10 hover:bg-muted group/act" onClick={() => router.push('/activity')}>
-                                        <Bell className="w-5 h-5 text-muted-foreground group-hover/act:text-primary transition-colors" />
-                                    </Button>
                                 </CardContent>
-                            </Card>
-
-                            {/* Notifications / Activity Card */}
-                            <Card className="rounded-[1.75rem] border border-border/50 bg-card/60 backdrop-blur-md shadow-sm overflow-hidden" onClick={() => router.push('/activity')}>
-                                <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/30 transition-colors">
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-2 rounded-xl bg-primary/10">
-                                            <Bell className="w-4 h-4 text-primary" />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-black uppercase tracking-widest text-muted-foreground">Идэвх & Мэдэгдэл</p>
-                                            <p className="text-xs text-foreground font-semibold">Сүүлд ирсэн мэдэгдлүүдийг харах</p>
-                                        </div>
-                                    </div>
-                                    <ArrowRight className="w-4 h-4 text-muted-foreground" />
-                                </div>
                             </Card>
 
                             {/* Hint card — compact */}
@@ -305,6 +286,27 @@ export default function ProfilePage() {
                                 </CardContent>
                             </Card>
 
+                            {/* Notification Activation Card */}
+                            {isSupportedBrowser && permission !== 'granted' && (
+                                <Card className="rounded-[1.75rem] border-none bg-primary/10 overflow-hidden">
+                                    <div className="p-5 flex items-start gap-4 cursor-pointer hover:bg-primary/15 transition-colors" onClick={() => handleToggleNotification(true)}>
+                                        <div className="p-2.5 rounded-2xl bg-primary/20 shrink-0">
+                                            <Bell className="w-5 h-5 text-primary" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-black uppercase tracking-widest text-primary mb-1">Мэдэгдэл идэвхжүүлэх</p>
+                                            <p className="text-xs text-foreground font-semibold leading-relaxed">
+                                                Утасныхаа дэлгэцэнд шинэ Wispr болон хариу ирэх бүрт мэдэгдэл хүлээн авахыг хүсвэл энд дарж зөвшөөрнө үү.
+                                            </p>
+                                            <Button size="sm" className="mt-3 rounded-xl font-bold px-4" onClick={(e) => { e.stopPropagation(); handleToggleNotification(true); }} disabled={isRequestingPerm}>
+                                                {isRequestingPerm ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Bell className="w-4 h-4 mr-2" />}
+                                                Зөвшөөрөх
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </Card>
+                            )}
+
                             {/* Compact toggles */}
                             <Card className="rounded-[1.75rem] border border-border/50 bg-card/60 backdrop-blur-md shadow-sm overflow-hidden">
                                 <ToggleRow
@@ -315,17 +317,21 @@ export default function ProfilePage() {
                                     onCheckedChange={handleTogglePublic}
                                     disabled={isTogglingPublic}
                                 />
-                                {isSupportedBrowser && (
+                                {isSupportedBrowser && permission === 'granted' && (
                                     <>
                                         <Separator />
-                                        <ToggleRow
-                                            icon={permission === 'granted' ? Bell : BellOff}
-                                            label="Мэдэгдэл"
-                                            description={permission === 'granted' ? "Идэвхтэй байна" : "Зөвшөөрөл өгөгдөөгүй"}
-                                            checked={permission === 'granted'}
-                                            onCheckedChange={handleToggleNotification}
-                                            disabled={isRequestingPerm || permission === 'granted'}
-                                        />
+                                        <div className="flex items-center justify-between gap-3 py-3 px-4 opacity-70">
+                                            <div className="flex items-center gap-3 min-w-0">
+                                                <div className="p-1.5 rounded-xl bg-green-500/10 shrink-0">
+                                                    <Bell className="w-4 h-4 text-green-500" />
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-sm font-semibold leading-tight">Мэдэгдэл идэвхтэй</p>
+                                                    <p className="text-[11px] text-muted-foreground leading-snug mt-0.5 truncate">Төхөөрөмжид мэдэгдэл очно</p>
+                                                </div>
+                                            </div>
+                                            <div className="p-1 px-2 rounded-lg bg-green-500/10 text-green-600 text-[10px] font-black uppercase">Идэвхтэй</div>
+                                        </div>
                                     </>
                                 )}
                             </Card>

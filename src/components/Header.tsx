@@ -87,7 +87,7 @@ export function Header({
           )}
           {!isHomePage && (
             <Link href="/" passHref className="flex items-center shrink-0">
-              <Logo iconOnly className="w-[28px] md:w-[32px] text-primary transition-all" />
+              <Logo iconOnly className="w-[34px] text-primary transition-all" />
             </Link>
           )}
         </div>

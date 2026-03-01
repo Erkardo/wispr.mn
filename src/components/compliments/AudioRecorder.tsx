@@ -12,9 +12,10 @@ interface AudioRecorderProps {
     ownerId: string;
     onAudioReady: (url: string, duration: number) => void;
     onAudioRemoved: () => void;
+    compact?: boolean;
 }
 
-export function AudioRecorder({ ownerId, onAudioReady, onAudioRemoved }: AudioRecorderProps) {
+export function AudioRecorder({ ownerId, onAudioReady, onAudioRemoved, compact }: AudioRecorderProps) {
     const [isRecording, setIsRecording] = useState(false);
     const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
     const [audioUrl, setAudioUrl] = useState<string | null>(null); // Local URL for preview
@@ -264,6 +265,24 @@ export function AudioRecorder({ ownerId, onAudioReady, onAudioRemoved }: AudioRe
     }
 
     // State: Idle
+    if (compact) {
+        return (
+            <Button
+                type="button"
+                onClick={startRecording}
+                className="h-9 w-9 rounded-xl flex items-center justify-center p-0 transition-all"
+                title="Дуут зурвас үлдээх"
+                style={{
+                    background: 'rgba(139,92,246,0.08)',
+                    border: '1.5px solid rgba(139,92,246,0.2)',
+                    color: '#8b5cf6',
+                }}
+            >
+                <Mic className="h-4 w-4" />
+            </Button>
+        );
+    }
+    // State: Idle (full)
     return (
         <Button
             type="button"

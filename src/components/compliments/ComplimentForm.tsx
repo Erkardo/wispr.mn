@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
-import { Form, FormControl, FormField, FormItem, FormMessage, FormLabel } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, ArrowRight, Lock, Send, ShieldCheck, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -65,69 +65,47 @@ export function ComplimentForm({ ownerId }: { ownerId: string }) {
 
   const handleGoogleSignIn = async () => {
     if (!auth) return;
-    const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
+      await signInWithPopup(auth, new GoogleAuthProvider());
       toast({ title: "Амжилттай холбогдлоо!", description: "Wispr-ээ үргэлжлүүлэн илгээнэ үү." });
     } catch (error: any) {
       if (error.code === 'auth/cancelled-popup-request') return;
-      let description = 'Нэвтрэхэд алдаа гарлаа. Түр хүлээгээд дахин оролдоно уу.';
-      if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
-        description = 'Popup цонхыг хаалаа. Popup зөвшөөрлөө шалгаад дахин оролдоно уу.';
-      }
-      console.error('Google sign-in error:', error);
-      toast({ title: "Алдаа гарлаа", description, variant: "destructive" });
+      toast({ title: "Алдаа", description: 'Нэвтрэхэд алдаа гарлаа.', variant: "destructive" });
     }
   };
 
   async function onSubmit(data: ComplimentFormValues) {
-    if (!ownerId) {
-      toast({ title: "Алдаа гарлаа", description: "Хүлээн авагчийн ID олдсонгүй.", variant: "destructive" });
-      return;
-    }
+    if (!ownerId) { toast({ title: "Алдаа", variant: "destructive" }); return; }
     setIsSubmitting(true);
     try {
       const result = await submitComplimentAction(data.text, audioUrl || undefined, audioDuration);
-
       if (result.success && (result.filteredText || audioUrl) && firestore) {
         const hintContext: HintContext = { frequency: (data.frequency as any) || '', location: (data.location as any) || '' };
         const complimentsRef = collection(firestore, 'complimentOwners', ownerId, 'compliments');
-        const complimentData = {
-          ownerId,
-          text: result.filteredText || '',
-          hintContext,
-          createdAt: serverTimestamp(),
-          isRead: false,
+        const complimentData: any = {
+          ownerId, text: result.filteredText || '', hintContext,
+          createdAt: serverTimestamp(), isRead: false,
           reactions: { '💛': 0, '😄': 0, '✨': 0 },
           senderId: user && !user.isAnonymous ? user.uid : null,
           senderOS: getSenderOS(),
         };
         if (audioUrl) Object.assign(complimentData, { audioUrl, audioDuration });
-
         const docRef = await addDoc(complimentsRef, complimentData);
-
         try {
-          const ownerDocRef = doc(firestore, 'complimentOwners', ownerId);
-          const batchPromises = [updateDoc(ownerDocRef, { xp: increment(10), totalCompliments: increment(1) })];
+          const batchPromises = [updateDoc(doc(firestore, 'complimentOwners', ownerId), { xp: increment(10), totalCompliments: increment(1) })];
           if (user && !user.isAnonymous) {
-            const sentRef = doc(firestore, 'complimentOwners', user.uid, 'sentWisprs', docRef.id);
-            batchPromises.push(setDoc(sentRef, { receiverId: ownerId, complimentId: docRef.id, sentAt: serverTimestamp() }));
+            batchPromises.push(setDoc(doc(firestore, 'complimentOwners', user.uid, 'sentWisprs', docRef.id), { receiverId: ownerId, complimentId: docRef.id, sentAt: serverTimestamp() }));
           }
           await Promise.all(batchPromises);
           notifyNewWisprAction(ownerId, complimentData.senderOS, docRef.id).catch(console.error);
-        } catch (e) {
-          console.error("Follow up updates failed:", e);
-        }
+        } catch (e) { console.error(e); }
         setIsSubmitted(true);
       } else {
         toast({ title: "Илгээхэд алдаа гарлаа", description: result.message || "Дахин оролдоно уу.", variant: "destructive" });
       }
     } catch (error: any) {
-      console.error("Submit Error:", error);
-      toast({ title: "Серверийн алдаа", description: `Алдаа: ${error.message || 'Ямар нэг зүйл буруу хуурайшлаа.'}`, variant: "destructive" });
-    } finally {
-      setIsSubmitting(false);
-    }
+      toast({ title: "Серверийн алдаа", description: error.message, variant: "destructive" });
+    } finally { setIsSubmitting(false); }
   }
 
   if (isSubmitted) return <ComplimentSentSuccess />;
@@ -136,8 +114,23 @@ export function ComplimentForm({ ownerId }: { ownerId: string }) {
     <Form {...form}>
       <form id="compliment-form" onSubmit={form.handleSubmit(onSubmit)} className="w-full">
 
-        {/* ─── Message card ─── */}
-        <div className="relative w-full rounded-3xl bg-white border border-violet-100 shadow-xl shadow-violet-100/60 overflow-hidden transition-all duration-300 focus-within:shadow-violet-200/80 focus-within:border-violet-300">
+        {/* ── Premium Message Card ── */}
+        <div
+          className="relative w-full overflow-hidden transition-all duration-300"
+          style={{
+            background: 'rgba(255,255,255,0.85)',
+            border: '1.5px solid rgba(139,92,246,0.18)',
+            borderRadius: '28px',
+            backdropFilter: 'blur(20px)',
+            boxShadow: '0 8px 40px rgba(139,92,246,0.12), 0 2px 8px rgba(0,0,0,0.04)',
+          }}
+        >
+          {/* Subtle shimmer line at top */}
+          <div
+            className="absolute top-0 left-0 right-0 h-0.5"
+            style={{ background: 'linear-gradient(90deg, transparent, rgba(139,92,246,0.4), rgba(167,139,250,0.6), rgba(139,92,246,0.4), transparent)' }}
+          />
+
           <FormField
             control={form.control}
             name="text"
@@ -146,7 +139,8 @@ export function ComplimentForm({ ownerId }: { ownerId: string }) {
                 <FormControl>
                   <Textarea
                     placeholder="Хэлмээр байсан үгээ энд үлдээгээрэй…"
-                    className="resize-none min-h-[200px] max-h-[340px] bg-transparent border-0 focus-visible:ring-0 px-6 pt-7 pb-3 text-[17px] font-medium leading-relaxed text-zinc-900 placeholder:text-zinc-400 overflow-y-auto shadow-none caret-violet-600"
+                    className="resize-none min-h-[190px] max-h-[320px] bg-transparent border-0 focus-visible:ring-0 px-6 pt-7 pb-3 text-[17px] font-medium leading-relaxed placeholder:text-zinc-400 overflow-y-auto shadow-none"
+                    style={{ caretColor: '#8b5cf6', color: '#18181b' }}
                     {...field}
                   />
                 </FormControl>
@@ -154,10 +148,15 @@ export function ComplimentForm({ ownerId }: { ownerId: string }) {
               </FormItem>
             )}
           />
-          {/* Tiny toolbar — AudioRecorder + AI only */}
-          <div className="flex items-center gap-2 px-5 py-3.5 border-t border-violet-50">
+
+          {/* Toolbar */}
+          <div
+            className="flex items-center gap-3 px-5 py-3.5"
+            style={{ borderTop: '1px solid rgba(139,92,246,0.1)', background: 'rgba(139,92,246,0.02)' }}
+          >
             <AudioRecorder
               ownerId={ownerId}
+              compact={true}
               onAudioReady={(url, duration) => { setAudioUrl(url); setAudioDuration(duration); }}
               onAudioRemoved={() => { setAudioUrl(null); setAudioDuration(0); }}
             />
@@ -165,114 +164,145 @@ export function ComplimentForm({ ownerId }: { ownerId: string }) {
           </div>
         </div>
 
-        {/* ─── Primary CTA ─── */}
-        <Button
+        {/* ── Primary CTA ── */}
+        <button
           type="button"
           onClick={handleOpenDrawer}
-          className="w-full mt-4 h-14 rounded-2xl font-black text-[17px] bg-violet-600 hover:bg-violet-700 text-white active:scale-[0.98] transition-all flex items-center justify-center gap-2.5 shadow-lg shadow-violet-300 group"
+          className="w-full mt-4 flex items-center justify-center gap-2.5 font-black text-white transition-all active:scale-[0.98] group"
+          style={{
+            height: '56px',
+            borderRadius: '18px',
+            fontSize: '17px',
+            background: 'linear-gradient(135deg, #7c3aed 0%, #8b5cf6 50%, #a78bfa 100%)',
+            boxShadow: '0 8px 24px rgba(124,58,237,0.4), 0 2px 8px rgba(124,58,237,0.2)',
+            border: 'none',
+            cursor: 'pointer',
+          }}
         >
           Үргэлжлүүлэх
-          <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
-        </Button>
+          <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" />
+        </button>
 
-        {/* ─── Trust hint ─── */}
-        <div className="mt-4 flex items-center justify-center gap-1.5 opacity-60">
-          <Lock className="w-3 h-3 text-violet-400" />
-          <p className="text-[11px] font-bold uppercase tracking-widest text-violet-500">Таны нэр хаана ч харагдахгүй</p>
+        {/* Trust hint */}
+        <div className="mt-4 flex items-center justify-center gap-2 opacity-60">
+          <Lock className="w-3 h-3" style={{ color: '#8b5cf6' }} />
+          <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: '#8b5cf6' }}>
+            Таны нэр хаана ч харагдахгүй
+          </p>
         </div>
 
-        {/* ─── Drawer ─── */}
+        {/* ── Drawer ── */}
         <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-          <DrawerContent className="bg-white border-t border-violet-100 rounded-t-[2rem] max-w-md mx-auto shadow-2xl shadow-violet-100">
-            <div className="overflow-y-auto w-full px-6 pt-2 pb-10 max-h-[85vh]">
-              <DrawerHeader className="px-0 pt-4 pb-6">
-                <DrawerTitle className="text-2xl font-black text-zinc-900 tracking-tight">Нэмэлт мэдээлэл</DrawerTitle>
-                <DrawerDescription className="text-[15px] mt-1 text-zinc-500">
-                  Таны нэр <strong className="font-bold text-zinc-900">хэзээ ч</strong> харагдахгүй.
+          <DrawerContent
+            className="max-w-md mx-auto rounded-t-[2rem]"
+            style={{
+              background: 'rgba(255,255,255,0.98)',
+              borderTop: '1.5px solid rgba(139,92,246,0.15)',
+              boxShadow: '0 -20px 60px rgba(139,92,246,0.12)',
+            }}
+          >
+            <div className="overflow-y-auto w-full px-6 pt-2 pb-10 max-h-[88vh]">
+              <DrawerHeader className="px-0 pt-5 pb-6">
+                <DrawerTitle className="text-2xl font-black tracking-tight" style={{ color: '#18181b' }}>
+                  Нэмэлт мэдээлэл
+                </DrawerTitle>
+                <DrawerDescription className="text-[15px] mt-1.5 text-zinc-500">
+                  Таны нэр <span className="font-bold text-zinc-900">хэзээ ч</span> харагдахгүй.
                 </DrawerDescription>
               </DrawerHeader>
 
               <div className="space-y-8">
                 {/* Frequency */}
-                <FormField
-                  control={form.control}
-                  name="frequency"
-                  render={({ field }) => (
-                    <FormItem className="space-y-3">
-                      <FormLabel className="text-[15px] font-bold text-zinc-800 dark:text-zinc-200 block">
-                        Энэ хүнтэй хэр ойрхон харьцдаг вэ?
-                      </FormLabel>
-                      <FormControl>
-                        <RadioGroup
-                          onValueChange={field.onChange}
-                          value={field.value}
-                          className="grid grid-cols-2 gap-2.5"
+                <div className="space-y-3">
+                  <p className="text-[15px] font-bold text-zinc-800">Энэ хүнтэй хэр ойрхон харьцдаг вэ?</p>
+                  <RadioGroup
+                    onValueChange={(v) => form.setValue('frequency', v)}
+                    value={form.watch('frequency')}
+                    className="grid grid-cols-2 gap-2.5"
+                  >
+                    {frequencyOptions.map(option => (
+                      <div key={option}>
+                        <RadioGroupItem value={option} id={`freq-${option}`} className="peer sr-only" />
+                        <Label
+                          htmlFor={`freq-${option}`}
+                          className="flex items-center justify-center py-3.5 rounded-2xl text-[14px] font-bold cursor-pointer transition-all duration-150 active:scale-95 peer-data-[state=checked]:text-white"
+                          style={{
+                            border: '2px solid transparent',
+                            background: 'rgba(139,92,246,0.06)',
+                            color: '#52525b',
+                          }}
+                          onMouseEnter={e => { if (form.watch('frequency') !== option) (e.target as HTMLElement).style.background = 'rgba(139,92,246,0.12)'; }}
+                          onMouseLeave={e => { if (form.watch('frequency') !== option) (e.target as HTMLElement).style.background = 'rgba(139,92,246,0.06)'; }}
                         >
-                          {frequencyOptions.map(option => (
-                            <div key={option}>
-                              <RadioGroupItem value={option} id={`freq-${option}`} className="peer sr-only" />
-                              <Label
-                                htmlFor={`freq-${option}`}
-                                className="flex items-center justify-center py-3.5 rounded-2xl text-[14px] font-bold cursor-pointer border-2 border-transparent bg-violet-50 text-zinc-600 transition-all duration-200 hover:bg-violet-100 active:scale-95 peer-data-[state=checked]:border-violet-600 peer-data-[state=checked]:bg-violet-600 peer-data-[state=checked]:text-white"
-                              >
-                                {option}
-                              </Label>
-                            </div>
-                          ))}
-                        </RadioGroup>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                          {option}
+                        </Label>
+                        <style>{`
+                          #freq-${option.replace(' ', '-')}:checked ~ label[for="freq-${option}"] {
+                            background: linear-gradient(135deg, #7c3aed, #8b5cf6) !important;
+                            border-color: transparent !important;
+                            color: white !important;
+                          }
+                        `}</style>
+                      </div>
+                    ))}
+                  </RadioGroup>
+                </div>
 
                 {/* Location */}
-                <FormField
-                  control={form.control}
-                  name="location"
-                  render={({ field: _field }) => (
-                    <FormItem className="space-y-3">
-                      <FormLabel className="text-[15px] font-bold text-zinc-800 dark:text-zinc-200 block">
-                        Хаана их харсан бэ?
-                      </FormLabel>
-                      <div className="flex flex-wrap gap-2">
-                        {locationOptions.map(option => {
-                          const isSelected = form.watch('location') === option;
-                          return (
-                            <button
-                              key={option}
-                              type="button"
-                              onClick={() => form.setValue('location', isSelected ? '' : option, { shouldValidate: true })}
-                              className={`h-11 px-5 rounded-xl text-[14px] font-bold border-2 transition-all duration-200 active:scale-95 ${isSelected
-                                ? 'border-violet-600 bg-violet-600 text-white'
-                                : 'border-transparent bg-violet-50 text-zinc-600 hover:bg-violet-100'
-                                }`}
-                            >
-                              {option}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </FormItem>
-                  )}
-                />
+                <div className="space-y-3">
+                  <p className="text-[15px] font-bold text-zinc-800">Хаана их харсан бэ?</p>
+                  <div className="flex flex-wrap gap-2">
+                    {locationOptions.map(option => {
+                      const isSelected = form.watch('location') === option;
+                      return (
+                        <button
+                          key={option}
+                          type="button"
+                          onClick={() => form.setValue('location', isSelected ? '' : option)}
+                          className="h-11 px-5 rounded-xl text-[14px] font-bold transition-all duration-150 active:scale-95"
+                          style={{
+                            background: isSelected ? 'linear-gradient(135deg, #7c3aed, #8b5cf6)' : 'rgba(139,92,246,0.06)',
+                            color: isSelected ? 'white' : '#52525b',
+                            border: '2px solid transparent',
+                          }}
+                        >
+                          {option}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
 
-                {/* CTA for anonymous users to get their own link */}
+                {/* Upsell for anonymous */}
                 {(!user || user.isAnonymous) && (
-                  <div className="relative overflow-hidden rounded-3xl border border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-5">
+                  <div
+                    className="rounded-3xl p-5 relative overflow-hidden"
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(139,92,246,0.06) 0%, rgba(167,139,250,0.04) 100%)',
+                      border: '1.5px solid rgba(139,92,246,0.15)',
+                    }}
+                  >
                     <div className="flex items-start gap-4">
-                      <div className="flex-shrink-0 w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">
-                        <Sparkles className="w-5 h-5 text-primary" />
+                      <div
+                        className="flex-shrink-0 w-11 h-11 rounded-2xl flex items-center justify-center"
+                        style={{ background: 'linear-gradient(135deg, rgba(139,92,246,0.15), rgba(167,139,250,0.1))' }}
+                      >
+                        <Sparkles className="w-5 h-5" style={{ color: '#8b5cf6' }} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-bold text-[15px] text-zinc-900 dark:text-white mb-1">Өөрийн линк аваарай</h4>
-                        <p className="text-[13px] text-zinc-500 dark:text-zinc-400 leading-relaxed mb-4">
-                          Таны нэрийг бид хэзээ ч задлахгүй. Өөртөө линк үүсгэж бусдын бодлыг сонс.
+                        <h4 className="font-black text-[15px] text-zinc-900 mb-1">Өөрийн линк аваарай</h4>
+                        <p className="text-[13px] text-zinc-500 leading-relaxed mb-4">
+                          Таны нэрийг бид хэзээ ч задлахгүй. Өөртөо линк үүсгэж бусдын бодлыг сонс.
                         </p>
                         <button
                           type="button"
                           onClick={handleGoogleSignIn}
-                          className="w-full h-12 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 font-semibold text-[14px] text-zinc-900 dark:text-white flex items-center justify-center gap-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors active:scale-[0.98]"
+                          className="w-full h-12 rounded-2xl font-bold text-[14px] text-zinc-800 flex items-center justify-center gap-2.5 transition-all active:scale-[0.98]"
+                          style={{
+                            background: 'white',
+                            border: '1.5px solid rgba(0,0,0,0.1)',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                          }}
                         >
                           <svg viewBox="0 0 24 24" className="w-5 h-5 flex-shrink-0" fill="none">
                             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -288,13 +318,18 @@ export function ComplimentForm({ ownerId }: { ownerId: string }) {
                 )}
               </div>
 
-              {/* Submit */}
+              {/* Submit Button */}
               <DrawerFooter className="px-0 pt-8">
                 <Button
                   type="submit"
                   form="compliment-form"
-                  className="w-full h-14 rounded-2xl font-black text-[17px] bg-violet-600 hover:bg-violet-700 text-white shadow-lg shadow-violet-200 active:scale-[0.98] transition-all flex items-center justify-center gap-2.5 group"
                   disabled={isSubmitting}
+                  className="w-full h-14 font-black text-[17px] text-white active:scale-[0.98] transition-all flex items-center justify-center gap-2.5 group border-0"
+                  style={{
+                    borderRadius: '18px',
+                    background: isSubmitting ? '#a78bfa' : 'linear-gradient(135deg, #7c3aed 0%, #8b5cf6 50%, #a78bfa 100%)',
+                    boxShadow: '0 8px 24px rgba(124,58,237,0.35)',
+                  }}
                 >
                   {isSubmitting ? (
                     <Loader2 className="w-6 h-6 animate-spin" />
@@ -305,9 +340,11 @@ export function ComplimentForm({ ownerId }: { ownerId: string }) {
                     </>
                   )}
                 </Button>
-                <div className="flex items-center justify-center gap-2 mt-3 opacity-60">
-                  <ShieldCheck className="w-3.5 h-3.5 text-violet-400" />
-                  <p className="text-[11px] font-bold uppercase tracking-widest text-violet-500">Нэрийг тань бид хамгаалж байна</p>
+                <div className="flex items-center justify-center gap-2 mt-3 opacity-50">
+                  <ShieldCheck className="w-3.5 h-3.5" style={{ color: '#8b5cf6' }} />
+                  <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: '#8b5cf6' }}>
+                    Нэрийг тань бид хамгаалж байна
+                  </p>
                 </div>
               </DrawerFooter>
             </div>

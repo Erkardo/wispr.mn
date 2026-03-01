@@ -13,6 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { doc, updateDoc } from 'firebase/firestore';
 import type { ComplimentOwner } from '@/types';
 import { isToday } from 'date-fns';
@@ -376,31 +377,40 @@ export default function ProfilePage() {
                     </TabsContent>
 
                     {/* ── АМЖИЛТ TAB ── */}
-                    <TabsContent value="achievements" className="m-0 focus-visible:outline-none animate-in fade-in duration-300">
-                        <div className="space-y-6">
-                            <Card className="rounded-[1.75rem] border border-border/50 bg-card/60 backdrop-blur-md shadow-sm overflow-hidden">
-                                <CardHeader className="pb-2">
-                                    <CardTitle className="text-base">Түвшин & Оноо</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <LevelProgress xp={ownerData?.xp || 0} />
-                                </CardContent>
-                            </Card>
+                    <TabsContent value="achievements" className="m-0 focus-visible:outline-none">
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.4, ease: "easeOut", staggerChildren: 0.1 }}
+                            className="space-y-6"
+                        >
+                            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                                <Card className="rounded-[1.75rem] border border-border/50 bg-card/60 backdrop-blur-md shadow-sm overflow-hidden">
+                                    <CardHeader className="pb-2">
+                                        <CardTitle className="text-base text-muted-foreground uppercase tracking-widest font-black text-[11px]">Түвшин & Оноо</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <LevelProgress xp={ownerData?.xp || 0} />
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
 
-                            <Card className="rounded-[1.75rem] border border-border/50 bg-card/60 backdrop-blur-md shadow-sm overflow-hidden">
-                                <CardHeader className="pb-2">
-                                    <CardTitle className="text-base">Тэмдэгүүд</CardTitle>
-                                    <CardDescription>Таны цуглуулсан тэмдэгүүд</CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <BadgeList
-                                        ownerId={user.uid}
-                                        earnedBadges={ownerData?.badges || []}
-                                        stats={{ totalCompliments: ownerData?.totalCompliments || 0, xp: ownerData?.xp || 0 }}
-                                    />
-                                </CardContent>
-                            </Card>
-                        </div>
+                            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                                <Card className="rounded-[1.75rem] border border-border/50 bg-card/60 backdrop-blur-md shadow-sm overflow-hidden">
+                                    <CardHeader className="pb-4">
+                                        <CardTitle className="text-base text-muted-foreground uppercase tracking-widest font-black text-[11px]">Тэмдэгүүд</CardTitle>
+                                        <CardDescription className="text-sm font-medium">Таны цуглуулсан болон цуглуулах боломжтой тэмдэгүүд</CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <BadgeList
+                                            ownerId={user.uid}
+                                            earnedBadges={ownerData?.badges || []}
+                                            stats={{ totalCompliments: ownerData?.totalCompliments || 0, xp: ownerData?.xp || 0 }}
+                                        />
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
+                        </motion.div>
                     </TabsContent>
                 </Tabs>
             </div>

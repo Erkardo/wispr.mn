@@ -75,6 +75,67 @@ export function BadgeList({ ownerId, earnedBadges, stats }: BadgeListProps) {
 
     const allBadges = BADGES;
 
+    const getBadgeStyles = (id: string) => {
+        switch (id) {
+            case 'first_wispr': return {
+                cardBg: 'bg-gradient-to-br from-blue-50 to-indigo-50',
+                iconBg: 'bg-gradient-to-br from-blue-400 to-indigo-500',
+                glow: 'bg-blue-400/30',
+                shadow: 'shadow-blue-500/30',
+                border: 'border-blue-200',
+                ring: 'ring-blue-100/50'
+            };
+            case 'popular_5': return {
+                cardBg: 'bg-gradient-to-br from-orange-50 to-red-50',
+                iconBg: 'bg-gradient-to-br from-orange-400 to-red-500',
+                glow: 'bg-orange-400/30',
+                shadow: 'shadow-orange-500/30',
+                border: 'border-orange-200',
+                ring: 'ring-orange-100/50'
+            };
+            case 'club_20': return {
+                cardBg: 'bg-gradient-to-br from-cyan-50 to-blue-50',
+                iconBg: 'bg-gradient-to-br from-cyan-300 to-blue-500',
+                glow: 'bg-cyan-400/30',
+                shadow: 'shadow-cyan-500/30',
+                border: 'border-cyan-200',
+                ring: 'ring-cyan-100/50'
+            };
+            case 'club_50': return {
+                cardBg: 'bg-gradient-to-br from-amber-50 to-yellow-50',
+                iconBg: 'bg-gradient-to-br from-yellow-300 via-amber-400 to-yellow-500',
+                glow: 'bg-yellow-400/30',
+                shadow: 'shadow-yellow-500/30',
+                border: 'border-yellow-200',
+                ring: 'ring-yellow-100/50'
+            };
+            case 'xp_500': return {
+                cardBg: 'bg-gradient-to-br from-emerald-50 to-teal-50',
+                iconBg: 'bg-gradient-to-br from-emerald-400 to-teal-500',
+                glow: 'bg-emerald-400/30',
+                shadow: 'shadow-emerald-500/30',
+                border: 'border-emerald-200',
+                ring: 'ring-emerald-100/50'
+            };
+            case 'xp_1000': return {
+                cardBg: 'bg-gradient-to-br from-purple-50 to-pink-50',
+                iconBg: 'bg-gradient-to-br from-purple-400 via-fuchsia-500 to-pink-500',
+                glow: 'bg-purple-400/30',
+                shadow: 'shadow-purple-500/30',
+                border: 'border-purple-200',
+                ring: 'ring-purple-100/50'
+            };
+            default: return {
+                cardBg: 'bg-gradient-to-br from-slate-50 to-gray-50',
+                iconBg: 'bg-gradient-to-br from-slate-400 to-gray-500',
+                glow: 'bg-slate-400/30',
+                shadow: 'shadow-slate-500/30',
+                border: 'border-slate-200',
+                ring: 'ring-slate-100/50'
+            };
+        }
+    };
+
     return (
         <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 sm:gap-4 justify-items-center">
             <TooltipProvider>
@@ -83,6 +144,7 @@ export function BadgeList({ ownerId, earnedBadges, stats }: BadgeListProps) {
                     const progress = badge.getProgress(stats);
                     const maxProgress = badge.maxProgress;
                     const progressPercentage = Math.min(100, Math.max(0, (progress / maxProgress) * 100));
+                    const styles = getBadgeStyles(badge.id);
 
                     return (
                         <Tooltip key={badge.id}>
@@ -90,39 +152,53 @@ export function BadgeList({ ownerId, earnedBadges, stats }: BadgeListProps) {
                                 <motion.div
                                     initial={{ opacity: 0, scale: 0.8 }}
                                     animate={{ opacity: 1, scale: 1 }}
-                                    transition={{ duration: 0.4, delay: idx * 0.05, ease: "easeOut" }}
+                                    transition={{ duration: 0.5, delay: idx * 0.05, type: "spring", stiffness: 200, damping: 15 }}
                                     className={cn(
-                                        "group relative flex flex-col items-center justify-center w-full aspect-square rounded-[1.5rem] transition-all duration-300 border",
+                                        "group relative flex flex-col items-center justify-center w-full aspect-square rounded-[1.75rem] transition-all duration-500 border overflow-hidden",
                                         isEarned
-                                            ? "bg-gradient-to-br from-yellow-50 via-white to-amber-50 border-yellow-200/50 shadow-md shadow-yellow-500/10 cursor-default"
-                                            : "bg-muted/30 border-muted/50 grayscale-[0.8] opacity-80"
+                                            ? cn(styles.cardBg, styles.border, `shadow-lg ${styles.shadow} cursor-default hover:shadow-xl hover:-translate-y-1`)
+                                            : "bg-muted/30 border-muted/50 grayscale-[0.6] opacity-70"
                                     )}
                                 >
-                                    {/* Inner Glow for earned badges */}
-                                    {isEarned && <div className="absolute inset-0 bg-yellow-400/10 rounded-[1.5rem] blur-xl -z-10 group-hover:bg-yellow-400/20 transition-colors" />}
+                                    {/* Ambient background glow */}
+                                    {isEarned && <div className={cn("absolute inset-0 blur-2xl -z-10 group-hover:opacity-100 transition-opacity opacity-40", styles.glow)} />}
 
+                                    {/* The Premium Medallion */}
                                     <div className={cn(
-                                        "text-3xl sm:text-4xl drop-shadow-sm transition-transform duration-300",
-                                        isEarned ? "group-hover:scale-110 group-hover:-translate-y-1 group-hover:drop-shadow-md" : ""
+                                        "relative flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full shadow-inner ring-4 transition-transform duration-500 ease-out z-10",
+                                        isEarned ? cn(styles.iconBg, styles.ring, "group-hover:scale-110 group-hover:-translate-y-1 group-hover:rotate-6") : "bg-muted ring-white/10"
                                     )}>
-                                        {badge.icon}
+                                        {/* Glossy 3D shine effect */}
+                                        {isEarned && (
+                                            <>
+                                                <div className="absolute inset-0 bg-gradient-to-b from-white/50 to-transparent rounded-full opacity-60" />
+                                                <div className="absolute top-1 right-2 w-3 h-2 bg-white/40 rounded-full blur-[1px] rotate-[-45deg]" />
+                                            </>
+                                        )}
+                                        <span className={cn(
+                                            "text-2xl sm:text-3xl relative z-20 drop-shadow-md",
+                                            !isEarned && "opacity-50"
+                                        )}>
+                                            {badge.icon}
+                                        </span>
                                     </div>
 
+                                    {/* Unearned Progress Context */}
                                     {!isEarned && (
-                                        <div className="absolute inset-x-3 bottom-3 flex flex-col gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            {/* Progress Bar for Locked Badges */}
-                                            <div className="h-1.5 w-full bg-muted/60 rounded-full overflow-hidden">
-                                                <div className="h-full bg-foreground/40 rounded-full" style={{ width: `${progressPercentage}%` }} />
+                                        <div className="absolute inset-x-3 bottom-3 flex flex-col gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0 duration-300">
+                                            <div className="h-1.5 w-full bg-muted-foreground/20 rounded-full overflow-hidden shadow-inner">
+                                                <div className="h-full bg-foreground/60 rounded-full" style={{ width: `${progressPercentage}%` }} />
                                             </div>
                                             <span className="text-[9px] font-black text-center text-muted-foreground uppercase tracking-widest">{progress}/{maxProgress}</span>
                                         </div>
                                     )}
 
-                                    {!isEarned && <Lock className="absolute top-2.5 right-2.5 h-3.5 w-3.5 text-muted-foreground/60 transition-opacity group-hover:opacity-0" />}
-                                    {isEarned && (
-                                        <div className="absolute top-2 right-2 flex h-2 w-2">
+                                    {/* Locks and Pings */}
+                                    {!isEarned && <Lock className="absolute top-3 right-3 h-3.5 w-3.5 text-muted-foreground/70 transition-opacity group-hover:opacity-0" />}
+                                    {isEarned && newlyEarned.includes(badge.id) && (
+                                        <div className="absolute top-2.5 right-2.5 flex h-2.5 w-2.5">
                                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
-                                            <span className="relative inline-flex rounded-full h-2 w-2 bg-yellow-500"></span>
+                                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-yellow-500 shadow-sm border border-yellow-200"></span>
                                         </div>
                                     )}
                                 </motion.div>

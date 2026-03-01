@@ -8,6 +8,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://wispr.mn'),
   title: 'Wispr - Сэтгэлийн үгээ шивнээч',
   description: 'Нэргүйгээр сэтгэлийн үгээ хуваалцаж, бусдаас ирсэн wispr-үүдийг уншаарай. Хамгийн аюулгүй, нээлттэй орон зай.',
   manifest: '/manifest.json',

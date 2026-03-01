@@ -155,7 +155,7 @@ export function SentList() {
                         transition={{ delay: index * 0.05 }}
                         key={comp.id}
                     >
-                        <Card className="overflow-hidden border-none shadow-xl rounded-3xl group">
+                        <Card id={`compliment-card-${comp.id}`} className="overflow-hidden border-none shadow-xl rounded-3xl group">
                             <div className="p-1" style={{ backgroundImage: style.bg }}>
                                 <CardContent className="bg-background dark:bg-zinc-950 rounded-[calc(1.5rem-4px)] p-5 sm:p-6 transition-all group-hover:bg-transparent group-hover:text-white duration-300">
                                     <div className="flex justify-between items-start mb-4">

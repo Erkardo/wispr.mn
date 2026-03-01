@@ -748,6 +748,7 @@ function ComplimentCard({
         className="w-full relative px-4 sm:px-0"
       >
         <div
+          id={`compliment-card-${compliment.id}`}
           className="w-full relative overflow-hidden rounded-[3rem] flex flex-col items-center justify-center min-h-[52vw] sm:min-h-[320px] group cursor-pointer"
           onClick={!isRevealing ? handleReveal : undefined}
           style={{

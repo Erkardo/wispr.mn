@@ -91,7 +91,7 @@ export default function HomePage() {
 
   useEffect(() => {
     const complimentId = searchParams.get('complimentId');
-    if (complimentId && !complimentsLoading && sortedCompliments.length > 0 && activeTab === 'received') {
+    if (complimentId && !complimentsLoading && (sortedCompliments.length > 0 || activeTab === 'sent')) {
       // Need a tiny delay to ensure the tab content has rendered the element
       setTimeout(() => {
         const element = document.getElementById(`compliment-card-${complimentId}`);
@@ -100,7 +100,7 @@ export default function HomePage() {
           element.classList.add('highlight-card');
           setTimeout(() => element.classList.remove('highlight-card'), 2000);
         }
-      }, 100);
+      }, 200);
     }
   }, [searchParams, complimentsLoading, sortedCompliments, activeTab]);
 

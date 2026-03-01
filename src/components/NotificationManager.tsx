@@ -1,13 +1,16 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { ToastAction } from '@/components/ui/toast';
 
 export function NotificationManager() {
     const { user } = useUser();
     const firestore = useFirestore();
+    const router = useRouter();
     const { toast } = useToast();
 
     useEffect(() => {
@@ -24,40 +27,65 @@ export function NotificationManager() {
 
         // 2. Listen for new UNREAD wisprs
         const complimentsRef = collection(firestore, 'complimentOwners', user.uid, 'compliments');
-        const unreadQuery = query(complimentsRef, where('isRead', '==', false));
+        const unreadCompsQuery = query(complimentsRef, where('isRead', '==', false));
 
-        // We use a manual onSnapshot to detect "changes" (newly added docs)
-        // and avoid firing on initial load if we want.
+        // 3. Listen for new UNREAD replies
+        const sentRef = collection(firestore, 'complimentOwners', user.uid, 'sentWisprs');
+        const unreadRepsQuery = query(sentRef, where('hasUnreadReply', '==', true));
+
         let isInitial = true;
-        const unsubscribe = onSnapshot(unreadQuery, (snapshot) => {
+
+        const handleNotification = (type: 'wispr' | 'reply', id: string) => {
+            const title = type === 'wispr' ? '🔥 Шинэ Wispr ирлээ!' : '💬 Хариу ирлээ!';
+            const body = type === 'wispr' ? 'Танд нэргүй wispr ирлээ. Одоо нээж үзээрэй.' : 'Таны илгээсэн wispr-д хариу бичжээ.';
+            const href = type === 'wispr' ? `/?complimentId=${id}` : `/?tab=sent&complimentId=${id}`;
+
+            // Browser Notification
+            if (Notification.permission === 'granted') {
+                const n = new Notification(type === 'wispr' ? 'Wispr - Шинэ зурвас!' : 'Wispr - Хариу ирлээ!', {
+                    body,
+                    icon: '/logo-icon.svg',
+                });
+                n.onclick = () => {
+                    window.focus();
+                    router.push(href);
+                };
+            }
+
+            // Toast
+            toast({
+                title,
+                description: body,
+                action: (
+                    <ToastAction altText="Open" onClick={() => router.push(href)}>
+                        Нээж үзэх
+                    </ToastAction>
+                ),
+            });
+        };
+
+        const unsubComps = onSnapshot(unreadCompsQuery, (snapshot) => {
+            if (isInitial) return;
+            snapshot.docChanges().forEach((change) => {
+                if (change.type === 'added') handleNotification('wispr', change.doc.id);
+            });
+        });
+
+        const unsubReps = onSnapshot(unreadRepsQuery, (snapshot) => {
             if (isInitial) {
                 isInitial = false;
                 return;
             }
-
             snapshot.docChanges().forEach((change) => {
-                if (change.type === 'added') {
-                    const data = change.doc.data();
-
-                    // Show Browser Notification
-                    if (Notification.permission === 'granted') {
-                        new Notification('Wispr - Шинэ зурвас!', {
-                            body: 'Танд шинэ нэргүй wispr ирлээ. Одоо нээж үзээрэй.',
-                            icon: '/logo-icon.svg',
-                        });
-                    }
-
-                    // Show Toast
-                    toast({
-                        title: '🔥 Шинэ Wispr ирлээ!',
-                        description: 'Таны сэтгэлийг дулаацуулах нэргүй wispr ирлээ.',
-                    });
-                }
+                if (change.type === 'added') handleNotification('reply', change.doc.data().complimentId || change.doc.id);
             });
         });
 
-        return () => unsubscribe();
-    }, [user, firestore, toast]);
+        return () => {
+            unsubComps();
+            unsubReps();
+        };
+    }, [user, firestore, toast, router]);
 
     return null;
 }

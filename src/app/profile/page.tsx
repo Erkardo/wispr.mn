@@ -5,7 +5,7 @@ import { Header } from '@/components/Header';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { Gift, HelpCircle, Shield, MessageCircle, Gem, LogOut, Loader2, Users, ShoppingCart, FileText, Palette, Trophy, User, Settings, Bell, BellOff, Globe, Lock } from 'lucide-react';
+import { Gift, HelpCircle, Shield, MessageCircle, Gem, LogOut, Loader2, Users, ShoppingCart, FileText, Palette, Trophy, User, Settings, Bell, BellOff, Globe, Lock, ArrowRight } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -247,7 +247,26 @@ export default function ProfilePage() {
                                             <p className="text-xs text-primary/70 font-mono font-bold mt-0.5">@{ownerData.username}</p>
                                         )}
                                     </div>
+                                    <Button asChild variant="ghost" size="icon" className="rounded-full h-10 w-10 hover:bg-muted group/act" onClick={() => router.push('/activity')}>
+                                        <Bell className="w-5 h-5 text-muted-foreground group-hover/act:text-primary transition-colors" />
+                                    </Button>
                                 </CardContent>
+                            </Card>
+
+                            {/* Notifications / Activity Card */}
+                            <Card className="rounded-[1.75rem] border border-border/50 bg-card/60 backdrop-blur-md shadow-sm overflow-hidden" onClick={() => router.push('/activity')}>
+                                <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/30 transition-colors">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 rounded-xl bg-primary/10">
+                                            <Bell className="w-4 h-4 text-primary" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-black uppercase tracking-widest text-muted-foreground">Идэвх & Мэдэгдэл</p>
+                                            <p className="text-xs text-foreground font-semibold">Сүүлд ирсэн мэдэгдлүүдийг харах</p>
+                                        </div>
+                                    </div>
+                                    <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                                </div>
                             </Card>
 
                             {/* Hint card — compact */}

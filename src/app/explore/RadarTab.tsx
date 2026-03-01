@@ -217,10 +217,20 @@ export function RadarTab() {
                         toast({ title: 'Алдаа', description: res.message, variant: 'destructive' });
                     }
                 },
-                () => {
-                    toast({ title: 'Байршил тогтоож чадсангүй', description: 'GPS зөвшөөрлөө шалгаад дахин оролдоно уу эсвэл түр хүлээгээд үзнэ үү.', variant: 'destructive' });
+                (error) => {
+                    console.error('Geolocation error:', error);
+                    let description = 'Байршил тогтоолтыг хөтчийн тохиргооноос зөвшөөрөөгүй байна.';
+                    if (error.code === 1) description = 'Байршлын зөвшөөрөл хаалттай байна. Хөтчийн тохиргооноос зөвшөөрнө үү.';
+                    else if (error.code === 2) description = 'Байршил тогтоох боломжгүй байна. Сүлжээ эсвэл GPS-ээ шалгана уу.';
+                    else if (error.code === 3) description = 'Байршил тогтоох хугацаа дууслаа. Дахин оролдоно уу.';
+
+                    toast({
+                        title: 'Байршил тогтоож чадсангүй',
+                        description,
+                        variant: 'destructive'
+                    });
                 },
-                { enableHighAccuracy: false, timeout: 15000, maximumAge: 30000 }
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
             );
         });
     };

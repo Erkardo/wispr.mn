@@ -26,23 +26,38 @@ export function Header({
   const { user } = useUser();
   const firestore = useFirestore();
 
-  // Query unread wisprs
+  // Query unread wisprs and unread replies
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     if (!user || !firestore) return;
 
     // Listen to changes in unread compliments
-    import('firebase/firestore').then(({ collection, query, where, onSnapshot }) => {
-      const complimentsRef = collection(firestore, 'complimentOwners', user.uid, 'compliments');
-      const unreadQuery = query(complimentsRef, where('isRead', '==', false), where('isArchived', 'in', [false, null]));
+    const complimentsRef = collection(firestore, 'complimentOwners', user.uid, 'compliments');
+    const complimentsQuery = query(complimentsRef, where('isRead', '==', false), where('isArchived', 'in', [false, null]));
 
-      const unsubscribe = onSnapshot(unreadQuery, (snapshot) => {
-        setUnreadCount(snapshot.docs.length);
+    // Listen to changes in unread replies
+    const repliesRef = collection(firestore, 'complimentOwners', user.uid, 'sentWisprs');
+    const repliesQuery = query(repliesRef, where('hasUnreadReply', '==', true));
+
+    const importFirestore = import('firebase/firestore');
+
+    let unsubComps = () => { };
+    let unsubReps = () => { };
+
+    importFirestore.then(({ onSnapshot }) => {
+      unsubComps = onSnapshot(complimentsQuery, (snap) => {
+        const compsCount = snap.docs.length;
+        onSnapshot(repliesQuery, (repSnap) => {
+          setUnreadCount(compsCount + repSnap.docs.length);
+        });
       });
-
-      return () => unsubscribe();
     });
+
+    return () => {
+      unsubComps();
+      unsubReps();
+    };
   }, [user, firestore]);
 
   const pathname = usePathname();
@@ -72,7 +87,7 @@ export function Header({
           )}
           {!isHomePage && (
             <Link href="/" passHref className="flex items-center shrink-0">
-              <Logo iconOnly className="w-11 md:w-12 text-primary transition-all" />
+              <Logo iconOnly className="w-[28px] md:w-[32px] text-primary transition-all" />
             </Link>
           )}
         </div>

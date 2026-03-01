@@ -134,51 +134,38 @@ export function ComplimentForm({ ownerId }: { ownerId: string }) {
           senderOS: getSenderOS(),
         };
 
-        // Non-blocking write to Firestore
-        addDoc(complimentsRef, complimentData).then(async (docRef) => {
-          // Increment owner XP and save to sender's sent box
-          try {
-            const ownerDocRef = doc(firestore, 'complimentOwners', ownerId);
-            const batchPromises = [
-              updateDoc(ownerDocRef, {
-                xp: increment(10), // +10 XP per wispr
-              })
-            ];
+        // BLOCKING write to Firestore
+        const docRef = await addDoc(complimentsRef, complimentData);
 
-            // Save reference to sender's Sent Box if they are logged in
-            if (user && !user.isAnonymous) {
-              const sentRef = doc(firestore, 'complimentOwners', user.uid, 'sentWisprs', docRef.id);
-              batchPromises.push(setDoc(sentRef, {
-                receiverId: ownerId,
-                complimentId: docRef.id,
-                sentAt: serverTimestamp()
-              }));
-            }
+        // Follow-up updates
+        try {
+          const ownerDocRef = doc(firestore, 'complimentOwners', ownerId);
+          const batchPromises = [
+            updateDoc(ownerDocRef, {
+              xp: increment(10), // +10 XP per wispr
+            })
+          ];
 
-            await Promise.all(batchPromises);
-
-            // Trigger push notification asynchronously (don't block the UI flow)
-            notifyNewWisprAction(ownerId, complimentData.senderOS, docRef.id).catch(console.error);
-
-          } catch (e) {
-            console.error("Failed to update extra DB data", e);
+          // Save reference to sender's Sent Box if they are logged in
+          if (user && !user.isAnonymous) {
+            const sentRef = doc(firestore, 'complimentOwners', user.uid, 'sentWisprs', docRef.id);
+            batchPromises.push(setDoc(sentRef, {
+              receiverId: ownerId,
+              complimentId: docRef.id,
+              sentAt: serverTimestamp()
+            }));
           }
-        }).catch(error => {
-          const permissionError = new FirestorePermissionError({
-            path: complimentsRef.path,
-            operation: 'create',
-            requestResourceData: complimentData,
-          });
-          errorEmitter.emit('permission-error', permissionError);
-          toast({
-            title: 'Алдаа',
-            description: 'Wispr илгээхэд алдаа гарлаа. Дахин оролдоно уу.',
-            variant: 'destructive',
-          });
-        });
 
-        // If user logged in and wants their own link, redirect them.
-        // Otherwise, show the success message.
+          await Promise.all(batchPromises);
+
+          // Trigger push notification asynchronously (don't block the UI flow)
+          notifyNewWisprAction(ownerId, complimentData.senderOS, docRef.id).catch(console.error);
+
+        } catch (e) {
+          console.error("Failed to update extra DB data", e);
+        }
+
+        // Redirect OR Show Success
         if (user && !user.isAnonymous && data.createOwnLink) {
           router.push('/create');
         } else {

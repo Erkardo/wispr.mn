@@ -2,15 +2,15 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, PlusCircle, User, Search } from 'lucide-react';
+import { Home, PlusCircle, Settings, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUser, useFirestore, useMemoFirebase, useCollection } from '@/firebase';
 
 const navItems = [
-  { href: '/', label: 'Wispr-үүд', icon: Home },
+  { href: '/', label: 'Нүүр', icon: Home },
   { href: '/explore', label: 'Хайх', icon: Search },
-  { href: '/create', label: 'Үүсгэх', icon: PlusCircle },
-  { href: '/profile', label: 'Профайл', icon: User },
+  { href: '/create', label: 'Шивнэх', icon: PlusCircle },
+  { href: '/profile', label: 'Тохиргоо', icon: Settings },
 ];
 
 export function BottomNav() {

@@ -32,33 +32,38 @@ export function Header({
   useEffect(() => {
     if (!user || !firestore) return;
 
-    // Listen to changes in unread compliments (fetch all unread, filter out archived client-side)
     const complimentsRef = collection(firestore, 'complimentOwners', user.uid, 'compliments');
     const complimentsQuery = query(complimentsRef, where('isRead', '==', false));
 
-    // Listen to changes in unread replies
     const repliesRef = collection(firestore, 'complimentOwners', user.uid, 'sentWisprs');
     const repliesQuery = query(repliesRef, where('hasUnreadReply', '==', true));
 
-    const importFirestore = import('firebase/firestore');
+    let unreadCompliments = 0;
+    let unreadReplies = 0;
 
-    let unsubComps = () => { };
-    let unsubReps = () => { };
+    let unsubComps: (() => void) | null = null;
+    let unsubReps: (() => void) | null = null;
+    let isMounted = true;
 
-    importFirestore.then(({ onSnapshot }) => {
+    import('firebase/firestore').then(({ onSnapshot }) => {
+      if (!isMounted) return;
+
+      // Run both listeners independently and combine their counts
       unsubComps = onSnapshot(complimentsQuery, (snap) => {
-        // Filter out archived compliments client-side because undefined fields can't be queried effectively with 'in'
-        const unarchivedCount = snap.docs.filter(doc => doc.data().isArchived !== true).length;
+        unreadCompliments = snap.docs.filter(doc => doc.data().isArchived !== true).length;
+        setUnreadCount(unreadCompliments + unreadReplies);
+      });
 
-        onSnapshot(repliesQuery, (repSnap) => {
-          setUnreadCount(unarchivedCount + repSnap.docs.length);
-        });
+      unsubReps = onSnapshot(repliesQuery, (snap) => {
+        unreadReplies = snap.docs.length;
+        setUnreadCount(unreadCompliments + unreadReplies);
       });
     });
 
     return () => {
-      unsubComps();
-      unsubReps();
+      isMounted = false;
+      unsubComps?.();
+      unsubReps?.();
     };
   }, [user, firestore]);
 

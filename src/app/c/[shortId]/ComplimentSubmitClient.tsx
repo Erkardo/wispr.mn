@@ -2,8 +2,9 @@
 
 import { ComplimentForm } from '@/components/compliments/ComplimentForm';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Heart, Loader2, Frown } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Heart, Frown } from 'lucide-react';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import Image from 'next/image';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useFirestore, useUser } from '@/firebase';
 import { doc, getDoc, collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
@@ -214,8 +215,15 @@ export function ComplimentSubmitClient({ shortId, ownerIdProp }: { shortId?: str
                     {ownerData?.photoURL || ownerData?.bio || ownerData?.displayName ? (
                         <div className="flex flex-col items-center gap-3 mb-4">
                             {ownerData?.photoURL ? (
-                                <Avatar className="h-24 w-24 border-4 border-primary/20 shadow-xl">
-                                    <AvatarImage src={ownerData.photoURL} alt={ownerData.displayName || ''} />
+                                <Avatar className="h-24 w-24 border-4 border-primary/20 shadow-xl overflow-hidden">
+                                    <Image
+                                        src={ownerData.photoURL}
+                                        alt={ownerData.displayName || 'Profile'}
+                                        width={96}
+                                        height={96}
+                                        priority
+                                        className="rounded-full object-cover"
+                                    />
                                     <AvatarFallback>{ownerData.displayName?.charAt(0).toUpperCase() || 'W'}</AvatarFallback>
                                 </Avatar>
                             ) : (

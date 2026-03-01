@@ -12,13 +12,26 @@ import { sendPushNotification } from '@/lib/fcm';
 
 
 export async function submitComplimentAction(text: string, audioUrl?: string, duration?: number): Promise<{ success: boolean; message: string; filteredText?: string }> {
-    if (!text.trim() && !audioUrl) {
+    const trimmed = text?.trim();
+
+    if (!trimmed && !audioUrl) {
         return { success: false, message: 'Wispr-ээ бичнэ үү эсвэл дуут зурвас үлдээнэ үү.' };
     }
 
+    if (trimmed && trimmed.length > 500) {
+        return { success: false, message: 'Wispr хэт урт байна. 500 тэмдэгтэд багтааж бичнэ үү.' };
+    }
+
+    // Basic spam guard: reject if the message is just repeated characters
+    if (trimmed && trimmed.length > 3) {
+        const uniqueChars = new Set(trimmed.replace(/\s/g, '')).size;
+        if (uniqueChars < 2) {
+            return { success: false, message: 'Жинхэнэ сэтгэлийн үгээ бичнэ үү 💛' };
+        }
+    }
+
     try {
-        // AI checking removed to save tokens. Accept all raw text.
-        return { success: true, message: 'Амжилттай шүүгдлээ', filteredText: text.trim() };
+        return { success: true, message: 'Амжилттай', filteredText: trimmed };
     } catch (error) {
         console.error('Wispr илгээхэд алдаа гарлаа:', error);
         return { success: false, message: 'Алдаа гарлаа.' };

@@ -138,10 +138,12 @@ export function ComplimentSubmitClient({ shortId, username }: ComplimentSubmitCl
     }
 
     return (
-        <div
-            className="flex min-h-[calc(100vh-56px)] flex-col items-center justify-start px-4 pt-10 pb-20 transition-colors duration-500 bg-[#FCFCFC] dark:bg-[#0A0A0A]"
-        >
-            <div className="w-full max-w-md flex flex-col items-center animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
+        <div className="flex min-h-[calc(100vh-56px)] justify-center px-4 pt-10 pb-20 relative overflow-hidden bg-white dark:bg-zinc-950">
+            {/* Elegant Ambient Glow Backgrounds */}
+            <div className="absolute top-[-5%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary/10 blur-[100px] pointer-events-none opacity-50 dark:opacity-20 mix-blend-multiply dark:mix-blend-screen" />
+            <div className="absolute top-[20%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-500/10 blur-[120px] pointer-events-none opacity-50 dark:opacity-20 mix-blend-multiply dark:mix-blend-screen" />
+
+            <div className="w-full max-w-md flex flex-col items-center animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out relative z-10">
 
                 {/* Poll Card (if exists) */}
                 {activePoll && (
@@ -150,31 +152,33 @@ export function ComplimentSubmitClient({ shortId, username }: ComplimentSubmitCl
                     </div>
                 )}
 
-                {/* Profile Header */}
-                <div className="mb-8 flex flex-col items-center">
-                    {ownerData?.photoURL ? (
-                        <Avatar className="h-24 w-24 shadow-sm overflow-hidden mb-5">
-                            <Image
-                                src={ownerData.photoURL}
-                                alt={ownerData.displayName || 'Profile'}
-                                width={96}
-                                height={96}
-                                priority
-                                className="object-cover"
-                            />
-                            <AvatarFallback className="bg-muted text-muted-foreground text-xl font-medium">{ownerData.displayName?.charAt(0).toUpperCase() || 'W'}</AvatarFallback>
-                        </Avatar>
-                    ) : (
-                        <div className="mx-auto bg-white dark:bg-zinc-800 p-5 rounded-full w-fit shadow-sm ring-1 ring-black/5 dark:ring-white/10 mb-5">
-                            <Heart className="h-8 w-8 text-primary" />
-                        </div>
-                    )}
+                <div className="mb-10 flex flex-col items-center relative">
+                    <div className="relative">
+                        <div className="absolute -inset-4 rounded-full bg-gradient-to-tr from-primary/30 to-blue-500/30 blur-2xl opacity-50 dark:opacity-30"></div>
+                        {ownerData?.photoURL ? (
+                            <Avatar className="h-[104px] w-[104px] shadow-2xl shadow-black/10 dark:shadow-white/5 ring-4 ring-white dark:ring-zinc-900 mb-6 relative z-10">
+                                <Image
+                                    src={ownerData.photoURL}
+                                    alt={ownerData.displayName || 'Profile'}
+                                    width={104}
+                                    height={104}
+                                    priority
+                                    className="object-cover"
+                                />
+                                <AvatarFallback className="bg-muted text-muted-foreground text-2xl font-bold">{ownerData.displayName?.charAt(0).toUpperCase() || 'W'}</AvatarFallback>
+                            </Avatar>
+                        ) : (
+                            <div className="mx-auto bg-gradient-to-br from-primary/10 to-primary/5 p-6 rounded-full w-fit shadow-2xl shadow-primary/10 ring-4 ring-white dark:ring-zinc-900 mb-6 relative z-10">
+                                <Heart className="h-10 w-10 text-primary drop-shadow-sm" />
+                            </div>
+                        )}
+                    </div>
 
-                    <div className="text-center">
-                        <h1 className="font-semibold text-[22px] text-foreground tracking-tight">
+                    <div className="text-center px-2">
+                        <h1 className="font-extrabold text-[24px] text-zinc-900 dark:text-zinc-50 tracking-tight">
                             @{ownerData?.displayName || 'Хэрэглэгч'}
                         </h1>
-                        <p className="text-[15px] font-medium text-muted-foreground mt-2 max-w-[280px] mx-auto leading-relaxed">
+                        <p className="text-[15px] font-medium text-zinc-500 dark:text-zinc-400 mt-2.5 max-w-[280px] mx-auto leading-relaxed">
                             {ownerData?.bio || "Надад хэлмээр байсан тэр үгээ энд зоригтойгоор үлдээгээрэй..."}
                         </p>
                     </div>

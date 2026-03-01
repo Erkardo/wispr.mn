@@ -16,31 +16,6 @@ const KINDNESS_QUOTES = [
   "Тэр энэ үгсийг сонсоод ямар их баярлах бол доо. 😌"
 ];
 
-// Premium SVG Paper Plane (Custom colorful design)
-const PremiumPaperPlane = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg" style={{ filter: "drop-shadow(0 20px 30px rgba(139, 92, 246, 0.6))" }}>
-    {/* Left Fold */}
-    <path d="M10 40 L90 10 L45 55 Z" fill="#E0E7FF" />
-    <path d="M10 40 L45 55 L40 65 Z" fill="#C7D2FE" />
-
-    {/* Right Fold */}
-    <path d="M90 10 L45 55 L40 65 Z" fill="#A5B4FC" />
-    <path d="M90 10 L40 65 L70 90 Z" fill="#818CF8" />
-
-    {/* Darker underbelly / shadow */}
-    <path d="M70 90 L40 65 L60 80 Z" fill="#6366F1" />
-
-    {/* Main right wing */}
-    <path d="M90 10 L60 80 L70 90 Z" fill="#4F46E5" />
-
-    {/* Highlights */}
-    <path d="M90 10 L10 40" stroke="#FFFFFF" strokeWidth="1" strokeLinecap="round" opacity="0.8" />
-    <path d="M90 10 L70 90" stroke="#FFFFFF" strokeWidth="1" strokeLinecap="round" opacity="0.6" />
-    <path d="M90 10 L45 55" stroke="#FFFFFF" strokeWidth="1" strokeLinecap="round" opacity="0.5" />
-    <path d="M90 10 L40 65" stroke="#FFFFFF" strokeWidth="1" strokeLinecap="round" opacity="0.4" />
-  </svg>
-);
-
 export function ComplimentSentSuccess() {
   const [quote, setQuote] = useState("");
   const [showPlane, setShowPlane] = useState(true);
@@ -136,9 +111,17 @@ export function ComplimentSentSuccess() {
                 ease: [0.22, 1, 0.36, 1], // Custom bouncy ease
                 times: [0, 0.3, 0.6, 0.8, 1]
               }}
-              className="absolute z-20"
+              className="absolute z-20 pointer-events-none drop-shadow-[0_20px_45px_rgba(139,92,246,0.6)]"
             >
-              <PremiumPaperPlane className="w-28 h-28" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/paper-plane.webp"
+                alt="Paper Plane"
+                width={160}
+                height={160}
+                className="select-none scale-x-[-1] object-contain"
+                style={{ WebkitUserDrag: 'none' }}
+              />
             </motion.div>
           )}
         </AnimatePresence>
